@@ -376,6 +376,27 @@
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
+    .loading-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 0 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .loading-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
     .no-slots {
       text-align: center;
@@ -727,6 +748,11 @@
       <div class="card">
         <div class="card-title" id="slotsTitle">Available Times</div>
         <div id="slotsContainer">
+          <!-- Loading spinner -->
+          <div class="loading-indicator hidden" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <span>Loading available times...</span>
+          </div>
           <!-- Slot-mode loading -->
           <div class="slots-loading" id="slotsLoading">
             <div class="slot-skeleton"></div>
@@ -1312,10 +1338,12 @@ async function fetchSlots(dateStr) {
   var classLoading = document.getElementById('classLoading');
   var noSlots = document.getElementById('noSlots');
   var title = document.getElementById('slotsTitle');
+  var loadingIndicator = document.getElementById('loadingIndicator');
 
   grid.classList.add('hidden');
   classList.classList.add('hidden');
   noSlots.classList.add('hidden');
+  loadingIndicator.classList.remove('hidden');
 
   var isClassMode = currentLocation.uiMode === 'classes';
   if (isClassMode) {
@@ -1350,6 +1378,7 @@ async function fetchSlots(dateStr) {
 
     slotsLoading.classList.add('hidden');
     classLoading.classList.add('hidden');
+    loadingIndicator.classList.add('hidden');
 
     if (availableSlots.length === 0) {
       noSlots.classList.remove('hidden');
@@ -1386,6 +1415,7 @@ async function fetchSlots(dateStr) {
 
   slotsLoading.classList.add('hidden');
   classLoading.classList.add('hidden');
+  loadingIndicator.classList.add('hidden');
 
   if (availableSlots.length === 0) {
     noSlots.classList.remove('hidden');
