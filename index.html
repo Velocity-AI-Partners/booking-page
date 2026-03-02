@@ -1263,6 +1263,7 @@ function buildDateCarousel() {
   document.getElementById('dateNavLabel').textContent =
     months[startDate.getMonth()] + ' ' + startDate.getFullYear();
   document.getElementById('datePrev').disabled = (dateOffset <= 0);
+  document.getElementById('dateNext').disabled = (dateOffset >= CONFIG.daysAhead - 7);
 
   for (var i = 0; i < CONFIG.daysAhead; i++) {
     var d = new Date(startDate);
@@ -1309,7 +1310,7 @@ function buildDateCarousel() {
 }
 
 function shiftDates(offset) {
-  dateOffset = Math.max(0, dateOffset + offset);
+  dateOffset = Math.max(0, Math.min(CONFIG.daysAhead - 7, dateOffset + offset));
   selectedDate = null;
   selectedSlot = null;
   updateSelectionSummary();
