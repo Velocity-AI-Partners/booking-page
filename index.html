@@ -53,7 +53,7 @@
     /* ========== GRADIENT HEADER ========== */
     .page-header {
       background: #FF9900;
-      padding: 24px 20px 32px;
+      padding: 28px 20px 36px;
       border-radius: 0 0 24px 24px;
       margin-bottom: -12px;
       position: relative;
@@ -70,20 +70,21 @@
     }
     .header-content {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
       position: relative;
       z-index: 1;
+      text-align: center;
     }
     .header-logo {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
+      width: 88px;
+      height: 88px;
+      border-radius: 18px;
       object-fit: contain;
       background: white;
-      padding: 4px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      padding: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .header-info h1 {
       font-size: 20px;
@@ -99,22 +100,11 @@
       font-weight: 500;
     }
     .header-phone {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 12px;
-      color: white;
-      text-decoration: none;
-      font-size: 18px;
-      flex-shrink: 0;
-      backdrop-filter: blur(4px);
-      transition: var(--transition);
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
     }
-    .header-phone:hover { background: rgba(255,255,255,0.3); }
 
     /* ========== CONTENT AREA ========== */
     .content-area {
@@ -708,7 +698,7 @@
           <h1 id="locationName"></h1>
           <p id="locationTagline"></p>
         </div>
-        <a id="headerPhone" class="header-phone" href="tel:" aria-label="Call">&#9742;</a>
+        <span id="headerPhone" class="header-phone"></span>
       </div>
     </div>
 
@@ -812,7 +802,7 @@
   </div>
 
   <div class="footer">
-    Powered by <a href="https://velocityaipartners.com" target="_blank">Velocity AI Partners</a>
+    Powered by <a href="https://velocity.ai/" target="_blank">Velocity AI</a>
   </div>
 
 </div>
@@ -1197,7 +1187,7 @@ function populateHeader() {
   document.getElementById('locationLogo').alt = currentLocation.name + ' Logo';
   document.getElementById('locationName').textContent = currentLocation.displayName;
   document.getElementById('locationTagline').textContent = currentLocation.tagline;
-  document.getElementById('headerPhone').href = 'tel:+' + currentLocation.phone;
+  document.getElementById('headerPhone').textContent = formatPhone(currentLocation.phone);
   document.title = 'Book Your ' + currentLocation.sessionLabel + ' | ' + currentLocation.displayName;
 }
 

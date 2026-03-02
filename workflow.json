@@ -15,7 +15,8 @@
         0
       ],
       "id": "c0eff6c2-e8e4-40b6-9c6b-cfefd363106f",
-      "name": "Booking Submit"
+      "name": "Booking Submit",
+      "webhookId": "c0eff6c2-e8e4-40b6-9c6b-cfefd363106f"
     },
     {
       "parameters": {
@@ -26,7 +27,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        300,
+        260,
         160
       ],
       "id": "a1b2c3d4-0001-4000-a000-000000000001",
@@ -34,12 +35,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const booking = $json.body;\n\nconst subject = `New Booking Request: ${booking.name} - ${booking.date} at ${booking.time}`;\n\nconst htmlBody = `\n<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;\">\n  <div style=\"background: #003055; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;\">\n    <h1 style=\"margin: 0; font-size: 20px;\">New Booking Request</h1>\n    <p style=\"margin: 5px 0 0; opacity: 0.8; font-size: 14px;\">${booking.locationName || booking.location}</p>\n  </div>\n  <div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;\">\n    <table style=\"width: 100%; border-collapse: collapse;\">\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280; width: 120px;\">Customer</td>\n        <td style=\"padding: 12px 8px; font-weight: 600;\">${booking.name}</td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Email</td>\n        <td style=\"padding: 12px 8px;\"><a href=\"mailto:${booking.email}\">${booking.email}</a></td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Phone</td>\n        <td style=\"padding: 12px 8px;\"><a href=\"tel:${booking.phone}\">${booking.phone}</a></td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Date</td>\n        <td style=\"padding: 12px 8px; font-weight: 600;\">${booking.date}</td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Time</td>\n        <td style=\"padding: 12px 8px; font-weight: 600;\">${booking.time}</td>\n      </tr>\n      ${booking.instructor ? `<tr style=\"border-bottom: 1px solid #f3f4f6;\"><td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Instructor</td><td style=\"padding: 12px 8px;\">${booking.instructor}</td></tr>` : ''}\n      ${booking.type ? `<tr style=\"border-bottom: 1px solid #f3f4f6;\"><td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Session Type</td><td style=\"padding: 12px 8px;\">${booking.type}</td></tr>` : ''}\n      ${booking.notes ? `<tr style=\"border-bottom: 1px solid #f3f4f6;\"><td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Notes</td><td style=\"padding: 12px 8px;\">${booking.notes}</td></tr>` : ''}\n    </table>\n    <div style=\"margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 6px; font-size: 12px; color: #9ca3af;\">\n      <p style=\"margin: 0;\">Location: ${booking.locationName} | CRM: ${booking.crm || 'N/A'}${booking.leadId ? ` | Lead ID: ${booking.leadId}` : ''}</p>\n      <p style=\"margin: 4px 0 0;\">Submitted via Velocity AI Booking Page</p>\n    </div>\n  </div>\n</div>`;\n\nconst toEmail = booking.locationEmail || 'bjordan@velocityaipartners.ai';\n\nreturn [{ json: { toEmail, subject, htmlBody, ...booking } }];"
+        "jsCode": "const booking = $json.body;\n\nconst name = booking.name || 'Customer';\nconst email = booking.email || '';\nconst phone = booking.phone || '';\n\nconst subject = `New Booking Request: ${name} - ${booking.date} at ${booking.time}`;\n\nconst htmlBody = `\n<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;\">\n  <div style=\"background: linear-gradient(135deg, #FF9900, #FF6D00); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;\">\n    <h1 style=\"margin: 0; font-size: 20px;\">New Booking Request</h1>\n    <p style=\"margin: 5px 0 0; opacity: 0.9; font-size: 14px;\">${booking.locationName || booking.location}</p>\n  </div>\n  <div style=\"border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;\">\n    <table style=\"width: 100%; border-collapse: collapse;\">\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280; width: 120px;\">Customer</td>\n        <td style=\"padding: 12px 8px; font-weight: 600;\">${name}</td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Email</td>\n        <td style=\"padding: 12px 8px;\"><a href=\"mailto:${email}\">${email || 'N/A'}</a></td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Phone</td>\n        <td style=\"padding: 12px 8px;\"><a href=\"tel:${phone}\">${phone}</a></td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Date</td>\n        <td style=\"padding: 12px 8px; font-weight: 600;\">${booking.date}</td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #f3f4f6;\">\n        <td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Time</td>\n        <td style=\"padding: 12px 8px; font-weight: 600;\">${booking.time}</td>\n      </tr>\n      ${booking.instructor ? '<tr style=\"border-bottom: 1px solid #f3f4f6;\"><td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Instructor</td><td style=\"padding: 12px 8px;\">' + booking.instructor + '</td></tr>' : ''}\n      ${booking.className ? '<tr style=\"border-bottom: 1px solid #f3f4f6;\"><td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Session Type</td><td style=\"padding: 12px 8px;\">' + booking.className + '</td></tr>' : ''}\n      ${booking.notes ? '<tr style=\"border-bottom: 1px solid #f3f4f6;\"><td style=\"padding: 12px 8px; font-weight: bold; color: #6b7280;\">Notes</td><td style=\"padding: 12px 8px;\">' + booking.notes + '</td></tr>' : ''}\n    </table>\n    <div style=\"margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 6px; font-size: 12px; color: #9ca3af;\">\n      <p style=\"margin: 0;\">Location: ${booking.locationName} | CRM: ${booking.crm || 'N/A'}${booking.leadId ? ' | Lead ID: ' + booking.leadId : ''}</p>\n      <p style=\"margin: 4px 0 0;\">Submitted via Velocity AI Booking Page</p>\n    </div>\n  </div>\n</div>`;\n\nconst toEmail = booking.locationEmail || 'bjordan@velocityaipartners.ai';\n\nreturn [{ json: { toEmail, subject, htmlBody } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        300,
+        740,
         -100
       ],
       "id": "a1b2c3d4-0002-4000-a000-000000000002",
@@ -56,7 +57,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        560,
+        980,
         -100
       ],
       "id": "a1b2c3d4-0003-4000-a000-000000000003",
@@ -87,16 +88,105 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body;\nconst location = body.location || '';\nconst dateStr = body.date || '';\n\nconst schedules = {\n  'stretch-zone-westborough': { hours: [8,9,10,11,12,13,14,15,16,17], sat: [8,9,10,11,12,13], label: 'Stretch Session' },\n  'stretch-zone-west-boylston': { hours: [8,9,10,11,12,13,14,15,16,17], sat: [8,9,10,11,12,13], label: 'Stretch Session' },\n  'stretch-zone-dfw': { hours: [8,9,10,11,12,13,14,15,16,17], sat: [8,9,10,11,12,13], label: 'Stretch Session' },\n  'stretch-zone-baton-rouge': { hours: [8,9,10,11,12,13,14,15,16,17], sat: [8,9,10,11,12,13], label: 'Stretch Session' },\n  'stretchlab-carlsbad': { hours: [8,9,10,11,12,13,14,15,16,17], sat: [8,9,10,11,12,13], label: 'Stretch Session' },\n  'integrated-martial-arts-westborough': { hours: [9,10,11,16,17,18,19], sat: [9,10,11,12], label: 'Class' },\n  'integrated-martial-arts-worcester': { hours: [9,10,11,16,17,18,19], sat: [9,10,11,12], label: 'Class' },\n};\n\nconst schedule = schedules[location];\nif (!schedule) {\n  return [{ json: { slots: [] } }];\n}\n\nconst d = new Date(dateStr + 'T12:00:00');\nconst dayOfWeek = d.getDay();\n\nif (dayOfWeek === 0) {\n  return [{ json: { slots: [] } }];\n}\n\nconst hours = dayOfWeek === 6 ? schedule.sat : schedule.hours;\nconst slots = hours.map(h => {\n  const hour12 = h > 12 ? h - 12 : h;\n  const ampm = h >= 12 ? 'PM' : 'AM';\n  const displayHour = hour12 === 0 ? 12 : hour12;\n  return {\n    time: `${displayHour}:00 ${ampm}`,\n    type: schedule.label,\n  };\n});\n\nreturn [{ json: { slots } }];"
+        "jsCode": "const body = $json.body;\nconst location = body.location || '';\nconst dateStr = body.date || '';\nconst storeId = body.storeId || 0;\n\n// knetk.io only works for Stretch Zone locations (not StretchLab or IMA)\nconst knetkLocations = {\n  'stretch-zone-westborough': { leadId: '128047422', storeId: 15077 },\n  'stretch-zone-west-boylston': { leadId: '128181157', storeId: 14803 },\n  'stretch-zone-dfw': { leadId: '128183277', storeId: 0 },\n  'stretch-zone-baton-rouge': { leadId: '128122536', storeId: 0 },\n};\n\nconst knetk = knetkLocations[location];\n\nif (knetk) {\n  const lid = body.leadId || knetk.leadId;\n  const sid = storeId || knetk.storeId;\n  const url = `https://stretchzone.knetk.io/${lid}/${sid}/39/locationformbooking`;\n  return [{ json: { url, date: dateStr, location, storeId: sid, scrapeMode: 'knetk' } }];\n}\n\n// StretchLab Carlsbad and IMA locations: skip scraping, return static\nreturn [{ json: { url: '', date: dateStr, location, storeId: 0, scrapeMode: 'static' } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        300,
+        220,
         400
       ],
-      "id": "a1b2c3d4-0005-4000-a000-000000000005",
-      "name": "Generate Slots"
+      "id": "b1b2c3d4-0003-4000-a000-000000000003",
+      "name": "Prepare Scrape"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "scrape-mode-check",
+              "leftValue": "={{ $json.scrapeMode }}",
+              "rightValue": "knetk",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        400
+      ],
+      "id": "b1b2c3d4-0010-4000-a000-000000000010",
+      "name": "Is knetk Location?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en;q=0.9"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        660,
+        340
+      ],
+      "id": "b1b2c3d4-0004-4000-a000-000000000004",
+      "name": "Scrape knetk.io",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const httpData = $input.first().json;\nconst prepData = $('Prepare Scrape').first().json;\nconst dateStr = prepData.date;\nconst location = prepData.location;\nconst scrapeMode = prepData.scrapeMode || 'knetk';\n\n// If knetk scrape, try parsing real schedule HTML\nif (scrapeMode === 'knetk') {\n  const html = typeof httpData === 'string' ? httpData : (httpData.data || '');\n\n  const regex = /onclick=\"\\$\\('#scheduledOn'\\)\\.val\\('(\\d{2}\\/\\d{2}\\/\\d{4} \\d{2}:\\d{2}:\\d{2})_(\\d+)_([\\d\\/ :]+)_([^']+)'\\); bookclass\\(\\);\"[\\s\\S]*?<p>(.*?)<\\/p>[\\s\\S]*?<span>(.*?)<\\/span>/g;\n\n  let match;\n  const allSlots = [];\n\n  while ((match = regex.exec(html)) !== null) {\n    const [_, endTime, classId, startTime, fullName, displayTime, shortName] = match;\n    const parts = startTime.split(' ')[0].split('/').map(Number);\n    allSlots.push({\n      month: parts[0], day: parts[1], year: parts[2],\n      time: displayTime.trim(),\n      instructor: fullName.trim(),\n    });\n  }\n\n  const d = new Date(dateStr + 'T12:00:00');\n  const slots = allSlots\n    .filter(s => s.month === d.getMonth()+1 && s.day === d.getDate() && s.year === d.getFullYear())\n    .map(s => ({ time: s.time, type: 'Stretch Session', instructor: s.instructor }));\n\n  if (slots.length > 0) {\n    return [{ json: { slots } }];\n  }\n}\n\n// Static fallback: location-specific business hours\nconst hours = {\n  'stretch-zone-westborough': { weekday: [8,19], sat: [10,15], sun: null, label: 'Stretch Session' },\n  'stretch-zone-west-boylston': { weekday: [8,19], sat: [10,15], sun: null, label: 'Stretch Session' },\n  'stretchlab-carlsbad': { weekday: [9,20], sat: [9,15], sun: [10,14], label: 'Stretch Session' },\n  'stretch-zone-dfw': { weekday: [7,20], sat: [8,16], sun: [11,17], label: 'Stretch Session' },\n  'stretch-zone-baton-rouge': { weekday: [8,19], sat: [10,16], sun: null, label: 'Stretch Session' },\n};\n\nconst d2 = new Date(dateStr + 'T12:00:00');\nconst h = hours[location];\nif (!h) return [{ json: { slots: [] } }];\n\nconst dow = d2.getDay();\nconst range = dow === 0 ? h.sun : dow === 6 ? h.sat : h.weekday;\nif (!range) return [{ json: { slots: [] } }];\n\nconst fallback = [];\nfor (let hr = range[0]; hr < range[1]; hr++) {\n  const h12 = hr > 12 ? hr - 12 : (hr === 0 ? 12 : hr);\n  const ampm = hr >= 12 ? 'PM' : 'AM';\n  fallback.push({ time: `${h12}:00 ${ampm}`, type: h.label });\n}\n\nreturn [{ json: { slots: fallback } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        400
+      ],
+      "id": "b1b2c3d4-0005-4000-a000-000000000005",
+      "name": "Parse & Format Slots"
     },
     {
       "parameters": {
@@ -106,7 +196,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        560,
+        1100,
         400
       ],
       "id": "a1b2c3d4-0006-4000-a000-000000000006",
@@ -145,14 +235,54 @@
       "main": [
         [
           {
-            "node": "Generate Slots",
+            "node": "Prepare Scrape",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Generate Slots": {
+    "Prepare Scrape": {
+      "main": [
+        [
+          {
+            "node": "Is knetk Location?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is knetk Location?": {
+      "main": [
+        [
+          {
+            "node": "Scrape knetk.io",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse & Format Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape knetk.io": {
+      "main": [
+        [
+          {
+            "node": "Parse & Format Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Format Slots": {
       "main": [
         [
           {
