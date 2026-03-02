@@ -115,7 +115,7 @@
 
     /* ========== GREETING ========== */
     .greeting {
-      background: var(--bg);
+      background: var(--primary);
       border-radius: var(--radius);
       padding: 20px;
       box-shadow: var(--shadow);
@@ -123,17 +123,17 @@
     .greeting h2 {
       font-size: 22px;
       font-weight: 800;
-      color: var(--text);
+      color: white;
     }
     .greeting p {
       font-size: 14px;
-      color: var(--text-muted);
+      color: rgba(255,255,255,0.9);
       margin-top: 2px;
     }
 
     /* ========== CARD ========== */
     .card {
-      background: var(--bg);
+      background: var(--primary);
       border-radius: var(--radius);
       padding: 20px;
       box-shadow: var(--shadow);
@@ -141,7 +141,7 @@
     .card-title {
       font-size: 12px;
       font-weight: 700;
-      color: var(--text-muted);
+      color: rgba(255,255,255,0.85);
       text-transform: uppercase;
       letter-spacing: 0.8px;
       margin-bottom: 14px;
@@ -157,7 +157,7 @@
     .date-nav-label {
       font-size: 15px;
       font-weight: 700;
-      color: var(--text);
+      color: white;
     }
     .date-nav-btns {
       display: flex;
@@ -166,19 +166,19 @@
     .date-nav-btn {
       width: 34px;
       height: 34px;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,255,255,0.4);
       border-radius: var(--radius-sm);
-      background: var(--bg);
+      background: rgba(255,255,255,0.2);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: var(--transition);
-      color: var(--text);
+      color: white;
       font-size: 18px;
       font-weight: 600;
     }
-    .date-nav-btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+    .date-nav-btn:hover { background: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.6); }
     .date-nav-btn:disabled { opacity: 0.25; cursor: default; }
 
     .date-scroll {
@@ -200,19 +200,20 @@
       padding: 10px 8px;
       border-radius: var(--radius-sm);
       border: 2px solid transparent;
-      background: var(--bg-subtle);
+      background: white;
       cursor: pointer;
       transition: all 0.2s ease;
       user-select: none;
       scroll-snap-align: start;
+      color: var(--text);
     }
-    .date-item:hover { border-color: var(--primary-light); background: var(--primary-light); }
+    .date-item:hover { border-color: var(--accent); background: #f0f8ff; }
     .date-item:active { transform: scale(0.96); }
     .date-item.selected {
-      background: var(--primary);
-      border-color: var(--primary);
+      background: var(--accent);
+      border-color: var(--accent);
       color: white;
-      box-shadow: 0 2px 8px rgba(255,153,0,0.3);
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
     }
     .date-item.selected .date-day { color: rgba(255,255,255,0.85); }
     .date-item.selected .date-month { color: rgba(255,255,255,0.7); }
@@ -244,20 +245,20 @@
     }
     .slot {
       padding: 14px 10px;
-      border: 2px solid var(--border);
+      border: 2px solid transparent;
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
-      background: var(--bg);
+      background: white;
     }
-    .slot:hover { border-color: var(--primary); background: var(--primary-light); }
+    .slot:hover { border-color: var(--accent); background: #f0f8ff; }
     .slot:active { transform: scale(0.97); }
     .slot.selected {
-      border-color: var(--primary);
-      background: var(--primary);
+      border-color: var(--accent);
+      background: var(--accent);
       color: white;
-      box-shadow: 0 2px 8px rgba(255,153,0,0.25);
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
     }
     .slot.selected .slot-instructor,
     .slot.selected .slot-type { color: rgba(255,255,255,0.85); }
@@ -288,19 +289,19 @@
       align-items: center;
       gap: 12px;
       padding: 14px;
-      border: 2px solid var(--border);
+      border: 2px solid transparent;
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.2s ease;
-      background: var(--bg);
+      background: white;
     }
-    .class-item:hover { border-color: var(--primary); background: var(--primary-light); }
+    .class-item:hover { border-color: var(--accent); background: #f0f8ff; }
     .class-item:active { transform: scale(0.98); }
     .class-item.selected {
-      border-color: var(--primary);
-      background: var(--primary);
+      border-color: var(--accent);
+      background: var(--accent);
       color: white;
-      box-shadow: 0 2px 8px rgba(255,153,0,0.25);
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
     }
     .class-item.selected .class-time,
     .class-item.selected .class-badge { color: rgba(255,255,255,0.85); }
@@ -360,14 +361,14 @@
     .slot-skeleton {
       height: 68px;
       border-radius: var(--radius-sm);
-      background: linear-gradient(90deg, var(--bg-subtle) 25%, #eef1f5 50%, var(--bg-subtle) 75%);
+      background: linear-gradient(90deg, rgba(255,255,255,0.15) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.15) 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
     }
     .class-skeleton {
       height: 64px;
       border-radius: var(--radius-sm);
-      background: linear-gradient(90deg, var(--bg-subtle) 25%, #eef1f5 50%, var(--bg-subtle) 75%);
+      background: linear-gradient(90deg, rgba(255,255,255,0.15) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.15) 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
     }
@@ -382,14 +383,14 @@
       gap: 10px;
       padding: 12px 0 8px;
       font-size: 13px;
-      color: var(--text-muted);
+      color: white;
       font-weight: 500;
     }
     .loading-spinner {
       width: 18px;
       height: 18px;
-      border: 2.5px solid var(--border);
-      border-top-color: var(--primary);
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
@@ -400,7 +401,7 @@
     .no-slots {
       text-align: center;
       padding: 32px 16px;
-      color: var(--text-muted);
+      color: rgba(255,255,255,0.9);
     }
     .no-slots-icon { font-size: 32px; margin-bottom: 8px; }
     .no-slots p { font-size: 14px; }
@@ -408,8 +409,8 @@
     /* ========== SELECTION SUMMARY ========== */
     .selection-summary {
       display: none;
-      background: var(--primary-light);
-      border: 2px solid var(--primary);
+      background: white;
+      border: 2px solid transparent;
       border-radius: var(--radius);
       padding: 16px 20px;
     }
@@ -417,7 +418,7 @@
     .selection-summary h3 {
       font-size: 13px;
       font-weight: 700;
-      color: var(--primary);
+      color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 10px;
