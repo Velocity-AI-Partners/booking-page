@@ -496,50 +496,70 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ========== CONFIRMATION ========== */
-    .confirmation {
+    /* ========== CONFIRMATION POPUP ========== */
+    .popup-overlay {
       display: none;
-      text-align: center;
-      padding: 40px 20px;
-      background: var(--bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
     }
-    .confirmation.visible { display: block; }
-    .confirmation-icon {
-      width: 80px;
-      height: 80px;
+    .popup-overlay.visible { display: flex; }
+    .popup {
+      background: white;
+      border-radius: 20px;
+      padding: 36px 28px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: popupIn 0.3s ease;
+    }
+    @keyframes popupIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .popup-icon {
+      width: 72px;
+      height: 72px;
       background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 40px;
-      box-shadow: 0 4px 12px rgba(16,185,129,0.2);
+      margin: 0 auto 16px;
+      font-size: 36px;
     }
-    .confirmation h2 {
-      font-size: 24px;
+    .popup h2 {
+      font-size: 22px;
       font-weight: 800;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    .confirmation > p {
+    .popup .popup-detail {
       font-size: 15px;
       color: var(--text-muted);
       margin-bottom: 24px;
+      line-height: 1.6;
     }
-    .confirmation-details {
-      text-align: left;
-      background: var(--bg-subtle);
-      border-radius: var(--radius-sm);
-      padding: 16px;
-      margin-bottom: 20px;
+    .popup .popup-detail strong { color: var(--text); }
+    .popup-close {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--primary), #FB923C);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
-    .confirmation-details .summary-row { padding: 4px 0; }
-    .conf-email-note {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
+    .popup-close:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(249,115,22,0.3); }
 
     /* ========== ERROR SCREEN ========== */
     .error-screen {
@@ -781,39 +801,14 @@
     </div>
   </div>
 
-  <!-- Confirmation -->
-  <div id="confirmationScreen" class="confirmation">
-    <div class="confirmation-icon">&#10003;</div>
-    <h2>You're All Set!</h2>
-    <p id="confirmationMsg">Your booking request has been submitted.</p>
-    <div class="confirmation-details">
-      <div class="summary-row">
-        <span class="icon">&#127963;</span>
-        <span class="label">Location</span>
-        <span class="value" id="confLocation"></span>
-      </div>
-      <div class="summary-row">
-        <span class="icon">&#128197;</span>
-        <span class="label">Date</span>
-        <span class="value" id="confDate"></span>
-      </div>
-      <div class="summary-row">
-        <span class="icon">&#128336;</span>
-        <span class="label">Time</span>
-        <span class="value" id="confTime"></span>
-      </div>
-      <div class="summary-row hidden" id="confClassRow">
-        <span class="icon">&#127941;</span>
-        <span class="label">Class</span>
-        <span class="value" id="confClass"></span>
-      </div>
-      <div class="summary-row hidden" id="confInstructorRow">
-        <span class="icon">&#128100;</span>
-        <span class="label">With</span>
-        <span class="value" id="confInstructor"></span>
-      </div>
+  <!-- Confirmation Popup -->
+  <div id="popupOverlay" class="popup-overlay">
+    <div class="popup">
+      <div class="popup-icon">&#10003;</div>
+      <h2 id="popupTitle">You're All Set!</h2>
+      <p class="popup-detail" id="popupDetail"></p>
+      <button class="popup-close" onclick="document.getElementById('popupOverlay').classList.remove('visible')">Done</button>
     </div>
-    <p class="conf-email-note">A confirmation will be sent to <strong id="confEmail"></strong></p>
   </div>
 
   <div class="footer">
@@ -1614,30 +1609,25 @@ async function submitBooking() {
 // CONFIRMATION
 // ============================================================
 function showConfirmation(payload) {
-  document.getElementById('bookingFlow').classList.add('hidden');
-  var screen = document.getElementById('confirmationScreen');
-  screen.classList.add('visible');
+  var firstName = payload.name ? payload.name.split(' ')[0] : '';
+  var title = firstName ? 'Thank you, ' + firstName + '!' : 'You\'re All Set!';
 
-  document.getElementById('confLocation').textContent = payload.locationName;
-  document.getElementById('confDate').textContent = payload.date;
-  document.getElementById('confTime').textContent = payload.time;
-  document.getElementById('confEmail').textContent = payload.email;
+  var detail = 'Your ' + currentLocation.sessionLabel.toLowerCase() +
+    ' is booked for <strong>' + payload.date + '</strong> at <strong>' + payload.time + '</strong>.';
 
   if (payload.className) {
-    document.getElementById('confClass').textContent = payload.className;
-    document.getElementById('confClassRow').classList.remove('hidden');
+    detail += '<br>Class: <strong>' + escapeHtml(payload.className) + '</strong>';
   }
 
-  if (payload.instructor) {
-    document.getElementById('confInstructor').textContent = payload.instructor;
-    document.getElementById('confInstructorRow').classList.remove('hidden');
-  }
+  detail += '<br><br>We\'ll see you there!';
 
-  document.getElementById('confirmationMsg').textContent =
-    'Your ' + currentLocation.sessionLabel.toLowerCase() + ' request has been submitted. ' +
-    'You will receive a confirmation at ' + payload.email + ' shortly.';
+  document.getElementById('popupTitle').textContent = title;
+  document.getElementById('popupDetail').innerHTML = detail;
+  document.getElementById('popupOverlay').classList.add('visible');
 
-  screen.scrollIntoView({ behavior: 'smooth' });
+  // Reset submit button
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitText').textContent = 'Confirm Booking';
 }
 
 // ============================================================
