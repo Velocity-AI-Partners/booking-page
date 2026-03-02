@@ -806,21 +806,6 @@
 
       <!-- Notes + Submit (no form fields if URL has user info) -->
       <div class="card" id="formCard">
-        <div id="missingFieldsSection" class="hidden">
-          <div class="card-title">Your Information</div>
-          <div class="form-group" id="nameGroup">
-            <label for="inputName">Full Name</label>
-            <input type="text" id="inputName" placeholder="Your full name" autocomplete="name">
-          </div>
-          <div class="form-group" id="emailGroup">
-            <label for="inputEmail">Email</label>
-            <input type="email" id="inputEmail" placeholder="you@example.com" autocomplete="email">
-          </div>
-          <div class="form-group" id="phoneGroup">
-            <label for="inputPhone">Phone</label>
-            <input type="tel" id="inputPhone" placeholder="(555) 123-4567" autocomplete="tel">
-          </div>
-        </div>
         <div class="form-group">
           <label for="inputNotes">Notes (optional)</label>
           <textarea id="inputNotes" placeholder="Any special requests or notes..."></textarea>
@@ -1162,7 +1147,6 @@ var dateOffset = 0;
 var selectedDate = null;
 var selectedSlot = null;
 var availableSlots = [];
-var hasMissingFields = false;
 
 // ============================================================
 // INIT
@@ -1201,7 +1185,6 @@ function init() {
   populateHeader();
   setupUserBar();
   populateGreeting();
-  setupFormFields();
   setupLoadingSkeleton();
   buildDateCarousel();
 }
@@ -1293,30 +1276,6 @@ function populateGreeting() {
     document.getElementById('greetingSubtext').textContent =
       'Select a date and time that works best for you.';
   }
-}
-
-// ============================================================
-// FORM FIELDS (only show missing ones)
-// ============================================================
-function setupFormFields() {
-  var needsName = !userInfo.name;
-  var needsEmail = !userInfo.email;
-  var needsPhone = !userInfo.phone;
-
-  hasMissingFields = needsName || needsEmail || needsPhone;
-
-  if (!hasMissingFields) return;
-
-  document.getElementById('missingFieldsSection').classList.remove('hidden');
-
-  if (!needsName) document.getElementById('nameGroup').classList.add('hidden');
-  if (!needsEmail) document.getElementById('emailGroup').classList.add('hidden');
-  if (!needsPhone) document.getElementById('phoneGroup').classList.add('hidden');
-
-  // Pre-fill any available info
-  if (userInfo.name) document.getElementById('inputName').value = userInfo.name;
-  if (userInfo.email) document.getElementById('inputEmail').value = userInfo.email;
-  if (userInfo.phone) document.getElementById('inputPhone').value = formatPhone(userInfo.phone);
 }
 
 // ============================================================
@@ -1639,12 +1598,8 @@ function updateSelectionSummary() {
 // FORM VALIDATION & SUBMIT
 // ============================================================
 function updateSubmitButton() {
-  var name = userInfo.name || document.getElementById('inputName').value.trim();
-  var email = userInfo.email || document.getElementById('inputEmail').value.trim();
-  var phone = userInfo.phone || document.getElementById('inputPhone').value.trim();
   var btn = document.getElementById('submitBtn');
-
-  btn.disabled = !(selectedDate && selectedSlot && name && email && phone);
+  btn.disabled = !(selectedDate && selectedSlot);
 }
 
 // Listen for form changes
@@ -1656,16 +1611,10 @@ async function submitBooking() {
   var btn = document.getElementById('submitBtn');
   if (btn.disabled) return;
 
-  var name = userInfo.name || document.getElementById('inputName').value.trim();
-  var email = userInfo.email || document.getElementById('inputEmail').value.trim();
-  var phone = userInfo.phone || document.getElementById('inputPhone').value.trim();
+  var name = userInfo.name || '';
+  var email = userInfo.email || '';
+  var phone = userInfo.phone || '';
   var notes = document.getElementById('inputNotes').value.trim();
-
-  // Validate email
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    alert('Please enter a valid email address.');
-    return;
-  }
 
   btn.disabled = true;
   document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Booking...';
