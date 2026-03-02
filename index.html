@@ -115,7 +115,7 @@
 
     /* ========== GREETING ========== */
     .greeting {
-      background: var(--primary);
+      background: white;
       border-radius: var(--radius);
       padding: 20px;
       box-shadow: var(--shadow);
@@ -123,17 +123,17 @@
     .greeting h2 {
       font-size: 22px;
       font-weight: 800;
-      color: white;
+      color: var(--text);
     }
     .greeting p {
       font-size: 14px;
-      color: rgba(255,255,255,0.9);
+      color: var(--text-muted);
       margin-top: 2px;
     }
 
     /* ========== CARD ========== */
     .card {
-      background: var(--primary);
+      background: white;
       border-radius: var(--radius);
       padding: 20px;
       box-shadow: var(--shadow);
@@ -141,7 +141,7 @@
     .card-title {
       font-size: 12px;
       font-weight: 700;
-      color: rgba(255,255,255,0.85);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.8px;
       margin-bottom: 14px;
@@ -157,7 +157,7 @@
     .date-nav-label {
       font-size: 15px;
       font-weight: 700;
-      color: white;
+      color: var(--text);
     }
     .date-nav-btns {
       display: flex;
@@ -166,19 +166,19 @@
     .date-nav-btn {
       width: 34px;
       height: 34px;
-      border: 1px solid rgba(255,255,255,0.4);
+      border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      background: rgba(255,255,255,0.2);
+      background: var(--bg-subtle);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: var(--transition);
-      color: white;
+      color: var(--text);
       font-size: 18px;
       font-weight: 600;
     }
-    .date-nav-btn:hover { background: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.6); }
+    .date-nav-btn:hover { background: var(--border); border-color: var(--text-light); }
     .date-nav-btn:disabled { opacity: 0.25; cursor: default; }
 
     .date-scroll {
@@ -199,8 +199,8 @@
       min-width: 64px;
       padding: 10px 8px;
       border-radius: var(--radius-sm);
-      border: 2px solid transparent;
-      background: white;
+      border: 2px solid var(--border-light);
+      background: var(--bg-subtle);
       cursor: pointer;
       transition: all 0.2s ease;
       user-select: none;
@@ -237,6 +237,53 @@
       margin-top: 1px;
     }
 
+    /* ========== SLOT GROUPS (collapsible by type) ========== */
+    .slot-group {
+      margin-bottom: 10px;
+    }
+    .slot-group:last-child { margin-bottom: 0; }
+    .slot-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s ease;
+    }
+    .slot-group-header:hover { background: var(--border); }
+    .slot-group-header-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .slot-group-header-count {
+      font-size: 12px;
+      color: var(--text-light);
+      font-weight: 500;
+      margin-left: 8px;
+    }
+    .slot-group-chevron {
+      font-size: 16px;
+      color: var(--text-light);
+      transition: transform 0.2s ease;
+    }
+    .slot-group.collapsed .slot-group-chevron { transform: rotate(-90deg); }
+    .slot-group-content {
+      padding-top: 8px;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+      max-height: 2000px;
+      opacity: 1;
+    }
+    .slot-group.collapsed .slot-group-content {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+    }
+
     /* ========== TIME SLOTS (Stretch Zone / StretchLab) ========== */
     .slots-grid {
       display: grid;
@@ -245,12 +292,12 @@
     }
     .slot {
       padding: 14px 10px;
-      border: 2px solid transparent;
+      border: 2px solid var(--border-light);
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
-      background: white;
+      background: var(--bg-subtle);
     }
     .slot:hover { border-color: var(--accent); background: #f0f8ff; }
     .slot:active { transform: scale(0.97); }
@@ -289,11 +336,11 @@
       align-items: center;
       gap: 12px;
       padding: 14px;
-      border: 2px solid transparent;
+      border: 2px solid var(--border-light);
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.2s ease;
-      background: white;
+      background: var(--bg-subtle);
     }
     .class-item:hover { border-color: var(--accent); background: #f0f8ff; }
     .class-item:active { transform: scale(0.98); }
@@ -361,14 +408,14 @@
     .slot-skeleton {
       height: 68px;
       border-radius: var(--radius-sm);
-      background: linear-gradient(90deg, rgba(255,255,255,0.15) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.15) 75%);
+      background: linear-gradient(90deg, #EAEDED 25%, #D5D9D9 50%, #EAEDED 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
     }
     .class-skeleton {
       height: 64px;
       border-radius: var(--radius-sm);
-      background: linear-gradient(90deg, rgba(255,255,255,0.15) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.15) 75%);
+      background: linear-gradient(90deg, #EAEDED 25%, #D5D9D9 50%, #EAEDED 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
     }
@@ -383,14 +430,14 @@
       gap: 10px;
       padding: 12px 0 8px;
       font-size: 13px;
-      color: white;
+      color: var(--text-muted);
       font-weight: 500;
     }
     .loading-spinner {
       width: 18px;
       height: 18px;
-      border: 2.5px solid rgba(255,255,255,0.3);
-      border-top-color: white;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--primary);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
@@ -401,7 +448,7 @@
     .no-slots {
       text-align: center;
       padding: 32px 16px;
-      color: rgba(255,255,255,0.9);
+      color: var(--text-muted);
     }
     .no-slots-icon { font-size: 32px; margin-bottom: 8px; }
     .no-slots p { font-size: 14px; }
@@ -615,7 +662,7 @@
     .location-group-label {
       font-size: 11px;
       font-weight: 700;
-      color: rgba(255,255,255,0.9);
+      color: rgba(255,255,255,0.85);
       text-transform: uppercase;
       letter-spacing: 1px;
       padding: 8px 4px 4px;
@@ -1433,23 +1480,81 @@ function renderSlots(slots) {
   var grid = document.getElementById('slotsGrid');
   grid.innerHTML = '';
 
-  slots.forEach(function(slot, idx) {
-    var el = document.createElement('div');
-    el.className = 'slot';
-    el.dataset.index = idx;
-
-    var html = '<div class="slot-time">' + escapeHtml(slot.time || slot.displayTime || '') + '</div>';
-    if (slot.instructor) {
-      html += '<div class="slot-instructor">' + escapeHtml(slot.instructor) + '</div>';
-    }
-    if (slot.type) {
-      html += '<div class="slot-type">' + escapeHtml(slot.type) + '</div>';
-    }
-    el.innerHTML = html;
-
-    el.addEventListener('click', function() { selectSlot(idx); });
-    grid.appendChild(el);
+  // Check if we have multiple types (e.g. "25 Min Stretch" and "50 Min Stretch")
+  var types = [];
+  var typeSet = {};
+  slots.forEach(function(s) {
+    var t = s.type || 'Available';
+    if (!typeSet[t]) { typeSet[t] = true; types.push(t); }
   });
+
+  if (types.length > 1) {
+    // Grouped collapsible view
+    types.forEach(function(typeName, gi) {
+      var group = document.createElement('div');
+      group.className = 'slot-group' + (gi > 0 ? ' collapsed' : '');
+
+      var typeSlots = [];
+      slots.forEach(function(s, idx) {
+        if ((s.type || 'Available') === typeName) typeSlots.push({ slot: s, idx: idx });
+      });
+
+      var header = document.createElement('div');
+      header.className = 'slot-group-header';
+      header.innerHTML =
+        '<div><span class="slot-group-header-title">' + escapeHtml(typeName) + '</span>' +
+        '<span class="slot-group-header-count">' + typeSlots.length + ' times</span></div>' +
+        '<span class="slot-group-chevron">&#9662;</span>';
+      header.addEventListener('click', function() {
+        group.classList.toggle('collapsed');
+      });
+
+      var content = document.createElement('div');
+      content.className = 'slot-group-content';
+
+      var innerGrid = document.createElement('div');
+      innerGrid.className = 'slots-grid';
+
+      typeSlots.forEach(function(item) {
+        var el = document.createElement('div');
+        el.className = 'slot';
+        el.dataset.index = item.idx;
+
+        var html = '<div class="slot-time">' + escapeHtml(item.slot.time || item.slot.displayTime || '') + '</div>';
+        if (item.slot.instructor) {
+          html += '<div class="slot-instructor">' + escapeHtml(item.slot.instructor) + '</div>';
+        }
+        el.innerHTML = html;
+
+        el.addEventListener('click', function() { selectSlot(item.idx); });
+        innerGrid.appendChild(el);
+      });
+
+      content.appendChild(innerGrid);
+      group.appendChild(header);
+      group.appendChild(content);
+      grid.appendChild(group);
+    });
+  } else {
+    // Flat grid (single type or Stretch Zone)
+    slots.forEach(function(slot, idx) {
+      var el = document.createElement('div');
+      el.className = 'slot';
+      el.dataset.index = idx;
+
+      var html = '<div class="slot-time">' + escapeHtml(slot.time || slot.displayTime || '') + '</div>';
+      if (slot.instructor) {
+        html += '<div class="slot-instructor">' + escapeHtml(slot.instructor) + '</div>';
+      }
+      if (slot.type) {
+        html += '<div class="slot-type">' + escapeHtml(slot.type) + '</div>';
+      }
+      el.innerHTML = html;
+
+      el.addEventListener('click', function() { selectSlot(idx); });
+      grid.appendChild(el);
+    });
+  }
 }
 
 // ============================================================
