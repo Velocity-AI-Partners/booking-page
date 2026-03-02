@@ -10,7 +10,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "id": "c0eff6c2-e8e4-40b6-9c6b-cfefd363106f",
       "name": "Booking Submit"
     },
@@ -22,7 +25,10 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [300, 160],
+      "position": [
+        300,
+        160
+      ],
       "id": "a1b2c3d4-0001-4000-a000-000000000001",
       "name": "Respond Success"
     },
@@ -32,7 +38,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [300, -100],
+      "position": [
+        300,
+        -100
+      ],
       "id": "a1b2c3d4-0002-4000-a000-000000000002",
       "name": "Format Booking Email"
     },
@@ -46,7 +55,10 @@
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [560, -100],
+      "position": [
+        560,
+        -100
+      ],
       "id": "a1b2c3d4-0003-4000-a000-000000000003",
       "name": "Send Booking Email",
       "credentials": {
@@ -65,7 +77,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [0, 400],
+      "position": [
+        0,
+        400
+      ],
       "id": "a1b2c3d4-0004-4000-a000-000000000004",
       "name": "Get Availability",
       "webhookId": "a1b2c3d4-0004-4000-a000-000000000004"
@@ -76,7 +91,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [300, 400],
+      "position": [
+        300,
+        400
+      ],
       "id": "a1b2c3d4-0005-4000-a000-000000000005",
       "name": "Generate Slots"
     },
@@ -87,7 +105,10 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [560, 400],
+      "position": [
+        560,
+        400
+      ],
       "id": "a1b2c3d4-0006-4000-a000-000000000006",
       "name": "Return Slots"
     }
@@ -96,29 +117,49 @@
     "Booking Submit": {
       "main": [
         [
-          { "node": "Respond Success", "type": "main", "index": 0 },
-          { "node": "Format Booking Email", "type": "main", "index": 0 }
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format Booking Email",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Format Booking Email": {
       "main": [
         [
-          { "node": "Send Booking Email", "type": "main", "index": 0 }
+          {
+            "node": "Send Booking Email",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Get Availability": {
       "main": [
         [
-          { "node": "Generate Slots", "type": "main", "index": 0 }
+          {
+            "node": "Generate Slots",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Generate Slots": {
       "main": [
         [
-          { "node": "Return Slots", "type": "main", "index": 0 }
+          {
+            "node": "Return Slots",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }
