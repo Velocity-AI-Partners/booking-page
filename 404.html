@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting...</title>
+  <script>
+    // SPA routing for GitHub Pages
+    // Converts path-based URLs to query params for index.html
+    var loc = window.location;
+    var base = '/booking-page';
+    var route = loc.pathname.replace(base, '').replace(/^\//, '').replace(/\/$/, '');
+    var search = loc.search ? loc.search.replace('?', '&') : '';
+    window.location.replace(base + '/?p=' + encodeURIComponent(route) + search);
+  </script>
+</head>
+<body></body>
+</html>
