@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Your Session</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #003055;
+      --primary-light: #e8f0f8;
+      --primary-hover: #004477;
+      --accent: #B8860B;
+      --text: #1a1a2e;
+      --text-muted: #6b7280;
+      --bg: #ffffff;
+      --bg-subtle: #f8fafc;
+      --border: #e5e7eb;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+      --transition: 0.2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-subtle);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .page-wrapper {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .header-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      object-fit: contain;
+      background: var(--bg-subtle);
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .header-info h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.3;
+    }
+    .header-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Greeting card */
+    .greeting {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .greeting h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .greeting p {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    /* Section card */
+    .card {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    /* Date carousel */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .date-nav-label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .date-nav-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .date-nav-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      color: var(--text);
+      font-size: 16px;
+    }
+    .date-nav-btn:hover { background: var(--bg-subtle); }
+    .date-nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+    .date-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .date-scroll::-webkit-scrollbar { display: none; }
+
+    .date-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 62px;
+      padding: 10px 8px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      background: var(--bg-subtle);
+      cursor: pointer;
+      transition: var(--transition);
+      user-select: none;
+    }
+    .date-item:hover { border-color: var(--primary-light); }
+    .date-item.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .date-item.selected .date-day { color: rgba(255,255,255,0.8); }
+    .date-item .date-day {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+    .date-item .date-num {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .date-item .date-month {
+      font-size: 10px;
+      font-weight: 500;
+      opacity: 0.7;
+      margin-top: 1px;
+    }
+
+    /* Time slots */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .slot {
+      padding: 12px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+    .slot:hover { border-color: var(--primary); background: var(--primary-light); }
+    .slot.selected {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+    .slot.selected .slot-instructor { color: rgba(255,255,255,0.8); }
+    .slot-time {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .slot-instructor {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .slot-type {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 500;
+      margin-top: 3px;
+    }
+
+    /* Loading skeleton */
+    .slots-loading {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .slot-skeleton {
+      height: 68px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--bg-subtle) 25%, #eef1f5 50%, var(--bg-subtle) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .no-slots {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-muted);
+    }
+    .no-slots-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .no-slots p {
+      font-size: 14px;
+    }
+
+    /* Selected summary */
+    .selection-summary {
+      display: none;
+      background: var(--primary-light);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    .selection-summary.visible { display: block; }
+    .selection-summary h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .summary-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .summary-row .icon { font-size: 16px; flex-shrink: 0; width: 20px; }
+    .summary-row .label { color: var(--text-muted); min-width: 70px; }
+    .summary-row .value { font-weight: 600; }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 15px;
+      transition: var(--transition);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+    .form-group .readonly-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Submit button */
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .submit-btn:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg);
+    }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .submit-btn .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Confirmation screen */
+    .confirmation {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .confirmation.visible { display: block; }
+    .confirmation-icon {
+      width: 72px;
+      height: 72px;
+      background: #dcfce7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 36px;
+    }
+    .confirmation h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .confirmation p {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .confirmation-details {
+      text-align: left;
+      background: var(--bg-subtle);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .confirmation-details .summary-row {
+      padding: 4px 0;
+    }
+
+    /* Error screen */
+    .error-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .error-screen.visible { display: block; }
+    .error-screen-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .error-screen h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .error-screen p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Location picker */
+    .location-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .location-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      color: inherit;
+    }
+    .location-option:hover {
+      border-color: #003055;
+      background: #f0f5fa;
+    }
+    .location-option img {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: var(--bg-subtle);
+      padding: 3px;
+      flex-shrink: 0;
+    }
+    .location-option-info h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 1px;
+    }
+    .location-option-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      margin-top: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    /* Utility */
+    .hidden { display: none !important; }
+
+    /* Responsive */
+    @media (max-width: 400px) {
+      .page-wrapper { padding: 10px; }
+      .greeting h2 { font-size: 20px; }
+      .slots-grid { grid-template-columns: 1fr 1fr; }
+      .date-item { min-width: 54px; padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <!-- Error: Unknown Location (bad slug) -->
+  <div id="errorScreen" class="error-screen">
+    <div class="error-screen-icon">&#128269;</div>
+    <h2>Location Not Found</h2>
+    <p>This booking link seems to be invalid or expired. Please use the link from your text message or email.</p>
+  </div>
+
+  <!-- Location Picker: shown when no loc param -->
+  <div id="locationPicker" class="hidden">
+    <div class="header" style="justify-content:center;">
+      <div class="header-info" style="text-align:center;">
+        <h1 style="font-size:22px;">Book a Session</h1>
+        <p>Select your location to get started</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Choose a Location</div>
+      <div id="locationList" class="location-list"></div>
+    </div>
+  </div>
+
+  <!-- Main booking flow -->
+  <div id="bookingFlow">
+
+    <!-- Header -->
+    <div class="header">
+      <img id="locationLogo" class="header-logo" src="" alt="Logo">
+      <div class="header-info">
+        <h1 id="locationName"></h1>
+        <p id="locationTagline"></p>
+      </div>
+    </div>
+
+    <!-- Greeting -->
+    <div class="greeting">
+      <h2 id="greetingText">Book Your Session</h2>
+      <p id="greetingSubtext">Pick a date and time that works for you.</p>
+    </div>
+
+    <!-- Date Picker -->
+    <div class="card">
+      <div class="card-title">Select a Date</div>
+      <div class="date-nav">
+        <span class="date-nav-label" id="dateNavLabel"></span>
+        <div class="date-nav-btns">
+          <button class="date-nav-btn" id="datePrev" onclick="shiftDates(-7)">&#8249;</button>
+          <button class="date-nav-btn" id="dateNext" onclick="shiftDates(7)">&#8250;</button>
+        </div>
+      </div>
+      <div class="date-scroll" id="dateScroll"></div>
+    </div>
+
+    <!-- Time Slots -->
+    <div class="card">
+      <div class="card-title" id="slotsTitle">Available Times</div>
+      <div id="slotsContainer">
+        <div class="slots-loading" id="slotsLoading">
+          <div class="slot-skeleton"></div>
+          <div class="slot-skeleton"></div>
+          <div class="slot-skeleton"></div>
+          <div class="slot-skeleton"></div>
+          <div class="slot-skeleton"></div>
+          <div class="slot-skeleton"></div>
+        </div>
+        <div class="slots-grid hidden" id="slotsGrid"></div>
+        <div class="no-slots hidden" id="noSlots">
+          <div class="no-slots-icon">&#128197;</div>
+          <p>No available times on this day.<br>Try selecting another date.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected Slot Summary -->
+    <div class="selection-summary" id="selectionSummary">
+      <h3>Your Selection</h3>
+      <div class="summary-row">
+        <span class="icon">&#128197;</span>
+        <span class="label">Date</span>
+        <span class="value" id="summaryDate"></span>
+      </div>
+      <div class="summary-row">
+        <span class="icon">&#128336;</span>
+        <span class="label">Time</span>
+        <span class="value" id="summaryTime"></span>
+      </div>
+      <div class="summary-row" id="summaryInstructorRow">
+        <span class="icon">&#128100;</span>
+        <span class="label">With</span>
+        <span class="value" id="summaryInstructor"></span>
+      </div>
+    </div>
+
+    <!-- User Info Form -->
+    <div class="card" id="formCard">
+      <div class="card-title">Your Information</div>
+      <div class="form-group">
+        <label for="inputName">Full Name</label>
+        <input type="text" id="inputName" placeholder="Your full name" required>
+      </div>
+      <div class="form-group">
+        <label for="inputEmail">Email</label>
+        <input type="email" id="inputEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label for="inputPhone">Phone</label>
+        <input type="tel" id="inputPhone" placeholder="(555) 123-4567" required>
+      </div>
+      <div class="form-group">
+        <label for="inputNotes">Notes (optional)</label>
+        <textarea id="inputNotes" placeholder="Any special requests or notes for your session..."></textarea>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitBooking()" disabled>
+        <span id="submitText">Confirm Booking</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Confirmation -->
+  <div id="confirmationScreen" class="confirmation">
+    <div class="confirmation-icon">&#10003;</div>
+    <h2>You're All Set!</h2>
+    <p id="confirmationMsg">Your booking request has been submitted. You'll receive a confirmation shortly.</p>
+    <div class="confirmation-details">
+      <div class="summary-row">
+        <span class="icon">&#127963;</span>
+        <span class="label">Location</span>
+        <span class="value" id="confLocation"></span>
+      </div>
+      <div class="summary-row">
+        <span class="icon">&#128197;</span>
+        <span class="label">Date</span>
+        <span class="value" id="confDate"></span>
+      </div>
+      <div class="summary-row">
+        <span class="icon">&#128336;</span>
+        <span class="label">Time</span>
+        <span class="value" id="confTime"></span>
+      </div>
+      <div class="summary-row" id="confInstructorRow">
+        <span class="icon">&#128100;</span>
+        <span class="label">With</span>
+        <span class="value" id="confInstructor"></span>
+      </div>
+    </div>
+    <p style="font-size:13px; color:var(--text-muted);">A confirmation will be sent to <strong id="confEmail"></strong></p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Powered by <a href="https://velocityaipartners.com" target="_blank">Velocity AI Partners</a>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION
+// ============================================================
+const CONFIG = {
+  // n8n Booking Page webhook (workflow 9mZNC3Vs4Xic77HO)
+  bookingWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/0c41acc9-33d5-467e-9182-6f39ceaa9a8e',
+
+  // Availability webhook (to be wired up per location in n8n)
+  availabilityWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/booking-availability',
+
+  // Days to show ahead
+  daysAhead: 14,
+};
+
+// ============================================================
+// LOCATION DATABASE
+// ============================================================
+const LOCATIONS = {
+  'stretch-zone-westborough': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Westborough MA',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-westborough-1771338230095.png',
+    timezone: 'America/New_York',
+    phone: '15087868763',
+    email: 'westborough@stretchzone.com',
+    clubreadyStoreId: 15077,
+    crm: 'clubready',
+    colors: { primary: '#003055', primaryLight: '#e8f0f8', primaryHover: '#004477', accent: '#B8860B' },
+  },
+  'stretch-zone-west-boylston': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - West Boylston MA',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/New_York',
+    phone: '15085566657',
+    email: 'westboylston@stretchzone.com',
+    clubreadyStoreId: 14803,
+    crm: 'clubready',
+    colors: { primary: '#003055', primaryLight: '#e8f0f8', primaryHover: '#004477', accent: '#B8860B' },
+  },
+  'stretchlab-carlsbad': {
+    name: 'StretchLab',
+    displayName: 'StretchLab - Carlsbad North Coast CA',
+    brand: 'StretchLab',
+    tagline: 'One-on-one assisted stretching',
+    sessionLabel: 'Stretch Session',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretchlab-carlsbad-1771338129474.webp',
+    timezone: 'America/Los_Angeles',
+    phone: '17602309818',
+    email: 'carlsbad@stretchlab.com',
+    clubreadyStoreId: 12727,
+    crm: 'clubready',
+    colors: { primary: '#EE6723', primaryLight: '#fef3ec', primaryHover: '#d4561a', accent: '#2D2D2D' },
+  },
+  'integrated-martial-arts-westborough': {
+    name: 'IMA Fitness',
+    displayName: 'Integrated Martial Arts - Westborough',
+    brand: 'IMA Fitness',
+    tagline: 'Martial arts, fitness, and self-defense',
+    sessionLabel: 'Class',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-westborough-1771600419957.png',
+    timezone: 'America/New_York',
+    phone: '18334005912',
+    email: 'info@imafitness.com',
+    crm: 'spark',
+    colors: { primary: '#B91C1C', primaryLight: '#fef2f2', primaryHover: '#991b1b', accent: '#1E3A5F' },
+  },
+  'integrated-martial-arts-worcester': {
+    name: 'IMA Fitness',
+    displayName: 'Integrated Martial Arts - Worcester',
+    brand: 'IMA Fitness',
+    tagline: 'Martial arts, fitness, and self-defense',
+    sessionLabel: 'Class',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png',
+    timezone: 'America/New_York',
+    phone: '18334005912',
+    email: 'worcester@imafitness.com',
+    crm: 'wellnessliving',
+    colors: { primary: '#B91C1C', primaryLight: '#fef2f2', primaryHover: '#991b1b', accent: '#1E3A5F' },
+  },
+  'stretch-zone-dfw': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Southlake TX',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/Chicago',
+    phone: '18176872319',
+    email: 'southlake@stretchzone.com',
+    crm: 'clubready',
+    colors: { primary: '#003055', primaryLight: '#e8f0f8', primaryHover: '#004477', accent: '#B8860B' },
+  },
+  'stretch-zone-baton-rouge': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Bocage LA',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/Chicago',
+    phone: '12254165460',
+    email: 'batonrouge@stretchzone.com',
+    crm: 'clubready',
+    colors: { primary: '#003055', primaryLight: '#e8f0f8', primaryHover: '#004477', accent: '#B8860B' },
+  },
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let currentLocation = null;
+let currentLocationSlug = '';
+let userInfo = { name: '', email: '', phone: '', leadId: '' };
+let dateOffset = 0;
+let selectedDate = null;
+let selectedSlot = null;
+let availableSlots = [];
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  const locSlug = params.get('loc') || params.get('location') || '';
+  const name = params.get('name') || '';
+  const email = params.get('email') || '';
+  const phone = params.get('phone') || '';
+  const leadId = params.get('lid') || params.get('leadId') || '';
+
+  currentLocationSlug = locSlug;
+  currentLocation = LOCATIONS[locSlug] || null;
+
+  // No loc param at all: show the location picker
+  if (!locSlug) {
+    document.getElementById('bookingFlow').classList.add('hidden');
+    showLocationPicker();
+    return;
+  }
+
+  // Bad slug: show error
+  if (!currentLocation) {
+    document.getElementById('bookingFlow').classList.add('hidden');
+    document.getElementById('errorScreen').classList.add('visible');
+    return;
+  }
+
+  userInfo = { name, email, phone, leadId };
+
+  applyBranding();
+  populateHeader();
+  populateGreeting();
+  prefillForm();
+  buildDateCarousel();
+}
+
+function showLocationPicker() {
+  const picker = document.getElementById('locationPicker');
+  picker.classList.remove('hidden');
+  const list = document.getElementById('locationList');
+  list.innerHTML = '';
+
+  // Group by brand
+  const brandOrder = ['Stretch Zone', 'StretchLab', 'IMA Fitness'];
+  const sorted = Object.entries(LOCATIONS).sort(function (a, b) {
+    const ai = brandOrder.indexOf(a[1].brand);
+    const bi = brandOrder.indexOf(b[1].brand);
+    if (ai !== bi) return ai - bi;
+    return a[1].displayName.localeCompare(b[1].displayName);
+  });
+
+  sorted.forEach(function (entry) {
+    const slug = entry[0];
+    const loc = entry[1];
+
+    var link = document.createElement('a');
+    link.className = 'location-option';
+    link.href = '?loc=' + encodeURIComponent(slug);
+
+    link.innerHTML =
+      '<img src="' + escapeHtml(loc.logo) + '" alt="' + escapeHtml(loc.brand) + '">' +
+      '<div class="location-option-info">' +
+        '<h3>' + escapeHtml(loc.displayName) + '</h3>' +
+        '<p>' + escapeHtml(loc.tagline) + '</p>' +
+      '</div>';
+
+    list.appendChild(link);
+  });
+}
+
+// ============================================================
+// BRANDING
+// ============================================================
+function applyBranding() {
+  const c = currentLocation.colors;
+  document.documentElement.style.setProperty('--primary', c.primary);
+  document.documentElement.style.setProperty('--primary-light', c.primaryLight);
+  document.documentElement.style.setProperty('--primary-hover', c.primaryHover);
+  document.documentElement.style.setProperty('--accent', c.accent);
+}
+
+function populateHeader() {
+  document.getElementById('locationLogo').src = currentLocation.logo;
+  document.getElementById('locationLogo').alt = currentLocation.name + ' Logo';
+  document.getElementById('locationName').textContent = currentLocation.displayName;
+  document.getElementById('locationTagline').textContent = currentLocation.tagline;
+  document.title = 'Book Your ' + currentLocation.sessionLabel + ' | ' + currentLocation.displayName;
+}
+
+function populateGreeting() {
+  const firstName = userInfo.name ? userInfo.name.split(' ')[0] : '';
+  if (firstName) {
+    document.getElementById('greetingText').textContent = 'Hi ' + firstName + '!';
+    document.getElementById('greetingSubtext').textContent =
+      'Pick a date and time for your ' + currentLocation.sessionLabel.toLowerCase() + '.';
+  } else {
+    document.getElementById('greetingText').textContent = 'Book Your ' + currentLocation.sessionLabel;
+    document.getElementById('greetingSubtext').textContent =
+      'Select a date and time that works best for you.';
+  }
+}
+
+function prefillForm() {
+  if (userInfo.name) document.getElementById('inputName').value = userInfo.name;
+  if (userInfo.email) document.getElementById('inputEmail').value = userInfo.email;
+  if (userInfo.phone) document.getElementById('inputPhone').value = formatPhone(userInfo.phone);
+}
+
+// ============================================================
+// DATE CAROUSEL
+// ============================================================
+function buildDateCarousel() {
+  const container = document.getElementById('dateScroll');
+  container.innerHTML = '';
+
+  const now = getLocationNow();
+  const startDate = new Date(now);
+  startDate.setDate(startDate.getDate() + dateOffset);
+
+  // Don't allow past dates
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Update nav label
+  document.getElementById('dateNavLabel').textContent =
+    months[startDate.getMonth()] + ' ' + startDate.getFullYear();
+
+  // Disable prev button if at today
+  document.getElementById('datePrev').disabled = (dateOffset <= 0);
+
+  for (let i = 0; i < CONFIG.daysAhead; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    d.setHours(0, 0, 0, 0);
+
+    // Skip past dates
+    if (d < today) continue;
+
+    const item = document.createElement('div');
+    item.className = 'date-item';
+    item.innerHTML =
+      '<span class="date-day">' + days[d.getDay()] + '</span>' +
+      '<span class="date-num">' + d.getDate() + '</span>' +
+      '<span class="date-month">' + months[d.getMonth()] + '</span>';
+
+    const dateStr = d.toISOString().split('T')[0];
+    item.dataset.date = dateStr;
+
+    if (selectedDate === dateStr) {
+      item.classList.add('selected');
+    }
+
+    item.addEventListener('click', function () {
+      selectDate(dateStr);
+    });
+
+    container.appendChild(item);
+  }
+
+  // Auto-select first date if none selected
+  if (!selectedDate && container.children.length > 0) {
+    selectDate(container.children[0].dataset.date);
+  }
+}
+
+function shiftDates(offset) {
+  dateOffset = Math.max(0, dateOffset + offset);
+  selectedDate = null;
+  selectedSlot = null;
+  updateSelectionSummary();
+  buildDateCarousel();
+}
+
+function selectDate(dateStr) {
+  selectedDate = dateStr;
+  selectedSlot = null;
+  updateSelectionSummary();
+
+  // Update visual selection
+  document.querySelectorAll('.date-item').forEach(function (el) {
+    el.classList.toggle('selected', el.dataset.date === dateStr);
+  });
+
+  fetchSlots(dateStr);
+}
+
+// ============================================================
+// FETCH AVAILABLE SLOTS
+// ============================================================
+async function fetchSlots(dateStr) {
+  const grid = document.getElementById('slotsGrid');
+  const loading = document.getElementById('slotsLoading');
+  const noSlots = document.getElementById('noSlots');
+  const title = document.getElementById('slotsTitle');
+
+  grid.classList.add('hidden');
+  noSlots.classList.add('hidden');
+  loading.classList.remove('hidden');
+
+  const d = new Date(dateStr + 'T12:00:00');
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  title.textContent = days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate();
+
+  try {
+    const response = await fetch(CONFIG.availabilityWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: currentLocationSlug,
+        date: dateStr,
+        leadId: userInfo.leadId || '',
+        timezone: currentLocation.timezone,
+        crm: currentLocation.crm,
+        storeId: currentLocation.clubreadyStoreId || null,
+      }),
+    });
+
+    if (!response.ok) throw new Error('Webhook returned ' + response.status);
+
+    const data = await response.json();
+    availableSlots = Array.isArray(data) ? data : (data.slots || []);
+  } catch (err) {
+    console.warn('Availability webhook not responding, using fallback:', err.message);
+    availableSlots = generateFallbackSlots(dateStr);
+  }
+
+  loading.classList.add('hidden');
+
+  if (availableSlots.length === 0) {
+    noSlots.classList.remove('hidden');
+  } else {
+    renderSlots(availableSlots);
+    grid.classList.remove('hidden');
+  }
+}
+
+function renderSlots(slots) {
+  const grid = document.getElementById('slotsGrid');
+  grid.innerHTML = '';
+
+  slots.forEach(function (slot, idx) {
+    const el = document.createElement('div');
+    el.className = 'slot';
+    el.dataset.index = idx;
+
+    let html = '<div class="slot-time">' + escapeHtml(slot.time || slot.displayTime || '') + '</div>';
+    if (slot.instructor) {
+      html += '<div class="slot-instructor">' + escapeHtml(slot.instructor) + '</div>';
+    }
+    if (slot.type) {
+      html += '<div class="slot-type">' + escapeHtml(slot.type) + '</div>';
+    }
+    el.innerHTML = html;
+
+    el.addEventListener('click', function () {
+      selectSlot(idx);
+    });
+
+    grid.appendChild(el);
+  });
+}
+
+function selectSlot(idx) {
+  selectedSlot = availableSlots[idx];
+
+  document.querySelectorAll('.slot').forEach(function (el) {
+    el.classList.toggle('selected', parseInt(el.dataset.index) === idx);
+  });
+
+  updateSelectionSummary();
+  updateSubmitButton();
+
+  // Scroll form into view on mobile
+  setTimeout(function () {
+    document.getElementById('selectionSummary').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+// ============================================================
+// SELECTION SUMMARY
+// ============================================================
+function updateSelectionSummary() {
+  const el = document.getElementById('selectionSummary');
+
+  if (!selectedDate || !selectedSlot) {
+    el.classList.remove('visible');
+    return;
+  }
+
+  el.classList.add('visible');
+
+  const d = new Date(selectedDate + 'T12:00:00');
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  document.getElementById('summaryDate').textContent =
+    days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  document.getElementById('summaryTime').textContent = selectedSlot.time || selectedSlot.displayTime || '';
+
+  if (selectedSlot.instructor) {
+    document.getElementById('summaryInstructor').textContent = selectedSlot.instructor;
+    document.getElementById('summaryInstructorRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryInstructorRow').style.display = 'none';
+  }
+}
+
+// ============================================================
+// FORM VALIDATION & SUBMIT
+// ============================================================
+function updateSubmitButton() {
+  const name = document.getElementById('inputName').value.trim();
+  const email = document.getElementById('inputEmail').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+  const btn = document.getElementById('submitBtn');
+
+  btn.disabled = !(selectedDate && selectedSlot && name && email && phone);
+}
+
+// Listen for form changes
+document.querySelectorAll('#formCard input, #formCard textarea').forEach(function (el) {
+  el.addEventListener('input', updateSubmitButton);
+});
+
+async function submitBooking() {
+  const btn = document.getElementById('submitBtn');
+  if (btn.disabled) return;
+
+  const name = document.getElementById('inputName').value.trim();
+  const email = document.getElementById('inputEmail').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+  const notes = document.getElementById('inputNotes').value.trim();
+
+  // Simple email validation
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert('Please enter a valid email address.');
+    return;
+  }
+
+  // Show loading
+  btn.disabled = true;
+  document.getElementById('submitText').innerHTML =
+    '<div class="spinner"></div> Booking...';
+
+  const d = new Date(selectedDate + 'T12:00:00');
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const formattedDate = months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+
+  const payload = {
+    location: currentLocationSlug,
+    locationName: currentLocation.displayName,
+    brand: currentLocation.brand,
+    crm: currentLocation.crm,
+    storeId: currentLocation.clubreadyStoreId || null,
+    locationEmail: currentLocation.email,
+    timezone: currentLocation.timezone,
+    leadId: userInfo.leadId || '',
+    name: name,
+    email: email,
+    phone: cleanPhone(phone),
+    notes: notes,
+    date: formattedDate,
+    time: selectedSlot.time || selectedSlot.displayTime || '',
+    instructor: selectedSlot.instructor || '',
+    classId: selectedSlot.classId || '',
+    type: selectedSlot.type || currentLocation.sessionLabel,
+  };
+
+  try {
+    const response = await fetch(CONFIG.bookingWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw new Error('Booking failed: ' + response.status);
+
+    showConfirmation(payload);
+  } catch (err) {
+    console.error('Booking submission error:', err);
+    alert('Something went wrong submitting your booking. Please try again or call us at ' +
+      formatPhone(currentLocation.phone) + '.');
+    btn.disabled = false;
+    document.getElementById('submitText').textContent = 'Confirm Booking';
+  }
+}
+
+function showConfirmation(payload) {
+  document.getElementById('bookingFlow').classList.add('hidden');
+  const screen = document.getElementById('confirmationScreen');
+  screen.classList.add('visible');
+
+  document.getElementById('confLocation').textContent = payload.locationName;
+  document.getElementById('confDate').textContent = payload.date;
+  document.getElementById('confTime').textContent = payload.time;
+  document.getElementById('confEmail').textContent = payload.email;
+
+  if (payload.instructor) {
+    document.getElementById('confInstructor').textContent = payload.instructor;
+    document.getElementById('confInstructorRow').style.display = 'flex';
+  } else {
+    document.getElementById('confInstructorRow').style.display = 'none';
+  }
+
+  document.getElementById('confirmationMsg').textContent =
+    'Your ' + currentLocation.sessionLabel.toLowerCase() + ' request has been submitted. ' +
+    'You will receive a confirmation at ' + payload.email + ' shortly.';
+
+  screen.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============================================================
+// FALLBACK SLOTS (when availability webhook is not yet wired)
+// ============================================================
+function generateFallbackSlots(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dayOfWeek = d.getDay();
+
+  // No slots on Sunday
+  if (dayOfWeek === 0) return [];
+
+  // Generate reasonable time slots based on brand
+  const slots = [];
+  let startHour = 8;
+  let endHour = 18;
+
+  if (currentLocation.brand === 'IMA Fitness') {
+    // IMA has classes in AM and PM blocks
+    const imaSlots = [
+      { time: '9:00 AM', type: 'Morning Class' },
+      { time: '10:00 AM', type: 'Morning Class' },
+      { time: '11:00 AM', type: 'Open Mat' },
+      { time: '4:00 PM', type: 'Afternoon Class' },
+      { time: '5:00 PM', type: 'Evening Class' },
+      { time: '6:00 PM', type: 'Evening Class' },
+      { time: '7:00 PM', type: 'Evening Class' },
+    ];
+    // Saturday: fewer slots
+    if (dayOfWeek === 6) {
+      return imaSlots.slice(0, 4);
+    }
+    return imaSlots;
+  }
+
+  // Stretch Zone / StretchLab: hourly slots
+  if (dayOfWeek === 6) {
+    startHour = 8;
+    endHour = 14;
+  }
+
+  for (let h = startHour; h < endHour; h++) {
+    const hour12 = h > 12 ? h - 12 : h;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const displayHour = hour12 === 0 ? 12 : hour12;
+    slots.push({
+      time: displayHour + ':00 ' + ampm,
+      type: currentLocation.sessionLabel,
+    });
+  }
+
+  return slots;
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function getLocationNow() {
+  if (!currentLocation) return new Date();
+  // Get current time in location's timezone
+  const now = new Date();
+  const tzString = now.toLocaleString('en-US', { timeZone: currentLocation.timezone });
+  return new Date(tzString);
+}
+
+function formatPhone(phone) {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11 && digits[0] === '1') {
+    return '(' + digits.slice(1, 4) + ') ' + digits.slice(4, 7) + '-' + digits.slice(7);
+  }
+  if (digits.length === 10) {
+    return '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
+  }
+  return phone;
+}
+
+function cleanPhone(phone) {
+  return phone.replace(/\D/g, '');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
