@@ -9,19 +9,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #F97316;
-      --primary-light: #FFF7ED;
-      --primary-hover: #EA580C;
-      --accent: #2563EB;
-      --accent-light: #EFF6FF;
-      --text: #1a1a2e;
-      --text-muted: #6b7280;
-      --text-light: #9ca3af;
+      --primary: #FF9900;
+      --primary-light: #FFF4E6;
+      --primary-hover: #E88B00;
+      --accent: #146EB4;
+      --accent-light: #E8F4FD;
+      --text: #0F1111;
+      --text-muted: #565959;
+      --text-light: #888C8C;
       --bg: #ffffff;
-      --bg-subtle: #E2E8F0;
-      --bg-warm: #CBD5E1;
-      --border: #e5e7eb;
-      --border-light: #f3f4f6;
+      --bg-subtle: #EAEDED;
+      --bg-warm: #232F3E;
+      --border: #D5D9D9;
+      --border-light: #EAEDED;
       --radius: 14px;
       --radius-sm: 10px;
       --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
@@ -52,7 +52,7 @@
 
     /* ========== GRADIENT HEADER ========== */
     .page-header {
-      background: linear-gradient(135deg, var(--primary) 0%, #FB923C 50%, #FBBF24 100%);
+      background: linear-gradient(135deg, #232F3E 0%, #37475A 100%);
       padding: 24px 20px 32px;
       border-radius: 0 0 24px 24px;
       margin-bottom: -12px;
@@ -223,7 +223,7 @@
       background: var(--primary);
       border-color: var(--primary);
       color: white;
-      box-shadow: 0 2px 8px rgba(249,115,22,0.3);
+      box-shadow: 0 2px 8px rgba(255,153,0,0.3);
     }
     .date-item.selected .date-day { color: rgba(255,255,255,0.85); }
     .date-item.selected .date-month { color: rgba(255,255,255,0.7); }
@@ -268,7 +268,7 @@
       border-color: var(--primary);
       background: var(--primary);
       color: white;
-      box-shadow: 0 2px 8px rgba(249,115,22,0.25);
+      box-shadow: 0 2px 8px rgba(255,153,0,0.25);
     }
     .slot.selected .slot-instructor,
     .slot.selected .slot-type { color: rgba(255,255,255,0.85); }
@@ -311,7 +311,7 @@
       border-color: var(--primary);
       background: var(--primary);
       color: white;
-      box-shadow: 0 2px 8px rgba(249,115,22,0.25);
+      box-shadow: 0 2px 8px rgba(255,153,0,0.25);
     }
     .class-item.selected .class-time,
     .class-item.selected .class-badge { color: rgba(255,255,255,0.85); }
@@ -450,7 +450,7 @@
     .form-group input:focus, .form-group textarea:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+      box-shadow: 0 0 0 3px rgba(255,153,0,0.15);
     }
     .form-group textarea {
       resize: vertical;
@@ -460,7 +460,7 @@
     .submit-btn {
       width: 100%;
       padding: 18px;
-      background: linear-gradient(135deg, var(--primary) 0%, #FB923C 100%);
+      background: linear-gradient(135deg, #FF9900 0%, #FEBD69 100%);
       color: white;
       border: none;
       border-radius: var(--radius);
@@ -474,11 +474,11 @@
       justify-content: center;
       gap: 8px;
       letter-spacing: 0.3px;
-      box-shadow: 0 4px 14px rgba(249,115,22,0.3);
+      box-shadow: 0 4px 14px rgba(255,153,0,0.3);
     }
     .submit-btn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(249,115,22,0.4);
+      box-shadow: 0 6px 20px rgba(255,153,0,0.4);
     }
     .submit-btn:active:not(:disabled) { transform: translateY(0); }
     .submit-btn:disabled {
@@ -549,7 +549,7 @@
     .popup-close {
       width: 100%;
       padding: 14px;
-      background: linear-gradient(135deg, var(--primary), #FB923C);
+      background: linear-gradient(135deg, #FF9900, #FEBD69);
       color: white;
       border: none;
       border-radius: var(--radius);
@@ -559,7 +559,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    .popup-close:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(249,115,22,0.3); }
+    .popup-close:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,153,0,0.3); }
 
     /* ========== ERROR SCREEN ========== */
     .error-screen {
@@ -577,7 +577,7 @@
 
     /* ========== LOCATION PICKER ========== */
     .picker-header {
-      background: linear-gradient(135deg, var(--primary) 0%, #FB923C 50%, #FBBF24 100%);
+      background: linear-gradient(135deg, #232F3E 0%, #37475A 100%);
       padding: 32px 20px;
       border-radius: 0 0 24px 24px;
       text-align: center;
@@ -624,8 +624,8 @@
       box-shadow: var(--shadow);
     }
     .location-option:hover {
-      border-color: #F97316;
-      background: #FFF7ED;
+      border-color: #FF9900;
+      background: #FFF4E6;
       transform: translateY(-1px);
       box-shadow: var(--shadow-md);
     }
