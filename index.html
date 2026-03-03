@@ -484,6 +484,19 @@
     .summary-row .label { color: var(--text-muted); min-width: 70px; font-size: 13px; }
     .summary-row .value { font-weight: 700; }
 
+    .summary-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-light);
+    }
+    .summary-note .icon { font-size: 16px; flex-shrink: 0; width: 20px; }
+
     /* ========== NOTES + SUBMIT ========== */
     .form-group {
       margin-bottom: 14px;
@@ -867,6 +880,11 @@
       <!-- Selection Summary -->
       <div class="selection-summary" id="selectionSummary">
         <h3>Your Selection</h3>
+        <div class="summary-row" id="summaryNameRow" style="display:none;">
+          <span class="icon">&#128100;</span>
+          <span class="label">Client</span>
+          <span class="value" id="summaryName"></span>
+        </div>
         <div class="summary-row">
           <span class="icon">&#128197;</span>
           <span class="label">Date</span>
@@ -887,7 +905,21 @@
           <span class="label">With</span>
           <span class="value" id="summaryInstructor"></span>
         </div>
+        <div class="summary-row" id="summaryPlanRow" style="display:none;">
+          <span class="icon">&#128203;</span>
+          <span class="label">Plan</span>
+          <span class="value" id="summaryPlan"></span>
+        </div>
+        <div class="summary-row" id="summaryCreditsRow" style="display:none;">
+          <span class="icon">&#127915;</span>
+          <span class="label">Credits</span>
+          <span class="value" id="summaryCredits"></span>
+        </div>
         <div id="summaryPricing" style="display:none;"></div>
+        <div class="summary-note" id="summaryPayNote" style="display:none;">
+          <span class="icon">&#128176;</span>
+          Book online, pay in store
+        </div>
       </div>
 
       <!-- Notes + Submit (no form fields if URL has user info) -->
@@ -927,6 +959,7 @@
 var CONFIG = {
   bookingWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/0c41acc9-33d5-467e-9182-6f39ceaa9a8e',
   availabilityWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/booking-availability',
+  memberInfoApi: 'https://lead-scraper-production.up.railway.app/api/member-info',
   daysAhead: 14,
 };
 
@@ -1258,6 +1291,10 @@ var selectedDate = null;
 var selectedSlot = null;
 var availableSlots = [];
 
+// Dynamic member info (populated by API call)
+window._memberPlan = null;
+window._memberCredits = null;
+
 // ============================================================
 // INIT
 // ============================================================
@@ -1297,6 +1334,11 @@ function init() {
   populateGreeting();
   setupLoadingSkeleton();
   buildDateCarousel();
+
+  // Fetch member info if member ID present and location is ClubReady
+  if (memberId && currentLocation.crm === 'clubready') {
+    fetchMemberInfo(currentLocationSlug, memberId);
+  }
 }
 
 // ============================================================
@@ -1719,6 +1761,14 @@ function updateSelectionSummary() {
 
   el.classList.add('visible');
 
+  // Show client name if available
+  if (userInfo.name) {
+    document.getElementById('summaryName').textContent = userInfo.name;
+    document.getElementById('summaryNameRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryNameRow').style.display = 'none';
+  }
+
   var d = new Date(selectedDate + 'T12:00:00');
   var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var monthNames = [
@@ -1748,7 +1798,21 @@ function updateSelectionSummary() {
     document.getElementById('summaryInstructorRow').style.display = 'none';
   }
 
-  // Show pricing or lead offer
+  // Show dynamic plan/credits if fetched from API
+  if (window._memberPlan) {
+    document.getElementById('summaryPlan').textContent = window._memberPlan;
+    document.getElementById('summaryPlanRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryPlanRow').style.display = 'none';
+  }
+  if (window._memberCredits != null) {
+    document.getElementById('summaryCredits').textContent = window._memberCredits + ' remaining';
+    document.getElementById('summaryCreditsRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryCreditsRow').style.display = 'none';
+  }
+
+  // Show static pricing or lead offer (from location config)
   var pricingEl = document.getElementById('summaryPricing');
   var html = '';
   if (userInfo.leadId && currentLocation.leadOffer) {
@@ -1771,11 +1835,18 @@ function updateSelectionSummary() {
     if (p.note) {
       html += '<div class="pricing-note">' + escapeHtml(p.note) + '</div>';
     }
-    html += '<div class="pricing-note" style="margin-top:8px;font-weight:600;">Book Online, Pay in Store</div>';
     html += '</div>';
   }
   pricingEl.innerHTML = html;
   pricingEl.style.display = html ? 'block' : 'none';
+
+  // "Book online, pay in store" note: show for all locations (members always, leads if not free)
+  var showPayNote = true;
+  if (userInfo.leadId && currentLocation.brand === 'Stretch Zone') {
+    // SZ leads get a FREE first session, no pay note needed
+    showPayNote = false;
+  }
+  document.getElementById('summaryPayNote').style.display = showPayNote ? 'flex' : 'none';
 }
 
 // ============================================================
@@ -1960,6 +2031,50 @@ function escapeHtml(str) {
   var div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ============================================================
+// MEMBER INFO FETCH (ClubReady only)
+// ============================================================
+async function fetchMemberInfo(locationSlug, memberId) {
+  // Map booking-page slugs to lead-scraper slugs
+  var slugMap = {
+    'stretch-zone-westborough': 'sz-westborough',
+    'stretch-zone-west-boylston': 'sz-west-boylston',
+    'stretchlab-carlsbad': 'stretchlab-carlsbad',
+    'stretch-zone-dfw': 'sz-dfw',
+    'stretch-zone-baton-rouge': 'sz-baton-rouge',
+  };
+  var apiSlug = slugMap[locationSlug] || locationSlug;
+
+  try {
+    var url = CONFIG.memberInfoApi + '?location=' + encodeURIComponent(apiSlug) + '&member_id=' + encodeURIComponent(memberId);
+    var resp = await fetch(url);
+    if (!resp.ok) return;
+    var data = await resp.json();
+
+    // Derive plan from membershipType or creditDetails
+    if (data.membershipType) {
+      window._memberPlan = data.membershipType;
+    } else if (data.creditDetails && data.creditDetails.length > 0) {
+      // Summarize credit types (e.g. "5x Stretch 50 mins")
+      var counts = {};
+      data.creditDetails.forEach(function(c) { counts[c] = (counts[c] || 0) + 1; });
+      var parts = Object.keys(counts).map(function(k) { return counts[k] + 'x ' + k; });
+      window._memberPlan = parts.join(', ');
+    }
+    if (data.credits != null) window._memberCredits = data.credits;
+    if (data.name && !userInfo.name) userInfo.name = data.name;
+
+    // Re-render summary if already visible
+    if (selectedDate && selectedSlot) updateSelectionSummary();
+    // Update greeting if name was filled in
+    if (data.name && !document.getElementById('greetingText').textContent.includes('Hi ')) {
+      populateGreeting();
+    }
+  } catch (e) {
+    // Silently fail; member info is optional enhancement
+  }
 }
 
 // ============================================================
