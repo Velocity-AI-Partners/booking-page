@@ -622,6 +622,42 @@
     }
     .popup-close:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,153,0,0.3); }
 
+    .pricing-box {
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-top: 16px;
+      text-align: left;
+    }
+    .pricing-box .pricing-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pricing-box table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .pricing-box td {
+      padding: 3px 0;
+      color: var(--text-muted);
+    }
+    .pricing-box td:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .pricing-box .pricing-note {
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
     /* ========== ERROR SCREEN ========== */
     .error-screen {
       display: none;
@@ -851,6 +887,7 @@
           <span class="label">With</span>
           <span class="value" id="summaryInstructor"></span>
         </div>
+        <div id="summaryPricing" style="display:none;"></div>
       </div>
 
       <!-- Notes + Submit (no form fields if URL has user info) -->
@@ -911,6 +948,16 @@ var LOCATIONS = {
     clubreadyStoreId: 15077,
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
+    leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['1x/week (4/mo)', '$50/session'],
+        ['2x/week (8/mo)', '$45/session'],
+        ['3x/week (12/mo)', '$40/session'],
+        ['Drop-in', '$85/session'],
+      ],
+    },
   },
   'stretch-zone-west-boylston': {
     name: 'Stretch Zone',
@@ -926,6 +973,16 @@ var LOCATIONS = {
     clubreadyStoreId: 14803,
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
+    leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['1x/week (4/mo)', '$50/session'],
+        ['2x/week (8/mo)', '$45/session'],
+        ['3x/week (12/mo)', '$40/session'],
+        ['Drop-in', '$85/session'],
+      ],
+    },
   },
   'stretchlab-carlsbad': {
     name: 'StretchLab',
@@ -941,6 +998,16 @@ var LOCATIONS = {
     clubreadyStoreId: 12727,
     crm: 'clubready',
     hours: { weekday: [9, 20], saturday: [9, 15], sunday: [10, 14] },
+    leadOffer: { label: 'Intro Stretch: $39 (25 min) or $59 (50 min)', detail: 'Includes MAPS assessment (Mobility, Activation, Posture, Symmetry)' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['25 min membership', 'from $52/session'],
+        ['50 min membership', 'from $81/session'],
+        ['25 min single', '$65'],
+        ['50 min single', '$125'],
+      ],
+    },
   },
   'integrated-martial-arts-westborough': {
     name: 'IMA Fitness',
@@ -955,6 +1022,7 @@ var LOCATIONS = {
     email: 'info@integratedmartialarts.com',
     crm: 'spark',
     hours: { weekday: [6, 20], saturday: [10, 14], sunday: null },
+    leadOffer: { label: '$19.99 for 3 Trial Sessions', detail: 'Available for adults and kids' },
   },
   'integrated-martial-arts-worcester': {
     name: 'IMA Fitness',
@@ -969,6 +1037,7 @@ var LOCATIONS = {
     email: 'info@imaworcester.com',
     crm: 'wellnessliving',
     hours: { weekday: [9, 20], saturday: [9, 14], sunday: [10, 12] },
+    leadOffer: { label: '$19.99 for 3 Trial Sessions', detail: 'Available for adults and kids' },
   },
   'stretch-zone-dfw': {
     name: 'Stretch Zone',
@@ -983,6 +1052,12 @@ var LOCATIONS = {
     email: 'southlake@stretchzone.com',
     crm: 'clubready',
     hours: { weekday: [7, 20], saturday: [8, 16], sunday: [11, 17] },
+    leadOffer: { label: 'FREE Initial Demo Session', detail: 'About 45-60 minutes, just bring comfortable clothing and socks' },
+    pricing: {
+      title: 'Session Pricing',
+      rows: [],
+      note: 'Pricing reviewed in-studio after your complimentary demo session',
+    },
   },
   'stretch-zone-baton-rouge': {
     name: 'Stretch Zone',
@@ -997,6 +1072,17 @@ var LOCATIONS = {
     email: 'bocage@stretchzone.com',
     crm: 'clubready',
     hours: { weekday: [7, 19], saturday: [8, 16], sunday: [11, 17] },
+    leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['Basic (2/mo)', '$139/mo'],
+        ['1x/week (4/mo)', '$240/mo'],
+        ['2x/week (8/mo)', '$440/mo'],
+        ['3x/week (12/mo)', '$600/mo'],
+        ['Drop-in', '$95/session'],
+      ],
+    },
   },
 };
 
@@ -1166,7 +1252,7 @@ var IMA_SCHEDULES = {
 // ============================================================
 var currentLocation = null;
 var currentLocationSlug = '';
-var userInfo = { name: '', email: '', phone: '', leadId: '' };
+var userInfo = { name: '', email: '', phone: '', leadId: '', memberId: '' };
 var dateOffset = 0;
 var selectedDate = null;
 var selectedSlot = null;
@@ -1185,6 +1271,7 @@ function init() {
   var email = params.get('email') || '';
   var phone = params.get('phone') || '';
   var leadId = params.get('lid') || params.get('leadId') || '';
+  var memberId = params.get('mid') || params.get('memberId') || '';
 
   currentLocationSlug = locSlug;
   currentLocation = LOCATIONS[locSlug] || null;
@@ -1201,7 +1288,7 @@ function init() {
     return;
   }
 
-  userInfo = { name: name, email: email, phone: phone, leadId: leadId };
+  userInfo = { name: name, email: email, phone: phone, leadId: leadId, memberId: memberId };
 
   // Show booking flow
   document.getElementById('bookingFlow').classList.remove('hidden');
@@ -1660,6 +1747,34 @@ function updateSelectionSummary() {
   } else {
     document.getElementById('summaryInstructorRow').style.display = 'none';
   }
+
+  // Show pricing or lead offer
+  var pricingEl = document.getElementById('summaryPricing');
+  var html = '';
+  if (userInfo.leadId && currentLocation.leadOffer) {
+    var offer = currentLocation.leadOffer;
+    html = '<div class="pricing-box">' +
+      '<div class="pricing-title">' + escapeHtml(offer.label) + '</div>' +
+      (offer.detail ? '<div class="pricing-note">' + escapeHtml(offer.detail) + '</div>' : '') +
+      '</div>';
+  } else if (currentLocation.pricing) {
+    var p = currentLocation.pricing;
+    html = '<div class="pricing-box">';
+    html += '<div class="pricing-title">' + escapeHtml(p.title) + '</div>';
+    if (p.rows && p.rows.length > 0) {
+      html += '<table>';
+      for (var i = 0; i < p.rows.length; i++) {
+        html += '<tr><td>' + escapeHtml(p.rows[i][0]) + '</td><td>' + escapeHtml(p.rows[i][1]) + '</td></tr>';
+      }
+      html += '</table>';
+    }
+    if (p.note) {
+      html += '<div class="pricing-note">' + escapeHtml(p.note) + '</div>';
+    }
+    html += '</div>';
+  }
+  pricingEl.innerHTML = html;
+  pricingEl.style.display = html ? 'block' : 'none';
 }
 
 // ============================================================
