@@ -957,7 +957,7 @@
 // CONFIGURATION
 // ============================================================
 var CONFIG = {
-  bookingWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/0c41acc9-33d5-467e-9182-6f39ceaa9a8e',
+  bookingApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/book-session',
   availabilityWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/booking-availability',
   memberInfoApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/member-info',
   daysAhead: 14,
@@ -1901,7 +1901,7 @@ async function submitBooking() {
   };
 
   try {
-    var response = await fetch(CONFIG.bookingWebhook, {
+    var response = await fetch(CONFIG.bookingApi, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
