@@ -1756,6 +1756,7 @@ function updateSelectionSummary() {
     html = '<div class="pricing-box">' +
       '<div class="pricing-title">' + escapeHtml(offer.label) + '</div>' +
       (offer.detail ? '<div class="pricing-note">' + escapeHtml(offer.detail) + '</div>' : '') +
+      '<div class="pricing-note" style="margin-top:8px;font-weight:600;">Book Online, Pay in Store</div>' +
       '</div>';
   } else if (currentLocation.pricing) {
     var p = currentLocation.pricing;
@@ -1771,6 +1772,7 @@ function updateSelectionSummary() {
     if (p.note) {
       html += '<div class="pricing-note">' + escapeHtml(p.note) + '</div>';
     }
+    html += '<div class="pricing-note" style="margin-top:8px;font-weight:600;">Book Online, Pay in Store</div>';
     html += '</div>';
   }
   pricingEl.innerHTML = html;
