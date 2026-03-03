@@ -1624,7 +1624,7 @@ function renderSlots(slots) {
     // Grouped collapsible view
     types.forEach(function(typeName, gi) {
       var group = document.createElement('div');
-      group.className = 'slot-group' + (gi > 0 ? ' collapsed' : '');
+      group.className = 'slot-group';
 
       var typeSlots = [];
       slots.forEach(function(s, idx) {
@@ -1635,11 +1635,7 @@ function renderSlots(slots) {
       header.className = 'slot-group-header';
       header.innerHTML =
         '<div><span class="slot-group-header-title">' + escapeHtml(typeName) + '</span>' +
-        '<span class="slot-group-header-count">' + typeSlots.length + ' times</span></div>' +
-        '<span class="slot-group-chevron">&#9662;</span>';
-      header.addEventListener('click', function() {
-        group.classList.toggle('collapsed');
-      });
+        '<span class="slot-group-header-count">' + typeSlots.length + ' times</span></div>';
 
       var content = document.createElement('div');
       content.className = 'slot-group-content';
