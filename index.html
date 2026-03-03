@@ -1713,6 +1713,7 @@ async function submitBooking() {
     classId: selectedSlot.classId || '',
     type: selectedSlot.type || currentLocation.sessionLabel,
     className: (currentLocation.uiMode === 'classes') ? (selectedSlot.type || '') : '',
+    source: 'booking_page',
   };
 
   try {
@@ -1722,22 +1723,25 @@ async function submitBooking() {
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) throw new Error('Booking failed: ' + response.status);
+    var result = {};
+    try { result = await response.json(); } catch (e) {}
 
-    showConfirmation(payload);
+    if (result.success) {
+      showConfirmation(payload, result);
+    } else {
+      var msg = result.message || 'Booking could not be completed.';
+      showBookingError(msg);
+    }
   } catch (err) {
     console.error('Booking submission error:', err);
-    alert('Something went wrong submitting your booking. Please try again or call us at ' +
-      formatPhone(currentLocation.phone) + '.');
-    btn.disabled = false;
-    document.getElementById('submitText').textContent = 'Confirm Booking';
+    showBookingError('Something went wrong. Please try again or call us.');
   }
 }
 
 // ============================================================
 // CONFIRMATION
 // ============================================================
-function showConfirmation(payload) {
+function showConfirmation(payload, result) {
   var firstName = payload.name ? payload.name.split(' ')[0] : '';
   var title = firstName ? 'Thank you, ' + firstName + '!' : 'You\'re All Set!';
 
@@ -1748,6 +1752,10 @@ function showConfirmation(payload) {
     detail += '<br>Class: <strong>' + escapeHtml(payload.className) + '</strong>';
   }
 
+  if (result && result.booking_id) {
+    detail += '<br>Confirmation #: <strong>' + escapeHtml(result.booking_id) + '</strong>';
+  }
+
   detail += '<br><br>We\'ll see you there!';
 
   document.getElementById('popupTitle').textContent = title;
@@ -1755,6 +1763,21 @@ function showConfirmation(payload) {
   document.getElementById('popupOverlay').classList.add('visible');
 
   // Reset submit button
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitText').textContent = 'Confirm Booking';
+}
+
+function showBookingError(msg) {
+  var phone = currentLocation.phone || '';
+  var detail = escapeHtml(msg);
+  if (phone) {
+    detail += '<br><br>Please call us at <strong>' + formatPhone(phone) + '</strong> to book directly.';
+  }
+
+  document.getElementById('popupTitle').textContent = 'Booking Issue';
+  document.getElementById('popupDetail').innerHTML = detail;
+  document.getElementById('popupOverlay').classList.add('visible');
+
   document.getElementById('submitBtn').disabled = false;
   document.getElementById('submitText').textContent = 'Confirm Booking';
 }
