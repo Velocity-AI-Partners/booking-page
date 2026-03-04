@@ -104,6 +104,11 @@
       font-weight: 600;
       letter-spacing: 0.3px;
     }
+    .header-address {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
 
     /* ========== CONTENT AREA ========== */
     .content-area {
@@ -497,40 +502,7 @@
     }
     .summary-note .icon { font-size: 16px; flex-shrink: 0; width: 20px; }
 
-    /* ========== NOTES + SUBMIT ========== */
-    .form-group {
-      margin-bottom: 14px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-    }
-    .form-group input, .form-group textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 2px solid transparent;
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 15px;
-      transition: var(--transition);
-      background: white;
-      color: #0F1111;
-    }
-    .form-group input:focus, .form-group textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(255,153,0,0.15);
-    }
-    .form-group textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
-
+    /* ========== SUBMIT ========== */
     .submit-btn {
       width: 100%;
       padding: 18px;
@@ -819,6 +791,7 @@
           <p id="locationTagline"></p>
         </div>
         <span id="headerPhone" class="header-phone"></span>
+        <span id="headerAddress" class="header-address"></span>
       </div>
     </div>
 
@@ -922,12 +895,8 @@
         </div>
       </div>
 
-      <!-- Notes + Submit (no form fields if URL has user info) -->
+      <!-- Submit -->
       <div class="card" id="formCard" style="background:white">
-        <div class="form-group">
-          <label for="inputNotes">Notes (optional)</label>
-          <textarea id="inputNotes" placeholder="Any special requests or notes..."></textarea>
-        </div>
         <button class="submit-btn" id="submitBtn" onclick="submitBooking()" disabled>
           <span id="submitText">Confirm Booking</span>
         </button>
@@ -978,10 +947,12 @@ var LOCATIONS = {
     timezone: 'America/New_York',
     phone: '15083291134',
     email: 'westboroughma@stretchzone.com',
+    address: '600 Union St, Westborough, MA 01581',
     clubreadyStoreId: 15077,
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
-    daysAhead: 2,
+    daysAhead: 14,
+    leadDaysAhead: 3,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1004,10 +975,12 @@ var LOCATIONS = {
     timezone: 'America/New_York',
     phone: '17742614238',
     email: 'westboylstonma@stretchzone.com',
+    address: '342 W Boylston St, West Boylston, MA 01583',
     clubreadyStoreId: 14803,
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
-    daysAhead: 2,
+    daysAhead: 14,
+    leadDaysAhead: 3,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1030,10 +1003,12 @@ var LOCATIONS = {
     timezone: 'America/Los_Angeles',
     phone: '17602837126',
     email: 'carlsbadnorthcoast@stretchlab.com',
+    address: '1850 Marron Road, Suite 102, Carlsbad, CA 92008',
     clubreadyStoreId: 12727,
     crm: 'clubready',
     hours: { weekday: [9, 20], saturday: [9, 15], sunday: [10, 14] },
-    daysAhead: 2,
+    daysAhead: 14,
+    leadDaysAhead: 3,
     leadOffer: { label: 'Intro Stretch: $39 (25 min) or $59 (50 min)', detail: 'Includes MAPS assessment (Mobility, Activation, Posture, Symmetry)' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1056,6 +1031,7 @@ var LOCATIONS = {
     timezone: 'America/New_York',
     phone: '17747724759',
     email: 'info@integratedmartialarts.com',
+    address: '227 Turnpike Road, Suite C, Westborough, MA 01581',
     crm: 'spark',
     hours: { weekday: [6, 20], saturday: [10, 14], sunday: null },
     leadOffer: { label: '$19.99 for 3 Trial Sessions', detail: 'Available for adults and kids' },
@@ -1071,6 +1047,7 @@ var LOCATIONS = {
     timezone: 'America/New_York',
     phone: '15082519469',
     email: 'info@imaworcester.com',
+    address: '342A West Boylston Street, West Boylston, MA 01583',
     crm: 'wellnessliving',
     hours: { weekday: [9, 20], saturday: [9, 14], sunday: [10, 12] },
     leadOffer: { label: '$19.99 for 3 Trial Sessions', detail: 'Available for adults and kids' },
@@ -1086,10 +1063,12 @@ var LOCATIONS = {
     timezone: 'America/Chicago',
     phone: '18176121666',
     email: 'southlake@stretchzone.com',
+    address: '405 N Carroll Ave, Southlake, TX 76092',
     clubreadyStoreId: 8486,
     crm: 'clubready',
     hours: { weekday: [7, 20], saturday: [8, 16], sunday: [11, 17] },
-    daysAhead: 2,
+    daysAhead: 14,
+    leadDaysAhead: 3,
     leadOffer: { label: 'FREE Initial Demo Session', detail: 'About 45-60 minutes, just bring comfortable clothing and socks' },
     pricing: {
       title: 'Session Pricing',
@@ -1108,10 +1087,12 @@ var LOCATIONS = {
     timezone: 'America/Chicago',
     phone: '12254562734',
     email: 'bocage@stretchzone.com',
+    address: '7575 Jefferson Hwy Suite E, Baton Rouge, LA 70806',
     clubreadyStoreId: 12330,
     crm: 'clubready',
     hours: { weekday: [7, 19], saturday: [8, 16], sunday: [11, 17] },
-    daysAhead: 2,
+    daysAhead: 14,
+    leadDaysAhead: 3,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1400,6 +1381,7 @@ function populateHeader() {
   document.getElementById('locationName').textContent = currentLocation.displayName;
   document.getElementById('locationTagline').textContent = currentLocation.tagline;
   document.getElementById('headerPhone').textContent = formatPhone(currentLocation.phone);
+  document.getElementById('headerAddress').textContent = currentLocation.address || '';
   document.title = 'Book Your ' + currentLocation.sessionLabel + ' | ' + currentLocation.displayName;
 }
 
@@ -1436,7 +1418,10 @@ function buildDateCarousel() {
   var container = document.getElementById('dateScroll');
   container.innerHTML = '';
 
-  var maxDays = (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
+  var isLead = userInfo.leadId && !userInfo.memberId;
+  var maxDays = (isLead && currentLocation && currentLocation.leadDaysAhead)
+    ? currentLocation.leadDaysAhead
+    : (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
 
   var now = getLocationNow();
   var startDate = new Date(now);
@@ -1498,7 +1483,10 @@ function buildDateCarousel() {
 }
 
 function shiftDates(offset) {
-  var maxDays = (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
+  var isLead = userInfo.leadId && !userInfo.memberId;
+  var maxDays = (isLead && currentLocation && currentLocation.leadDaysAhead)
+    ? currentLocation.leadDaysAhead
+    : (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
   dateOffset = Math.max(0, Math.min(maxDays - 7, dateOffset + offset));
   selectedDate = null;
   selectedSlot = null;
@@ -1863,11 +1851,6 @@ function updateSubmitButton() {
   btn.disabled = !(selectedDate && selectedSlot);
 }
 
-// Listen for form changes
-document.querySelectorAll('#formCard input, #formCard textarea').forEach(function(el) {
-  el.addEventListener('input', updateSubmitButton);
-});
-
 async function submitBooking() {
   var btn = document.getElementById('submitBtn');
   if (btn.disabled) return;
@@ -1875,8 +1858,6 @@ async function submitBooking() {
   var name = userInfo.name || '';
   var email = userInfo.email || '';
   var phone = userInfo.phone || '';
-  var notes = document.getElementById('inputNotes').value.trim();
-
   btn.disabled = true;
   document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Booking...';
 
@@ -1900,7 +1881,6 @@ async function submitBooking() {
     name: name,
     email: email,
     phone: cleanPhone(phone),
-    notes: notes,
     date: formattedDate,
     time: selectedSlot.displayTime || selectedSlot.time || '',
     instructor: selectedSlot.instructor || '',
