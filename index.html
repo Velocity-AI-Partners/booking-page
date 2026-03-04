@@ -1073,7 +1073,7 @@ var LOCATIONS = {
     pricing: {
       title: 'Session Pricing',
       rows: [],
-      note: 'Pricing reviewed in-studio after your complimentary demo session',
+      note: 'Your first session is FREE',
     },
   },
   'stretch-zone-baton-rouge': {
@@ -1820,9 +1820,21 @@ function updateSelectionSummary() {
     html = '<div class="pricing-box">';
     html += '<div class="pricing-title">' + escapeHtml(p.title) + '</div>';
     if (p.rows && p.rows.length > 0) {
+      // Filter pricing rows to match selected session type if available
+      var filteredRows = p.rows;
+      if (selectedSlot && selectedSlot.type) {
+        var slotType = (selectedSlot.type || '').toLowerCase();
+        var is25 = slotType.indexOf('25') !== -1;
+        var is50 = slotType.indexOf('50') !== -1;
+        if (is25 || is50) {
+          var keyword = is25 ? '25' : '50';
+          filteredRows = p.rows.filter(function(row) { return row[0].indexOf(keyword) !== -1; });
+          if (filteredRows.length === 0) filteredRows = p.rows; // fallback to all if no match
+        }
+      }
       html += '<table>';
-      for (var i = 0; i < p.rows.length; i++) {
-        html += '<tr><td>' + escapeHtml(p.rows[i][0]) + '</td><td>' + escapeHtml(p.rows[i][1]) + '</td></tr>';
+      for (var i = 0; i < filteredRows.length; i++) {
+        html += '<tr><td>' + escapeHtml(filteredRows[i][0]) + '</td><td>' + escapeHtml(filteredRows[i][1]) + '</td></tr>';
       }
       html += '</table>';
     }
@@ -1834,10 +1846,10 @@ function updateSelectionSummary() {
   pricingEl.innerHTML = html;
   pricingEl.style.display = html ? 'block' : 'none';
 
-  // "Book online, pay in store" note: show for all locations (members always, leads if not free)
+  // "Book online, pay in store" note: hide for free sessions
   var showPayNote = true;
-  if (userInfo.leadId && currentLocation.brand === 'Stretch Zone') {
-    // SZ leads get a FREE first session, no pay note needed
+  var offerLabel = (currentLocation.leadOffer && currentLocation.leadOffer.label) || '';
+  if (userInfo.leadId && offerLabel.toUpperCase().indexOf('FREE') !== -1) {
     showPayNote = false;
   }
   document.getElementById('summaryPayNote').style.display = showPayNote ? 'flex' : 'none';
