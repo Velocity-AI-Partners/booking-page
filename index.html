@@ -981,6 +981,7 @@ var LOCATIONS = {
     clubreadyStoreId: 15077,
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
+    daysAhead: 2,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1006,6 +1007,7 @@ var LOCATIONS = {
     clubreadyStoreId: 14803,
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
+    daysAhead: 2,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1031,6 +1033,7 @@ var LOCATIONS = {
     clubreadyStoreId: 12727,
     crm: 'clubready',
     hours: { weekday: [9, 20], saturday: [9, 15], sunday: [10, 14] },
+    daysAhead: 2,
     leadOffer: { label: 'Intro Stretch: $39 (25 min) or $59 (50 min)', detail: 'Includes MAPS assessment (Mobility, Activation, Posture, Symmetry)' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1086,6 +1089,7 @@ var LOCATIONS = {
     clubreadyStoreId: 8486,
     crm: 'clubready',
     hours: { weekday: [7, 20], saturday: [8, 16], sunday: [11, 17] },
+    daysAhead: 2,
     leadOffer: { label: 'FREE Initial Demo Session', detail: 'About 45-60 minutes, just bring comfortable clothing and socks' },
     pricing: {
       title: 'Session Pricing',
@@ -1107,6 +1111,7 @@ var LOCATIONS = {
     clubreadyStoreId: 12330,
     crm: 'clubready',
     hours: { weekday: [7, 19], saturday: [8, 16], sunday: [11, 17] },
+    daysAhead: 2,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1431,6 +1436,8 @@ function buildDateCarousel() {
   var container = document.getElementById('dateScroll');
   container.innerHTML = '';
 
+  var maxDays = (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
+
   var now = getLocationNow();
   var startDate = new Date(now);
   startDate.setDate(startDate.getDate() + dateOffset);
@@ -1444,9 +1451,9 @@ function buildDateCarousel() {
   document.getElementById('dateNavLabel').textContent =
     months[startDate.getMonth()] + ' ' + startDate.getFullYear();
   document.getElementById('datePrev').disabled = (dateOffset <= 0);
-  document.getElementById('dateNext').disabled = (dateOffset >= CONFIG.daysAhead - 7);
+  document.getElementById('dateNext').disabled = (dateOffset >= maxDays - 7);
 
-  for (var i = 0; i < CONFIG.daysAhead; i++) {
+  for (var i = 0; i < maxDays; i++) {
     var d = new Date(startDate);
     d.setDate(d.getDate() + i);
     d.setHours(0, 0, 0, 0);
@@ -1491,7 +1498,8 @@ function buildDateCarousel() {
 }
 
 function shiftDates(offset) {
-  dateOffset = Math.max(0, Math.min(CONFIG.daysAhead - 7, dateOffset + offset));
+  var maxDays = (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
+  dateOffset = Math.max(0, Math.min(maxDays - 7, dateOffset + offset));
   selectedDate = null;
   selectedSlot = null;
   updateSelectionSummary();
