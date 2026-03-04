@@ -250,13 +250,14 @@
     .slot-group-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       padding: 12px 14px;
       background: var(--bg-subtle);
       border-radius: var(--radius-sm);
       cursor: pointer;
       user-select: none;
       transition: background 0.2s ease;
+      text-align: center;
     }
     .slot-group-header:hover { background: var(--border); }
     .slot-group-header-title {
@@ -303,6 +304,12 @@
       transition: all 0.2s ease;
       text-align: center;
       background: var(--bg-subtle);
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
     .slot:hover { border-color: var(--accent); background: #f0f8ff; }
     .slot:active { transform: scale(0.97); }
@@ -323,6 +330,10 @@
       font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .slot-type {
       font-size: 11px;
