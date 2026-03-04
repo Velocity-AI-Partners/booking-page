@@ -1020,7 +1020,7 @@ var LOCATIONS = {
     hours: { weekday: [9, 20], saturday: [9, 15], sunday: [10, 14] },
     daysAhead: 14,
     leadDaysAhead: 3,
-    leadOffer: { label: 'Intro Stretch: $39 (25 min) or $59 (50 min)', detail: 'Includes MAPS assessment (Mobility, Activation, Posture, Symmetry)' },
+    leadOffer: { label: 'Intro Stretch: $39 (25 min) or $59 (50 min)', label25: 'Intro Stretch (25 min): $39', label50: 'Intro Stretch (50 min): $59', detail: 'Includes MAPS assessment (Mobility, Activation, Posture, Symmetry)' },
     pricing: {
       title: 'Member Session Pricing',
       rows: [
@@ -1822,8 +1822,14 @@ function updateSelectionSummary() {
   var html = '';
   if (userInfo.leadId && currentLocation.leadOffer) {
     var offer = currentLocation.leadOffer;
+    var offerLabel = offer.label;
+    if (selectedSlot && selectedSlot.type) {
+      var st = (selectedSlot.type || '').toLowerCase();
+      if (st.indexOf('25') !== -1 && offer.label25) offerLabel = offer.label25;
+      else if (st.indexOf('50') !== -1 && offer.label50) offerLabel = offer.label50;
+    }
     html = '<div class="pricing-box">' +
-      '<div class="pricing-title">' + escapeHtml(offer.label) + '</div>' +
+      '<div class="pricing-title">' + escapeHtml(offerLabel) + '</div>' +
       (offer.detail ? '<div class="pricing-note">' + escapeHtml(offer.detail) + '</div>' : '') +
       '</div>';
   } else if (currentLocation.pricing) {
