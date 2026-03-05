@@ -768,6 +768,13 @@
       .date-item { min-width: 56px; padding: 8px 6px; }
       .header-info h1 { font-size: 18px; }
     }
+    .cal-buttons { margin-top: 16px; border-top: 1px solid #D5D9D9; padding-top: 16px; }
+    .cal-buttons .cal-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #888C8C; margin-bottom: 10px; }
+    .cal-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; margin: 8px 0; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; text-decoration: none; font-family: inherit; cursor: pointer; transition: transform 0.2s ease; }
+    .cal-btn:active { transform: scale(0.98); }
+    .cal-btn-google { background: #4285F4; color: #fff; }
+    .cal-btn-apple { background: #0F1111; color: #fff; }
+    .cal-loading { font-size: 13px; color: var(--text-light); padding: 8px 0; }
   </style>
 </head>
 <body>
@@ -922,6 +929,7 @@
       <div class="popup-icon">&#10003;</div>
       <h2 id="popupTitle">You're All Set!</h2>
       <p class="popup-detail" id="popupDetail"></p>
+      <div id="calendarButtons"></div>
       <button class="popup-close" onclick="document.getElementById('popupOverlay').classList.remove('visible')">Done</button>
     </div>
   </div>
@@ -2037,14 +2045,58 @@ function showConfirmation(payload, result) {
 
   document.getElementById('popupTitle').textContent = title;
   document.getElementById('popupDetail').innerHTML = detail;
+  document.getElementById('calendarButtons').innerHTML = '<div class="cal-loading">Loading calendar options...</div>';
   document.getElementById('popupOverlay').classList.add('visible');
 
-  // Reset submit button
+  fetchCalendarLinks(payload);
+
   document.getElementById('submitBtn').disabled = false;
   document.getElementById('submitText').textContent = 'Confirm Booking';
 }
 
+async function fetchCalendarLinks(payload) {
+  var container = document.getElementById('calendarButtons');
+  if (!container) return;
+
+  var MONTHS_MAP = {January:'01',February:'02',March:'03',April:'04',May:'05',June:'06',July:'07',August:'08',September:'09',October:'10',November:'11',December:'12'};
+  var isoDate = '';
+  var dm = payload.date.match(/(\w+)\s+(\d+),?\s*(\d{4})/);
+  if (dm) isoDate = dm[3] + '-' + MONTHS_MAP[dm[1]] + '-' + dm[2].padStart(2, '0');
+
+  var isoTime = '';
+  var tm = payload.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (tm) {
+    var h = parseInt(tm[1]);
+    if (tm[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+    if (tm[3].toUpperCase() === 'AM' && h === 12) h = 0;
+    isoTime = h.toString().padStart(2, '0') + ':' + tm[2];
+  }
+
+  if (!isoDate || !isoTime) { container.innerHTML = ''; return; }
+
+  var tz = currentLocation.timezone || 'America/New_York';
+  var locName = currentLocation.displayName || '';
+
+  try {
+    var resp = await fetch('https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/add-to-calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-secret': 'vcal_k8m2p4x7w9' },
+      body: JSON.stringify({ title: 'Session at ' + locName, event_date: isoDate, event_time: isoTime, duration_min: 60, location_name: locName, timezone: tz }),
+    });
+    var data = await resp.json();
+    if (data.gcal_url || data.ics_url) {
+      var html = '<div class="cal-buttons"><div class="cal-label">Add to Calendar</div>';
+      if (data.gcal_url) html += '<a class="cal-btn cal-btn-google" href="' + data.gcal_url + '" target="_blank" rel="noopener">📅 Google Calendar</a>';
+      if (data.ics_url) html += '<a class="cal-btn cal-btn-apple" href="' + data.ics_url + '">🗓 Apple / Outlook</a>';
+      html += '</div>';
+      container.innerHTML = html;
+    } else { container.innerHTML = ''; }
+  } catch (e) { container.innerHTML = ''; }
+}
+
 function showBookingError(msg) {
+  var calEl = document.getElementById('calendarButtons');
+  if (calEl) calEl.innerHTML = '';
   var phone = currentLocation.phone || '';
   var detail = escapeHtml(msg);
   if (phone) {
