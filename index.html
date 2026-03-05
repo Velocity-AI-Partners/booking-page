@@ -2179,7 +2179,7 @@ function showNoCreditsPopup() {
   if (calEl) calEl.innerHTML = '';
 
   document.getElementById('popupTitle').textContent = 'No Session Credits';
-  var detail = 'You don't have any remaining session credits at <strong>' + escapeHtml(locName) + '</strong>.';
+  var detail = 'You do not have any remaining session credits at <strong>' + escapeHtml(locName) + '</strong>.';
   detail += '<div class="no-credits-info"><div class="nc-label">Purchase More Sessions</div>';
   if (phone) detail += '&#128222; Call us: <strong>' + escapeHtml(phone) + '</strong><br>';
   if (website) detail += '&#127760; Visit: <a href="' + website + '" target="_blank" rel="noopener">' + escapeHtml(locName) + ' Website</a><br>';
