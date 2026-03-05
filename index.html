@@ -963,7 +963,8 @@ var LOCATIONS = {
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
     daysAhead: 14,
-    leadDaysAhead: 5,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -991,7 +992,8 @@ var LOCATIONS = {
     crm: 'clubready',
     hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
     daysAhead: 14,
-    leadDaysAhead: 5,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1019,7 +1021,8 @@ var LOCATIONS = {
     crm: 'clubready',
     hours: { weekday: [9, 20], saturday: [9, 15], sunday: [10, 14] },
     daysAhead: 14,
-    leadDaysAhead: 5,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
     leadOffer: { label: 'Intro Stretch: $39 (25 min) or $59 (50 min)', label25: 'Intro Stretch (25 min): $39', label50: 'Intro Stretch (50 min): $59', detail: 'Includes MAPS assessment (Mobility, Activation, Posture, Symmetry)' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1079,7 +1082,8 @@ var LOCATIONS = {
     crm: 'clubready',
     hours: { weekday: [7, 20], saturday: [8, 16], sunday: [11, 17] },
     daysAhead: 14,
-    leadDaysAhead: 5,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
     leadOffer: { label: 'FREE Initial Demo Session', detail: 'About 45-60 minutes, just bring comfortable clothing and socks' },
     pricing: {
       title: 'Session Pricing',
@@ -1103,7 +1107,8 @@ var LOCATIONS = {
     crm: 'clubready',
     hours: { weekday: [7, 19], saturday: [8, 16], sunday: [11, 17] },
     daysAhead: 14,
-    leadDaysAhead: 5,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
     leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
     pricing: {
       title: 'Member Session Pricing',
@@ -1333,6 +1338,7 @@ function init() {
   populateGreeting();
   setupLoadingSkeleton();
   buildDateCarousel();
+  checkLeadSlotExpansion();
 
   // Fetch member info if member ID present and location is ClubReady
   if (memberId && currentLocation.crm === 'clubready') {
@@ -1490,6 +1496,55 @@ function buildDateCarousel() {
     if (items.length > 0) {
       selectDate(items[0].dataset.date);
     }
+  }
+}
+
+
+async function checkLeadSlotExpansion() {
+  var isLead = userInfo.leadId && !userInfo.memberId;
+  if (!isLead || !currentLocation || !currentLocation.leadDaysAhead) return;
+  if (!currentLocation.leadDaysAheadExpanded) return;
+
+  var now = getLocationNow();
+  var dates = [];
+  for (var i = 0; i < currentLocation.leadDaysAhead; i++) {
+    var d = new Date(now);
+    d.setDate(d.getDate() + i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+
+  try {
+    var requests = dates.map(function(dateStr) {
+      return fetch(CONFIG.availabilityWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: currentLocationSlug,
+          date: dateStr,
+          leadId: userInfo.leadId || '',
+          timezone: currentLocation.timezone,
+          crm: currentLocation.crm,
+          storeId: currentLocation.clubreadyStoreId || null,
+        }),
+      }).then(function(r) { return r.ok ? r.json() : []; })
+        .catch(function() { return []; });
+    });
+
+    var results = await Promise.all(requests);
+    var totalSlots = 0;
+    results.forEach(function(data) {
+      var slots = Array.isArray(data) ? data : (data.slots || []);
+      totalSlots += slots.length;
+    });
+
+    if (totalSlots <= 2) {
+      currentLocation.leadDaysAhead = currentLocation.leadDaysAheadExpanded;
+      selectedDate = null;
+      dateOffset = 0;
+      buildDateCarousel();
+    }
+  } catch (err) {
+    console.warn('Lead slot expansion check failed:', err.message);
   }
 }
 
