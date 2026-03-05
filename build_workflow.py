@@ -64,8 +64,8 @@ const storeId = body.storeId || 0;
 const knetkLocations = {
   'stretch-zone-westborough': { leadId: '128047422', storeId: 15077 },
   'stretch-zone-west-boylston': { leadId: '128181157', storeId: 14803 },
-  'stretch-zone-dfw': { leadId: '128183277', storeId: 0 },
-  'stretch-zone-baton-rouge': { leadId: '128122536', storeId: 0 },
+  'stretch-zone-dfw': { leadId: '128183277', storeId: 8486 },
+  'stretch-zone-baton-rouge': { leadId: '128122536', storeId: 12330 },
 };
 
 const knetk = knetkLocations[location];
