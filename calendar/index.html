@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Add to Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FF9900;
+      --primary-light: #FFF4E6;
+      --primary-hover: #E88B00;
+      --accent: #146EB4;
+      --accent-light: #E8F4FD;
+      --text: #0F1111;
+      --text-muted: #565959;
+      --text-light: #888C8C;
+      --bg: #ffffff;
+      --bg-warm: #0077B6;
+      --border: #D5D9D9;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --transition: 0.2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-warm);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-wrapper {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 0 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-header {
+      background: white;
+      padding: 28px 20px 36px;
+      border-radius: 0 0 24px 24px;
+      margin-bottom: -12px;
+      position: relative;
+    }
+    .page-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: inherit;
+      border-radius: 0 0 24px 24px;
+    }
+    .header-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    .header-info h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .header-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    .card-area {
+      padding: 24px 16px;
+      flex: 1;
+    }
+
+    .confirm-icon {
+      width: 64px;
+      height: 64px;
+      background: #E6F9E6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .confirm-icon svg {
+      width: 32px;
+      height: 32px;
+      color: #2E7D32;
+    }
+
+    .card {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .event-details {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .event-location {
+      color: var(--text-light);
+      font-size: 13px;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 -20px 24px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px 20px;
+      margin: 10px 0;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .btn-google {
+      background: #4285F4;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(66,133,244,0.3);
+    }
+    .btn-google:hover {
+      box-shadow: 0 4px 12px rgba(66,133,244,0.4);
+    }
+
+    .btn-apple {
+      background: var(--text);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .btn-apple:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: white;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .loading .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: white;
+      font-size: 15px;
+    }
+    .error-msg h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-info">
+          <h1>Booking Confirmed</h1>
+          <p>Add this session to your calendar</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-area" id="content">
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading event details...
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/add-to-calendar';
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    function formatDate(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return MONTHS[m - 1] + ' ' + d + ', ' + y;
+    }
+
+    function formatTime(timeStr) {
+      const [h, min] = timeStr.split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      return h12 + ':' + min.toString().padStart(2, '0') + ' ' + ampm;
+    }
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const content = document.getElementById('content');
+
+      if (!code) {
+        content.innerHTML = '<div class="error-msg"><h2>Invalid Link</h2><p>This calendar link is missing a code parameter.</p></div>';
+        return;
+      }
+
+      try {
+        const resp = await fetch(API_BASE + '?code=' + encodeURIComponent(code));
+        if (!resp.ok) {
+          content.innerHTML = '<div class="error-msg"><h2>Event Not Found</h2><p>This calendar link may have expired or is invalid.</p></div>';
+          return;
+        }
+
+        const event = await resp.json();
+        const dateStr = formatDate(event.event_date);
+        const timeStr = formatTime(event.event_time);
+
+        content.innerHTML = `
+          <div class="card">
+            <div class="confirm-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <h2>${event.title}</h2>
+            <div class="event-details">${dateStr} at ${timeStr}</div>
+            <div class="event-location">${event.location_name}</div>
+            <div class="divider"></div>
+            <div class="section-label">Add to your calendar</div>
+            <a class="btn btn-google" href="${event.gcal_url}" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.5 22h-15A2.5 2.5 0 012 19.5v-15A2.5 2.5 0 014.5 2H8v2H4.5a.5.5 0 00-.5.5v15a.5.5 0 00.5.5h15a.5.5 0 00.5-.5V16h2v3.5a2.5 2.5 0 01-2.5 2.5z"/>
+                <path d="M17 2h-4v2h2.59l-6.3 6.29 1.42 1.42L17 5.41V8h2V2z"/>
+              </svg>
+              Google Calendar
+            </a>
+            <a class="btn btn-apple" href="${event.ics_url}">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+              </svg>
+              Apple / Outlook Calendar
+            </a>
+          </div>`;
+      } catch (e) {
+        content.innerHTML = '<div class="error-msg"><h2>Something went wrong</h2><p>Could not load event details. Please try again.</p></div>';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
