@@ -1455,19 +1455,23 @@ function buildDateCarousel() {
   document.getElementById('datePrev').disabled = (dateOffset <= 0);
   document.getElementById('dateNext').disabled = (dateOffset >= maxDays - 7);
 
-  for (var i = 0; i < maxDays; i++) {
+  var openCount = 0;
+  var calendarDay = 0;
+  while (openCount < maxDays) {
     var d = new Date(startDate);
-    d.setDate(d.getDate() + i);
+    d.setDate(d.getDate() + calendarDay);
     d.setHours(0, 0, 0, 0);
+    calendarDay++;
 
     if (d < today) continue;
+    if (!isDayOpen(d)) continue;
+    openCount++;
 
     var item = document.createElement('div');
     item.className = 'date-item';
 
     var dayOfWeek = d.getDay();
-    var noSlots = (dayOfWeek === 0 && !currentLocation.hours.sunday);
-    if (noSlots) item.classList.add('sunday');
+    var noSlots = false;
 
     item.innerHTML =
       '<span class="date-day">' + days[dayOfWeek] + '</span>' +
@@ -1507,9 +1511,14 @@ async function checkLeadSlotExpansion() {
 
   var now = getLocationNow();
   var dates = [];
-  for (var i = 0; i < currentLocation.leadDaysAhead; i++) {
+  var leadOpenCount = 0;
+  var leadCalDay = 0;
+  while (leadOpenCount < currentLocation.leadDaysAhead) {
     var d = new Date(now);
-    d.setDate(d.getDate() + i);
+    d.setDate(d.getDate() + leadCalDay);
+    leadCalDay++;
+    if (!isDayOpen(d)) continue;
+    leadOpenCount++;
     dates.push(d.toISOString().split('T')[0]);
   }
 
@@ -1553,7 +1562,17 @@ function shiftDates(offset) {
   var maxDays = (isLead && currentLocation && currentLocation.leadDaysAhead)
     ? currentLocation.leadDaysAhead
     : (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
-  dateOffset = Math.max(0, Math.min(maxDays - 7, dateOffset + offset));
+  var step = offset > 0 ? 1 : -1;
+  var remaining = Math.abs(offset);
+  var newOffset = dateOffset;
+  var now = getLocationNow();
+  while (remaining > 0) {
+    newOffset += step;
+    var check = new Date(now);
+    check.setDate(check.getDate() + newOffset);
+    if (isDayOpen(check)) remaining--;
+  }
+  dateOffset = Math.max(0, Math.min(maxDays - 7, newOffset));
   selectedDate = null;
   selectedSlot = null;
   updateSelectionSummary();
@@ -1966,7 +1985,7 @@ async function submitBooking() {
     email: email,
     phone: cleanPhone(phone),
     date: formattedDate,
-    time: selectedSlot.displayTime || selectedSlot.time || '',
+    time: selectedSlot.time || '',
     instructor: selectedSlot.instructor || '',
     classId: selectedSlot.classId || '',
     type: selectedSlot.type || currentLocation.sessionLabel,
@@ -2074,6 +2093,14 @@ function generateFallbackSlots(dateStr) {
 // ============================================================
 // UTILITIES
 // ============================================================
+function isDayOpen(date) {
+  if (!currentLocation || !currentLocation.hours) return true;
+  var day = date.getDay();
+  if (day === 0) return !!currentLocation.hours.sunday;
+  if (day === 6) return !!currentLocation.hours.saturday;
+  return !!currentLocation.hours.weekday;
+}
+
 function getLocationNow() {
   if (!currentLocation) return new Date();
   var now = new Date();
