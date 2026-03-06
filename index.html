@@ -1490,7 +1490,7 @@ function buildDateCarousel() {
       '<span class="date-num">' + d.getDate() + '</span>' +
       '<span class="date-month">' + months[d.getMonth()] + '</span>';
 
-    var dateStr = d.toISOString().split('T')[0];
+    var dateStr = toLocalDateStr(d);
     item.dataset.date = dateStr;
 
     if (selectedDate === dateStr) {
@@ -1531,7 +1531,7 @@ async function checkLeadSlotExpansion() {
     leadCalDay++;
     if (!isDayOpen(d)) continue;
     leadOpenCount++;
-    dates.push(d.toISOString().split('T')[0]);
+    dates.push(toLocalDateStr(d));
   }
 
   try {
@@ -2237,6 +2237,13 @@ function getLocationNow() {
   var now = new Date();
   var tzString = now.toLocaleString('en-US', { timeZone: currentLocation.timezone });
   return new Date(tzString);
+}
+
+function toLocalDateStr(d) {
+  var y = d.getFullYear();
+  var m = ('0' + (d.getMonth() + 1)).slice(-2);
+  var day = ('0' + d.getDate()).slice(-2);
+  return y + '-' + m + '-' + day;
 }
 
 function formatPhone(phone) {

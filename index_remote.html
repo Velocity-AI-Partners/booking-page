@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Book Your Session</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FF9900;
+      --primary-light: #FFF4E6;
+      --primary-hover: #E88B00;
+      --accent: #146EB4;
+      --accent-light: #E8F4FD;
+      --text: #0F1111;
+      --text-muted: #565959;
+      --text-light: #888C8C;
+      --bg: #ffffff;
+      --bg-subtle: #EAEDED;
+      --bg-warm: #0077B6;
+      --border: #D5D9D9;
+      --border-light: #EAEDED;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+      --transition: 0.2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-warm);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-wrapper {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 0 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ========== GRADIENT HEADER ========== */
+    .page-header {
+      background: white;
+      padding: 28px 20px 36px;
+      border-radius: 0 0 24px 24px;
+      margin-bottom: -12px;
+      position: relative;
+    }
+    .page-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: inherit;
+      border-radius: 0 0 24px 24px;
+    }
+    .header-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    .header-logo {
+      width: 176px;
+      height: 176px;
+      border-radius: 24px;
+      object-fit: contain;
+      background: white;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .header-info h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .header-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+    .header-phone {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .header-address {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* ========== CONTENT AREA ========== */
+    .content-area {
+      padding: 24px 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ========== GREETING ========== */
+    .greeting {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .greeting h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .greeting p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ========== CARD ========== */
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    /* ========== DATE CAROUSEL ========== */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .date-nav-label {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .date-nav-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .date-nav-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-subtle);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .date-nav-btn:hover { background: var(--border); border-color: var(--text-light); }
+    .date-nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+    .date-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-snap-type: x mandatory;
+    }
+    .date-scroll::-webkit-scrollbar { display: none; }
+
+    .date-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 64px;
+      padding: 10px 8px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border-light);
+      background: var(--bg-subtle);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      scroll-snap-align: start;
+      color: var(--text);
+    }
+    .date-item:hover { border-color: var(--accent); background: #f0f8ff; }
+    .date-item:active { transform: scale(0.96); }
+    .date-item.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
+    }
+    .date-item.selected .date-day { color: rgba(255,255,255,0.85); }
+    .date-item.selected .date-month { color: rgba(255,255,255,0.7); }
+    .date-item.sunday { opacity: 0.4; pointer-events: none; }
+    .date-item .date-day {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .date-item .date-num {
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .date-item .date-month {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-top: 1px;
+    }
+
+    /* ========== SLOT GROUPS (collapsible by type) ========== */
+    .slot-group {
+      margin-bottom: 10px;
+    }
+    .slot-group:last-child { margin-bottom: 0; }
+    .slot-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 14px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s ease;
+      text-align: center;
+    }
+    .slot-group-header:hover { background: var(--border); }
+    .slot-group-header-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .slot-group-header-count {
+      font-size: 12px;
+      color: var(--text-light);
+      font-weight: 500;
+      margin-left: 8px;
+    }
+    .slot-group-chevron {
+      font-size: 16px;
+      color: var(--text-light);
+      transition: transform 0.2s ease;
+    }
+    .slot-group.collapsed .slot-group-chevron { transform: rotate(-90deg); }
+    .slot-group-content {
+      padding-top: 8px;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+      max-height: 2000px;
+      opacity: 1;
+    }
+    .slot-group.collapsed .slot-group-content {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+    }
+
+    /* ========== TIME SLOTS (Stretch Zone / StretchLab) ========== */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 8px;
+    }
+    .slot {
+      padding: 14px 10px;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      background: var(--bg-subtle);
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .slot:hover { border-color: var(--accent); background: #f0f8ff; }
+    .slot:active { transform: scale(0.97); }
+    .slot.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
+    }
+    .slot.selected .slot-time { color: white; }
+    .slot.selected .slot-instructor,
+    .slot.selected .slot-type { color: rgba(255,255,255,0.85); }
+    .slot-time {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .slot-instructor {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .slot-type {
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    /* ========== CLASS LIST (IMA - group classes) ========== */
+    .class-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .class-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--bg-subtle);
+    }
+    .class-item:hover { border-color: var(--accent); background: #f0f8ff; }
+    .class-item:active { transform: scale(0.98); }
+    .class-item.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
+    }
+    .class-item.selected .class-name { color: white; }
+    .class-item.selected .class-time,
+    .class-item.selected .class-detail,
+    .class-item.selected .class-badge { color: rgba(255,255,255,0.85); }
+    .class-item.selected .class-badge { background: rgba(255,255,255,0.2); }
+    .class-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+      min-width: 42px;
+      text-align: center;
+    }
+    .badge-bjj { background: #DBEAFE; color: #1D4ED8; }
+    .badge-muay-thai { background: #FEE2E2; color: #DC2626; }
+    .badge-mma { background: #FFF7ED; color: #EA580C; }
+    .badge-fitness { background: #D1FAE5; color: #059669; }
+    .badge-kids { background: #EDE9FE; color: #7C3AED; }
+    .badge-karate { background: #FEF3C7; color: #D97706; }
+    .badge-other { background: #F3F4F6; color: #6B7280; }
+    .class-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .class-name {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .class-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .class-time {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    /* ========== LOADING SKELETON ========== */
+    .slots-loading {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 8px;
+    }
+    .class-loading {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .slot-skeleton {
+      height: 68px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(90deg, #EAEDED 25%, #D5D9D9 50%, #EAEDED 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    .class-skeleton {
+      height: 64px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(90deg, #EAEDED 25%, #D5D9D9 50%, #EAEDED 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .loading-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 0 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .loading-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .no-slots {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-muted);
+    }
+    .no-slots-icon { font-size: 32px; margin-bottom: 8px; }
+    .no-slots p { font-size: 14px; }
+
+    /* ========== SELECTION SUMMARY ========== */
+    .selection-summary {
+      display: none;
+      background: white;
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .selection-summary.visible { display: block; }
+    .selection-summary h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .summary-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .summary-row .icon { font-size: 16px; flex-shrink: 0; width: 20px; }
+    .summary-row .label { color: var(--text-muted); min-width: 70px; font-size: 13px; }
+    .summary-row .value { font-weight: 700; }
+
+    .summary-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-light);
+    }
+    .summary-note .icon { font-size: 16px; flex-shrink: 0; width: 20px; }
+
+    /* ========== SUBMIT ========== */
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: #FF9900;
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 14px rgba(255,153,0,0.3);
+    }
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,153,0,0.4);
+    }
+    .submit-btn:active:not(:disabled) { transform: translateY(0); }
+    .submit-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .submit-btn .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ========== CONFIRMATION POPUP ========== */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .popup-overlay.visible { display: flex; }
+    .popup {
+      background: white;
+      border-radius: 20px;
+      padding: 36px 28px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: popupIn 0.3s ease;
+    }
+    @keyframes popupIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .popup-icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 36px;
+    }
+    .popup h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .popup .popup-detail {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .popup .popup-detail strong { color: var(--text); }
+    .popup-close {
+      width: 100%;
+      padding: 14px;
+      background: #FF9900;
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .popup-close:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,153,0,0.3); }
+
+    .pricing-box {
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-top: 16px;
+      text-align: left;
+    }
+    .pricing-box .pricing-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pricing-box table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .pricing-box td {
+      padding: 3px 0;
+      color: var(--text-muted);
+    }
+    .pricing-box td:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .pricing-box .pricing-note {
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    /* ========== ERROR SCREEN ========== */
+    .error-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .error-screen.visible { display: block; }
+    .error-screen-icon { font-size: 48px; margin-bottom: 12px; }
+    .error-screen h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .error-screen p { font-size: 14px; color: var(--text-muted); }
+
+    /* ========== LOCATION PICKER ========== */
+    .picker-header {
+      background: #FF9900;
+      padding: 32px 20px;
+      border-radius: 0 0 24px 24px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .picker-header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .picker-header p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.9);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .location-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0 16px;
+    }
+    .location-group-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 4px 4px;
+    }
+    .location-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      background: var(--bg);
+      box-shadow: var(--shadow);
+    }
+    .location-option:hover {
+      border-color: #FF9900;
+      background: #FFF4E6;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    .location-option:active { transform: translateY(0); }
+    .location-option img {
+      width: 96px;
+      height: 96px;
+      border-radius: 16px;
+      object-fit: contain;
+      background: var(--bg-subtle);
+      padding: 3px;
+      flex-shrink: 0;
+    }
+    .location-option-info h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 1px;
+    }
+    .location-option-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      text-align: center;
+      padding: 24px 20px 8px;
+      margin-top: auto;
+      font-size: 11px;
+      color: var(--text-light);
+    }
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ========== UTILITIES ========== */
+    .hidden { display: none !important; }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 400px) {
+      .page-header { padding: 20px 16px 28px; }
+      .content-area { padding: 20px 12px 0; }
+      .greeting h2 { font-size: 20px; }
+      .slots-grid { grid-template-columns: 1fr 1fr; }
+      .date-item { min-width: 56px; padding: 8px 6px; }
+      .header-info h1 { font-size: 18px; }
+    }
+    .cal-buttons { margin-top: 16px; border-top: 1px solid #D5D9D9; padding-top: 16px; }
+    .cal-buttons .cal-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #888C8C; margin-bottom: 10px; }
+    .cal-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; margin: 8px 0; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; text-decoration: none; font-family: inherit; cursor: pointer; transition: transform 0.2s ease; color: #fff; }
+    .cal-btn:active { transform: scale(0.98); }
+    .cal-btn-google { background: #4285F4; }
+    .cal-btn-apple { background: #0F1111; }
+    .cal-loading { font-size: 13px; color: var(--text-light); padding: 8px 0; }
+    .no-credits-info { background: var(--primary-light); border-radius: var(--radius-sm); padding: 16px; margin-top: 12px; text-align: left; }
+    .no-credits-info .nc-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); margin-bottom: 8px; }
+    .no-credits-info a { color: var(--accent); font-weight: 600; text-decoration: none; }
+    .no-credits-info a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <!-- Error: Unknown Location -->
+  <div id="errorScreen" class="error-screen">
+    <div class="error-screen-icon">&#128269;</div>
+    <h2>Location Not Found</h2>
+    <p>This booking link seems to be invalid or expired.<br>Please use the link from your text message.</p>
+  </div>
+
+  <!-- Location Picker -->
+  <div id="locationPicker" class="hidden">
+    <div class="picker-header">
+      <h1>Book a Session</h1>
+      <p>Select your location to get started</p>
+    </div>
+    <div id="locationList" class="location-list"></div>
+  </div>
+
+  <!-- Main Booking Flow -->
+  <div id="bookingFlow" class="hidden">
+
+    <!-- Gradient Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <img id="locationLogo" class="header-logo" src="" alt="Logo">
+        <div class="header-info">
+          <h1 id="locationName"></h1>
+          <p id="locationTagline"></p>
+        </div>
+        <span id="headerPhone" class="header-phone"></span>
+        <span id="headerAddress" class="header-address"></span>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- Greeting -->
+      <div class="greeting" id="greetingCard">
+        <h2 id="greetingText">Book Your Session</h2>
+        <p id="greetingSubtext">Pick a date and time that works for you.</p>
+      </div>
+
+      <!-- Date Picker -->
+      <div class="card">
+        <div class="card-title">Select a Date</div>
+        <div class="date-nav">
+          <span class="date-nav-label" id="dateNavLabel"></span>
+          <div class="date-nav-btns">
+            <button class="date-nav-btn" id="datePrev" onclick="shiftDates(-7)">&#8249;</button>
+            <button class="date-nav-btn" id="dateNext" onclick="shiftDates(7)">&#8250;</button>
+          </div>
+        </div>
+        <div class="date-scroll" id="dateScroll"></div>
+      </div>
+
+      <!-- Time Slots / Class Schedule -->
+      <div class="card">
+        <div class="card-title" id="slotsTitle">Available Times</div>
+        <div id="slotsContainer">
+          <!-- Loading spinner -->
+          <div class="loading-indicator hidden" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <span>Loading available times...</span>
+          </div>
+          <!-- Slot-mode loading -->
+          <div class="slots-loading" id="slotsLoading">
+            <div class="slot-skeleton"></div>
+            <div class="slot-skeleton"></div>
+            <div class="slot-skeleton"></div>
+            <div class="slot-skeleton"></div>
+            <div class="slot-skeleton"></div>
+            <div class="slot-skeleton"></div>
+          </div>
+          <!-- Class-mode loading -->
+          <div class="class-loading hidden" id="classLoading">
+            <div class="class-skeleton"></div>
+            <div class="class-skeleton"></div>
+            <div class="class-skeleton"></div>
+            <div class="class-skeleton"></div>
+          </div>
+          <div class="slots-grid hidden" id="slotsGrid"></div>
+          <div class="class-list hidden" id="classList"></div>
+          <div class="no-slots hidden" id="noSlots">
+            <div class="no-slots-icon">&#128197;</div>
+            <p>No available times on this day.<br>Try selecting another date.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection Summary -->
+      <div class="selection-summary" id="selectionSummary">
+        <h3>Your Selection</h3>
+        <div class="summary-row" id="summaryNameRow" style="display:none;">
+          <span class="icon">&#128100;</span>
+          <span class="label">Client</span>
+          <span class="value" id="summaryName"></span>
+        </div>
+        <div class="summary-row">
+          <span class="icon">&#128197;</span>
+          <span class="label">Date</span>
+          <span class="value" id="summaryDate"></span>
+        </div>
+        <div class="summary-row">
+          <span class="icon">&#128336;</span>
+          <span class="label">Time</span>
+          <span class="value" id="summaryTime"></span>
+        </div>
+        <div class="summary-row" id="summaryClassRow" style="display:none;">
+          <span class="icon">&#127941;</span>
+          <span class="label">Class</span>
+          <span class="value" id="summaryClass"></span>
+        </div>
+        <div class="summary-row" id="summaryInstructorRow" style="display:none;">
+          <span class="icon">&#128100;</span>
+          <span class="label">With</span>
+          <span class="value" id="summaryInstructor"></span>
+        </div>
+        <div class="summary-row" id="summaryPlanRow" style="display:none;">
+          <span class="icon">&#128203;</span>
+          <span class="label">Plan</span>
+          <span class="value" id="summaryPlan"></span>
+        </div>
+        <div class="summary-row" id="summaryCreditsRow" style="display:none;">
+          <span class="icon">&#127915;</span>
+          <span class="label">Credits</span>
+          <span class="value" id="summaryCredits"></span>
+        </div>
+        <div id="summaryPricing" style="display:none;"></div>
+        <div class="summary-note" id="summaryPayNote" style="display:none;">
+          <span class="icon">&#128176;</span>
+          Book online, pay in store
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="card" id="formCard" style="background:white">
+        <button class="submit-btn" id="submitBtn" onclick="submitBooking()" disabled>
+          <span id="submitText">Confirm Booking</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Confirmation Popup -->
+  <div id="popupOverlay" class="popup-overlay">
+    <div class="popup">
+      <div class="popup-icon">&#10003;</div>
+      <h2 id="popupTitle">You're All Set!</h2>
+      <p class="popup-detail" id="popupDetail"></p>
+      <div id="calendarButtons"></div>
+      <button class="popup-close" onclick="document.getElementById('popupOverlay').classList.remove('visible')">Done</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Powered by <a href="https://velocity.ai/" target="_blank">Velocity AI</a>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION
+// ============================================================
+var CONFIG = {
+  bookingApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/book-session',
+  availabilityWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/booking-availability',
+  memberInfoApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/member-info',
+  daysAhead: 30,
+};
+
+// ============================================================
+// LOCATION DATABASE
+// ============================================================
+var LOCATIONS = {
+  'stretch-zone-westborough': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Westborough MA',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-westborough-1771338230095.png',
+    timezone: 'America/New_York',
+    phone: '15083291134',
+    email: 'westboroughma@stretchzone.com',
+    address: '600 Union St, Westborough, MA 01581',
+    clubreadyStoreId: 15077,
+    crm: 'clubready',
+    hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['1x/week (4/mo)', '$50/session'],
+        ['2x/week (8/mo)', '$45/session'],
+        ['3x/week (12/mo)', '$40/session'],
+        ['Drop-in', '$85/session'],
+      ],
+    },
+  },
+  'stretch-zone-west-boylston': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - West Boylston MA',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/New_York',
+    phone: '17742614238',
+    email: 'westboylstonma@stretchzone.com',
+    address: '342 W Boylston St, West Boylston, MA 01583',
+    clubreadyStoreId: 14803,
+    crm: 'clubready',
+    hours: { weekday: [8, 19], saturday: [10, 15], sunday: null },
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['1x/week (4/mo)', '$50/session'],
+        ['2x/week (8/mo)', '$45/session'],
+        ['3x/week (12/mo)', '$40/session'],
+        ['Drop-in', '$85/session'],
+      ],
+    },
+  },
+  'stretchlab-carlsbad': {
+    name: 'StretchLab',
+    displayName: 'StretchLab - Carlsbad North Coast CA',
+    brand: 'StretchLab',
+    tagline: 'One-on-one assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretchlab-carlsbad-1771338129474.webp',
+    timezone: 'America/Los_Angeles',
+    phone: '17602837126',
+    email: 'carlsbadnorthcoast@stretchlab.com',
+    address: '1850 Marron Road, Suite 102, Carlsbad, CA 92008',
+    clubreadyStoreId: 12727,
+    crm: 'clubready',
+    hours: { weekday: [9, 20], saturday: [9, 15], sunday: [10, 14] },
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'Intro Stretch: $39 (25 min) or $59 (50 min)', label25: 'Intro Stretch (25 min): $39', label50: 'Intro Stretch (50 min): $59', detail: 'Includes MAPS assessment (Mobility, Activation, Posture, Symmetry)' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['25 min membership', 'from $52/session'],
+        ['50 min membership', 'from $81/session'],
+        ['25 min single', '$65'],
+        ['50 min single', '$125'],
+      ],
+    },
+  },
+  'integrated-martial-arts-westborough': {
+    name: 'IMA Fitness',
+    displayName: 'Integrated Martial Arts - Westborough',
+    brand: 'IMA Fitness',
+    tagline: 'Martial arts, fitness, and self-defense',
+    sessionLabel: 'Class',
+    uiMode: 'classes',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-westborough-1771600419957.png',
+    timezone: 'America/New_York',
+    phone: '17747724759',
+    email: 'info@integratedmartialarts.com',
+    address: '227 Turnpike Road, Suite C, Westborough, MA 01581',
+    crm: 'spark',
+    hours: { weekday: [6, 20], saturday: [10, 14], sunday: null },
+    leadOffer: { label: '$19.99 for 3 Trial Sessions', detail: 'Available for adults and kids' },
+  },
+  'integrated-martial-arts-worcester': {
+    name: 'IMA Fitness',
+    displayName: 'Integrated Martial Arts - Worcester',
+    brand: 'IMA Fitness',
+    tagline: 'Martial arts, fitness, and self-defense',
+    sessionLabel: 'Class',
+    uiMode: 'classes',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png',
+    timezone: 'America/New_York',
+    phone: '15082519469',
+    email: 'info@imaworcester.com',
+    address: '342A West Boylston Street, West Boylston, MA 01583',
+    crm: 'wellnessliving',
+    hours: { weekday: [9, 20], saturday: [9, 14], sunday: [10, 12] },
+    leadOffer: { label: '$19.99 for 3 Trial Sessions', detail: 'Available for adults and kids' },
+  },
+  'stretch-zone-dfw': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Southlake TX',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/Chicago',
+    phone: '18176121666',
+    email: 'southlake@stretchzone.com',
+    address: '405 N Carroll Ave, Southlake, TX 76092',
+    clubreadyStoreId: 8486,
+    crm: 'clubready',
+    hours: { weekday: [7, 20], saturday: [8, 16], sunday: [11, 17] },
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'FREE Initial Demo Session', detail: 'About 45-60 minutes, just bring comfortable clothing and socks' },
+    pricing: {
+      title: 'Session Pricing',
+      rows: [],
+      note: 'Your first session is FREE',
+    },
+  },
+  'stretch-zone-baton-rouge': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Bocage LA',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/Chicago',
+    phone: '12254562734',
+    email: 'bocage@stretchzone.com',
+    address: '7575 Jefferson Hwy Suite E, Baton Rouge, LA 70806',
+    clubreadyStoreId: 12330,
+    crm: 'clubready',
+    hours: { weekday: [7, 19], saturday: [8, 16], sunday: [11, 17] },
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['Basic (2/mo)', '$139/mo'],
+        ['1x/week (4/mo)', '$240/mo'],
+        ['2x/week (8/mo)', '$440/mo'],
+        ['3x/week (12/mo)', '$600/mo'],
+        ['Drop-in', '$95/session'],
+      ],
+    },
+  },
+};
+
+// ============================================================
+// IMA CLASS SCHEDULES (from Supabase business_knowledge)
+// ============================================================
+var IMA_SCHEDULES = {
+  'integrated-martial-arts-westborough': {
+    Monday: [
+      { time: '5:00 AM', end: '6:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 AM', end: '7:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 AM', end: '7:00 AM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '7:00 AM', end: '8:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Kids Jiu Jitsu', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ (Gi)', cat: 'bjj' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Adult BJJ - Gi Advanced', cat: 'bjj' },
+    ],
+    Tuesday: [
+      { time: '5:00 AM', end: '6:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 AM', end: '7:00 AM', name: 'Adult BJJ (Nogi/Gi)', cat: 'bjj' },
+      { time: '11:00 AM', end: '12:00 PM', name: 'Adult BJJ (Nogi)', cat: 'bjj' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Kids Muay Thai', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'Boxing Fitness', cat: 'fitness' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Muay Thai - Advanced Sparring', cat: 'muay-thai' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ (Nogi)', cat: 'bjj' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Adult MMA', cat: 'mma' },
+    ],
+    Wednesday: [
+      { time: '6:00 AM', end: '7:00 AM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '6:00 AM', end: '7:00 AM', name: 'Boxing Fitness', cat: 'fitness' },
+      { time: '7:00 AM', end: '8:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Kids Wrestling', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ (Gi)', cat: 'bjj' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Adult MMA - Wrestling', cat: 'mma' },
+    ],
+    Thursday: [
+      { time: '5:00 AM', end: '6:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 AM', end: '7:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 AM', end: '7:00 AM', name: 'Adult BJJ (Nogi/Gi)', cat: 'bjj' },
+      { time: '11:00 AM', end: '12:00 PM', name: 'Adult BJJ (Nogi)', cat: 'bjj' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Kids Jiu Jitsu', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'Boxing Fitness', cat: 'fitness' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ (Nogi)', cat: 'bjj' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Adult MMA', cat: 'mma' },
+    ],
+    Friday: [
+      { time: '6:00 AM', end: '7:00 AM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '6:00 AM', end: '7:00 AM', name: 'Boxing Fitness', cat: 'fitness' },
+      { time: '7:00 AM', end: '8:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Muay Thai - All Levels Sparring', cat: 'muay-thai' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ (Gi)', cat: 'bjj' },
+    ],
+    Saturday: [
+      { time: '10:00 AM', end: '11:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '11:00 AM', end: '11:45 AM', name: 'Kids Muay Thai', cat: 'kids' },
+      { time: '11:00 AM', end: '12:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'Adult MMA', cat: 'mma' },
+      { time: '1:00 PM', end: '2:00 PM', name: 'Open Mat', cat: 'other' },
+    ],
+    Sunday: [],
+  },
+  'integrated-martial-arts-worcester': {
+    Monday: [
+      { time: '8:00 AM', end: '9:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:00 AM', end: '10:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:30 AM', end: '10:30 AM', name: 'BJJ - Submission Grappling', cat: 'bjj' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '3:00 PM', end: '4:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:00 PM', end: '5:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:10 PM', end: '4:55 PM', name: 'Tiny Tigers - Wrestling', cat: 'kids' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Mighty Dragons - Wrestling', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ', cat: 'bjj' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'No Gi Grappling', cat: 'bjj' },
+    ],
+    Tuesday: [
+      { time: '9:00 AM', end: '10:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:30 AM', end: '10:30 AM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'BJJ - Submission Grappling', cat: 'bjj' },
+      { time: '3:00 PM', end: '4:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:00 PM', end: '5:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:10 PM', end: '4:55 PM', name: 'Tiny Tigers - Muay Thai', cat: 'kids' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Advanced Karate (Children)', cat: 'karate' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Mighty Dragons - Muay Thai', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '5:45 PM', end: '6:30 PM', name: 'Beginner Karate (Children)', cat: 'karate' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '6:30 PM', end: '7:30 PM', name: 'Adult & Teen Karate', cat: 'karate' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Mixed Martial Arts (MMA)', cat: 'mma' },
+    ],
+    Wednesday: [
+      { time: '8:00 AM', end: '9:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:00 AM', end: '10:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:30 AM', end: '10:30 AM', name: 'BJJ - Submission Grappling', cat: 'bjj' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '3:00 PM', end: '4:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:00 PM', end: '5:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:10 PM', end: '4:55 PM', name: 'Tiny Tigers - BJJ', cat: 'kids' },
+      { time: '4:30 PM', end: '5:00 PM', name: 'Junior Karate (Ages 3-5)', cat: 'karate' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Beginner & Advanced Karate (Children)', cat: 'karate' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Mighty Dragons - BJJ', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '5:45 PM', end: '6:30 PM', name: 'Autism Program', cat: 'karate' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ', cat: 'bjj' },
+      { time: '6:30 PM', end: '7:30 PM', name: 'Adult & Teen Karate', cat: 'karate' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'No Gi Grappling', cat: 'bjj' },
+      { time: '7:30 PM', end: '8:30 PM', name: 'American Kempo JuJitsu', cat: 'karate' },
+    ],
+    Thursday: [
+      { time: '9:00 AM', end: '10:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:30 AM', end: '10:30 AM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'BJJ - Submission Grappling', cat: 'bjj' },
+      { time: '3:00 PM', end: '4:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:00 PM', end: '5:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:10 PM', end: '4:55 PM', name: 'Tiny Tigers - Muay Thai', cat: 'kids' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Beginner & Advanced Karate (Children)', cat: 'karate' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Mighty Dragons - Muay Thai', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '6:30 PM', end: '7:30 PM', name: 'Adult & Teen Karate', cat: 'karate' },
+      { time: '7:00 PM', end: '8:00 PM', name: 'Mixed Martial Arts (MMA)', cat: 'mma' },
+      { time: '7:30 PM', end: '8:30 PM', name: 'American Kempo JuJitsu', cat: 'karate' },
+    ],
+    Friday: [
+      { time: '8:00 AM', end: '9:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:00 AM', end: '10:00 AM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '9:30 AM', end: '10:30 AM', name: 'BJJ - Submission Grappling', cat: 'bjj' },
+      { time: '12:00 PM', end: '1:00 PM', name: 'Muay Thai Kickboxing', cat: 'muay-thai' },
+      { time: '3:00 PM', end: '4:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:00 PM', end: '5:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '4:10 PM', end: '4:55 PM', name: 'Tiny Tigers - Wrestling', cat: 'kids' },
+      { time: '5:00 PM', end: '5:45 PM', name: 'Mighty Dragons - Wrestling', cat: 'kids' },
+      { time: '5:00 PM', end: '6:00 PM', name: 'IMA Fit', cat: 'fitness' },
+      { time: '5:30 PM', end: '6:15 PM', name: 'Beginner & Advanced Karate (Children)', cat: 'karate' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Adult BJJ', cat: 'bjj' },
+      { time: '6:00 PM', end: '7:00 PM', name: 'Muay Thai - Sparring', cat: 'muay-thai' },
+      { time: '6:15 PM', end: '7:15 PM', name: 'Adult & Teen Karate', cat: 'karate' },
+    ],
+    Saturday: [
+      { time: '9:00 AM', end: '9:45 AM', name: 'Tiny Tigers - BJJ', cat: 'kids' },
+      { time: '9:00 AM', end: '9:45 AM', name: 'Kali Stick & Knife Fighting', cat: 'other' },
+      { time: '9:30 AM', end: '10:30 AM', name: 'Adult Karate', cat: 'karate' },
+      { time: '10:00 AM', end: '10:45 AM', name: 'Mighty Dragons Class', cat: 'kids' },
+      { time: '10:30 AM', end: '11:15 AM', name: 'Beginners & Advanced Karate - Juniors', cat: 'karate' },
+      { time: '11:15 AM', end: '12:00 PM', name: 'Autism Program', cat: 'karate' },
+      { time: '12:00 PM', end: '12:45 PM', name: 'New Student Autism', cat: 'karate' },
+    ],
+    Sunday: [
+      { time: '10:00 AM', end: '12:00 PM', name: 'Open Mat (Everyone)', cat: 'other' },
+    ],
+  },
+};
+
+// ============================================================
+// STATE
+// ============================================================
+var currentLocation = null;
+var currentLocationSlug = '';
+var userInfo = { name: '', email: '', phone: '', leadId: '', memberId: '' };
+var dateOffset = 0;
+var selectedDate = null;
+var selectedSlot = null;
+var availableSlots = [];
+
+// Dynamic member info (populated by API call)
+window._memberPlan = null;
+window._memberCredits = null;
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  var params = new URLSearchParams(window.location.search);
+
+  // Support path-based routing via 404.html redirect
+  var pathRoute = params.get('p') || '';
+  var locSlug = pathRoute.replace(/^\//, '').replace(/\/$/, '') || params.get('loc') || params.get('location') || '';
+  var name = params.get('name') || '';
+  var email = params.get('email') || '';
+  var phone = params.get('phone') || '';
+  var leadId = params.get('lid') || params.get('leadId') || '';
+  var memberId = params.get('mid') || params.get('memberId') || '';
+
+  currentLocationSlug = locSlug;
+  currentLocation = LOCATIONS[locSlug] || null;
+
+  // No loc param: show location picker
+  if (!locSlug) {
+    showLocationPicker();
+    return;
+  }
+
+  // Bad slug: show error
+  if (!currentLocation) {
+    document.getElementById('errorScreen').classList.add('visible');
+    return;
+  }
+
+  userInfo = { name: name, email: email, phone: phone, leadId: leadId, memberId: memberId };
+
+  // Show booking flow
+  document.getElementById('bookingFlow').classList.remove('hidden');
+
+  populateHeader();
+  populateGreeting();
+  setupLoadingSkeleton();
+  buildDateCarousel();
+  checkLeadSlotExpansion();
+
+  // Fetch member info if member ID present and location is ClubReady
+  if (memberId && currentLocation.crm === 'clubready') {
+    fetchMemberInfo(currentLocationSlug, memberId);
+  }
+}
+
+// ============================================================
+// LOCATION PICKER
+// ============================================================
+function showLocationPicker() {
+  var picker = document.getElementById('locationPicker');
+  picker.classList.remove('hidden');
+  var list = document.getElementById('locationList');
+  list.innerHTML = '';
+
+  var brands = {};
+  Object.keys(LOCATIONS).forEach(function(slug) {
+    var loc = LOCATIONS[slug];
+    if (!brands[loc.brand]) brands[loc.brand] = [];
+    brands[loc.brand].push({ slug: slug, loc: loc });
+  });
+
+  var brandOrder = ['Stretch Zone', 'StretchLab', 'IMA Fitness'];
+  brandOrder.forEach(function(brand) {
+    var entries = brands[brand];
+    if (!entries) return;
+
+    var label = document.createElement('div');
+    label.className = 'location-group-label';
+    label.textContent = brand;
+    list.appendChild(label);
+
+    entries.forEach(function(entry) {
+      var slug = entry.slug;
+      var loc = entry.loc;
+      var link = document.createElement('a');
+      link.className = 'location-option';
+      link.href = '?loc=' + encodeURIComponent(slug);
+      link.innerHTML =
+        '<img src="' + escapeHtml(loc.logo) + '" alt="' + escapeHtml(loc.brand) + '">' +
+        '<div class="location-option-info">' +
+          '<h3>' + escapeHtml(loc.displayName) + '</h3>' +
+          '<p>' + escapeHtml(loc.tagline) + '</p>' +
+        '</div>';
+      list.appendChild(link);
+    });
+  });
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+function populateHeader() {
+  document.getElementById('locationLogo').src = currentLocation.logo;
+  document.getElementById('locationLogo').alt = currentLocation.name + ' Logo';
+  document.getElementById('locationName').textContent = currentLocation.displayName;
+  document.getElementById('locationTagline').textContent = currentLocation.tagline;
+  document.getElementById('headerPhone').textContent = formatPhone(currentLocation.phone);
+  document.getElementById('headerAddress').textContent = currentLocation.address || '';
+  document.title = 'Book Your ' + currentLocation.sessionLabel + ' | ' + currentLocation.displayName;
+}
+
+// ============================================================
+// GREETING
+// ============================================================
+function populateGreeting() {
+  var firstName = userInfo.name ? userInfo.name.split(' ')[0] : '';
+  if (firstName) {
+    document.getElementById('greetingText').textContent = 'Hi ' + firstName + '!';
+    document.getElementById('greetingSubtext').textContent =
+      'Pick a date and time for your ' + currentLocation.sessionLabel.toLowerCase() + '.';
+  } else {
+    document.getElementById('greetingText').textContent = 'Book Your ' + currentLocation.sessionLabel;
+    document.getElementById('greetingSubtext').textContent =
+      'Select a date and time that works best for you.';
+  }
+}
+
+// ============================================================
+// LOADING SKELETON (match UI mode)
+// ============================================================
+function setupLoadingSkeleton() {
+  if (currentLocation.uiMode === 'classes') {
+    document.getElementById('slotsLoading').classList.add('hidden');
+    document.getElementById('classLoading').classList.remove('hidden');
+  }
+}
+
+// ============================================================
+// DATE CAROUSEL
+// ============================================================
+function buildDateCarousel() {
+  var container = document.getElementById('dateScroll');
+  container.innerHTML = '';
+
+  var isLead = userInfo.leadId && !userInfo.memberId;
+  var maxDays = (isLead && currentLocation && currentLocation.leadDaysAhead)
+    ? currentLocation.leadDaysAhead
+    : (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
+
+  var now = getLocationNow();
+  var startDate = new Date(now);
+  startDate.setDate(startDate.getDate() + dateOffset);
+
+  var today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  document.getElementById('dateNavLabel').textContent =
+    months[startDate.getMonth()] + ' ' + startDate.getFullYear();
+  document.getElementById('datePrev').disabled = (dateOffset <= 0);
+  document.getElementById('dateNext').disabled = (dateOffset >= maxDays - 7);
+
+  var openCount = 0;
+  var calendarDay = 0;
+  while (openCount < maxDays) {
+    var d = new Date(startDate);
+    d.setDate(d.getDate() + calendarDay);
+    d.setHours(0, 0, 0, 0);
+    calendarDay++;
+
+    if (d < today) continue;
+    if (!isDayOpen(d)) continue;
+    openCount++;
+
+    var item = document.createElement('div');
+    item.className = 'date-item';
+
+    var dayOfWeek = d.getDay();
+    var noSlots = false;
+
+    item.innerHTML =
+      '<span class="date-day">' + days[dayOfWeek] + '</span>' +
+      '<span class="date-num">' + d.getDate() + '</span>' +
+      '<span class="date-month">' + months[d.getMonth()] + '</span>';
+
+    var dateStr = toLocalDateStr(d);
+    item.dataset.date = dateStr;
+
+    if (selectedDate === dateStr) {
+      item.classList.add('selected');
+    }
+
+    if (!noSlots) {
+      item.addEventListener('click', (function(ds) {
+        return function() { selectDate(ds); };
+      })(dateStr));
+    }
+
+    container.appendChild(item);
+  }
+
+  // Auto-select first selectable date
+  if (!selectedDate) {
+    var items = container.querySelectorAll('.date-item:not(.sunday)');
+    if (items.length > 0) {
+      selectDate(items[0].dataset.date);
+    }
+  }
+}
+
+
+async function checkLeadSlotExpansion() {
+  var isLead = userInfo.leadId && !userInfo.memberId;
+  if (!isLead || !currentLocation || !currentLocation.leadDaysAhead) return;
+  if (!currentLocation.leadDaysAheadExpanded) return;
+
+  var now = getLocationNow();
+  var dates = [];
+  var leadOpenCount = 0;
+  var leadCalDay = 0;
+  while (leadOpenCount < currentLocation.leadDaysAhead) {
+    var d = new Date(now);
+    d.setDate(d.getDate() + leadCalDay);
+    leadCalDay++;
+    if (!isDayOpen(d)) continue;
+    leadOpenCount++;
+    dates.push(toLocalDateStr(d));
+  }
+
+  try {
+    var requests = dates.map(function(dateStr) {
+      return fetch(CONFIG.availabilityWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: currentLocationSlug,
+          date: dateStr,
+          leadId: userInfo.leadId || '',
+          timezone: currentLocation.timezone,
+          crm: currentLocation.crm,
+          storeId: currentLocation.clubreadyStoreId || null,
+        }),
+      }).then(function(r) { return r.ok ? r.json() : []; })
+        .catch(function() { return []; });
+    });
+
+    var results = await Promise.all(requests);
+    var totalSlots = 0;
+    results.forEach(function(data) {
+      var slots = Array.isArray(data) ? data : (data.slots || []);
+      totalSlots += slots.length;
+    });
+
+    if (totalSlots <= 2) {
+      currentLocation.leadDaysAhead = currentLocation.leadDaysAheadExpanded;
+      selectedDate = null;
+      dateOffset = 0;
+      buildDateCarousel();
+    }
+  } catch (err) {
+    console.warn('Lead slot expansion check failed:', err.message);
+  }
+}
+
+function shiftDates(offset) {
+  var isLead = userInfo.leadId && !userInfo.memberId;
+  var maxDays = (isLead && currentLocation && currentLocation.leadDaysAhead)
+    ? currentLocation.leadDaysAhead
+    : (currentLocation && currentLocation.daysAhead) || CONFIG.daysAhead;
+  var step = offset > 0 ? 1 : -1;
+  var remaining = Math.abs(offset);
+  var newOffset = dateOffset;
+  var now = getLocationNow();
+  while (remaining > 0) {
+    newOffset += step;
+    var check = new Date(now);
+    check.setDate(check.getDate() + newOffset);
+    if (isDayOpen(check)) remaining--;
+  }
+  dateOffset = Math.max(0, Math.min(maxDays - 7, newOffset));
+  selectedDate = null;
+  selectedSlot = null;
+  updateSelectionSummary();
+  buildDateCarousel();
+}
+
+function selectDate(dateStr) {
+  selectedDate = dateStr;
+  selectedSlot = null;
+  updateSelectionSummary();
+
+  document.querySelectorAll('.date-item').forEach(function(el) {
+    el.classList.toggle('selected', el.dataset.date === dateStr);
+  });
+
+  fetchSlots(dateStr);
+}
+
+// ============================================================
+// FETCH SLOTS / CLASSES
+// ============================================================
+async function fetchSlots(dateStr) {
+  var grid = document.getElementById('slotsGrid');
+  var classList = document.getElementById('classList');
+  var slotsLoading = document.getElementById('slotsLoading');
+  var classLoading = document.getElementById('classLoading');
+  var noSlots = document.getElementById('noSlots');
+  var title = document.getElementById('slotsTitle');
+  var loadingIndicator = document.getElementById('loadingIndicator');
+
+  grid.classList.add('hidden');
+  classList.classList.add('hidden');
+  noSlots.classList.add('hidden');
+  loadingIndicator.classList.remove('hidden');
+
+  var isClassMode = currentLocation.uiMode === 'classes';
+  if (isClassMode) {
+    classLoading.classList.remove('hidden');
+    slotsLoading.classList.add('hidden');
+  } else {
+    slotsLoading.classList.remove('hidden');
+    classLoading.classList.add('hidden');
+  }
+
+  var d = new Date(dateStr + 'T12:00:00');
+  var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  title.textContent = dayNames[d.getDay()] + ', ' + monthNames[d.getMonth()] + ' ' + d.getDate();
+
+  // For IMA locations, use embedded schedule data
+  if (isClassMode && IMA_SCHEDULES[currentLocationSlug]) {
+    var dayName = dayNames[d.getDay()];
+    var classes = IMA_SCHEDULES[currentLocationSlug][dayName] || [];
+    availableSlots = classes.map(function(c) {
+      return {
+        time: c.time,
+        endTime: c.end,
+        displayTime: c.time + ' - ' + c.end,
+        type: c.name,
+        category: c.cat,
+      };
+    });
+
+    slotsLoading.classList.add('hidden');
+    classLoading.classList.add('hidden');
+    loadingIndicator.classList.add('hidden');
+
+    if (availableSlots.length === 0) {
+      noSlots.classList.remove('hidden');
+    } else {
+      renderClasses(availableSlots);
+      classList.classList.remove('hidden');
+    }
+    return;
+  }
+
+  // For ClubReady locations, try webhook then fallback
+  try {
+    var response = await fetch(CONFIG.availabilityWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: currentLocationSlug,
+        date: dateStr,
+        leadId: userInfo.leadId || '',
+        timezone: currentLocation.timezone,
+        crm: currentLocation.crm,
+        storeId: currentLocation.clubreadyStoreId || null,
+      }),
+    });
+
+    if (!response.ok) throw new Error('Webhook returned ' + response.status);
+
+    var data = await response.json();
+    availableSlots = Array.isArray(data) ? data : (data.slots || []);
+  } catch (err) {
+    console.warn('Availability webhook unavailable, using fallback:', err.message);
+    availableSlots = generateFallbackSlots(dateStr);
+  }
+
+  slotsLoading.classList.add('hidden');
+  classLoading.classList.add('hidden');
+  loadingIndicator.classList.add('hidden');
+
+  if (availableSlots.length === 0) {
+    noSlots.classList.remove('hidden');
+  } else {
+    renderSlots(availableSlots);
+    grid.classList.remove('hidden');
+  }
+}
+
+// ============================================================
+// RENDER: SLOT GRID (Stretch Zone / StretchLab)
+// ============================================================
+function renderSlots(slots) {
+  var grid = document.getElementById('slotsGrid');
+  grid.innerHTML = '';
+
+  // Check if we have multiple types (e.g. "25 Min Stretch" and "50 Min Stretch")
+  var types = [];
+  var typeSet = {};
+  slots.forEach(function(s) {
+    var t = s.type || 'Available';
+    if (!typeSet[t]) { typeSet[t] = true; types.push(t); }
+  });
+
+  if (types.length > 1) {
+    // Grouped collapsible view
+    types.forEach(function(typeName, gi) {
+      var group = document.createElement('div');
+      group.className = 'slot-group';
+
+      var typeSlots = [];
+      slots.forEach(function(s, idx) {
+        if ((s.type || 'Available') === typeName) typeSlots.push({ slot: s, idx: idx });
+      });
+
+      var header = document.createElement('div');
+      header.className = 'slot-group-header';
+      header.innerHTML =
+        '<div><span class="slot-group-header-title">' + escapeHtml(typeName) + '</span>' +
+        '<span class="slot-group-header-count">' + typeSlots.length + ' times</span></div>';
+
+      var content = document.createElement('div');
+      content.className = 'slot-group-content';
+
+      var innerGrid = document.createElement('div');
+      innerGrid.className = 'slots-grid';
+
+      typeSlots.forEach(function(item) {
+        var el = document.createElement('div');
+        el.className = 'slot';
+        el.dataset.index = item.idx;
+
+        var html = '<div class="slot-time">' + escapeHtml(item.slot.time || item.slot.displayTime || '') + '</div>';
+        if (item.slot.instructor) {
+          html += '<div class="slot-instructor">' + escapeHtml(item.slot.instructor) + '</div>';
+        }
+        el.innerHTML = html;
+
+        el.addEventListener('click', function() { selectSlot(item.idx); });
+        innerGrid.appendChild(el);
+      });
+
+      content.appendChild(innerGrid);
+      group.appendChild(header);
+      group.appendChild(content);
+      grid.appendChild(group);
+    });
+  } else {
+    // Flat grid (single type or Stretch Zone)
+    slots.forEach(function(slot, idx) {
+      var el = document.createElement('div');
+      el.className = 'slot';
+      el.dataset.index = idx;
+
+      var html = '<div class="slot-time">' + escapeHtml(slot.time || slot.displayTime || '') + '</div>';
+      if (slot.instructor) {
+        html += '<div class="slot-instructor">' + escapeHtml(slot.instructor) + '</div>';
+      }
+      if (slot.type) {
+        html += '<div class="slot-type">' + escapeHtml(slot.type) + '</div>';
+      }
+      el.innerHTML = html;
+
+      el.addEventListener('click', function() { selectSlot(idx); });
+      grid.appendChild(el);
+    });
+  }
+}
+
+// ============================================================
+// RENDER: CLASS LIST (IMA)
+// ============================================================
+function renderClasses(classes) {
+  var list = document.getElementById('classList');
+  list.innerHTML = '';
+
+  classes.forEach(function(cls, idx) {
+    var el = document.createElement('div');
+    el.className = 'class-item';
+    el.dataset.index = idx;
+
+    var badgeClass = 'badge-' + (cls.category || 'other');
+    var badgeLabel = getBadgeLabel(cls.category);
+
+    el.innerHTML =
+      '<span class="class-badge ' + badgeClass + '">' + escapeHtml(badgeLabel) + '</span>' +
+      '<div class="class-info">' +
+        '<div class="class-name">' + escapeHtml(cls.type || cls.name || '') + '</div>' +
+        '<div class="class-detail">' + escapeHtml(cls.displayTime || (cls.time + ' - ' + cls.endTime) || '') + '</div>' +
+      '</div>' +
+      '<div class="class-time">' + escapeHtml(cls.time || '') + '</div>';
+
+    el.addEventListener('click', function() { selectSlot(idx); });
+    list.appendChild(el);
+  });
+}
+
+function getBadgeLabel(cat) {
+  var labels = {
+    'bjj': 'BJJ',
+    'muay-thai': 'MT',
+    'mma': 'MMA',
+    'fitness': 'FIT',
+    'kids': 'KIDS',
+    'karate': 'KRT',
+    'other': '',
+  };
+  return labels[cat] || '';
+}
+
+// ============================================================
+// SELECT SLOT
+// ============================================================
+function selectSlot(idx) {
+  selectedSlot = availableSlots[idx];
+
+  document.querySelectorAll('.slot, .class-item').forEach(function(el) {
+    el.classList.toggle('selected', parseInt(el.dataset.index) === idx);
+  });
+
+  updateSelectionSummary();
+  updateSubmitButton();
+
+  setTimeout(function() {
+    document.getElementById('selectionSummary').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+// ============================================================
+// SELECTION SUMMARY
+// ============================================================
+function updateSelectionSummary() {
+  var el = document.getElementById('selectionSummary');
+
+  if (!selectedDate || !selectedSlot) {
+    el.classList.remove('visible');
+    return;
+  }
+
+  el.classList.add('visible');
+
+  // Show client name if available
+  if (userInfo.name) {
+    document.getElementById('summaryName').textContent = userInfo.name;
+    document.getElementById('summaryNameRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryNameRow').style.display = 'none';
+  }
+
+  var d = new Date(selectedDate + 'T12:00:00');
+  var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  document.getElementById('summaryDate').textContent =
+    dayNames[d.getDay()] + ', ' + monthNames[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+
+  var timeDisplay = selectedSlot.displayTime || selectedSlot.time || '';
+  document.getElementById('summaryTime').textContent = timeDisplay;
+
+  // Show class name for IMA
+  if (currentLocation.uiMode === 'classes' && selectedSlot.type) {
+    document.getElementById('summaryClass').textContent = selectedSlot.type;
+    document.getElementById('summaryClassRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryClassRow').style.display = 'none';
+  }
+
+  // Show instructor if available
+  if (selectedSlot.instructor) {
+    document.getElementById('summaryInstructor').textContent = selectedSlot.instructor;
+    document.getElementById('summaryInstructorRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryInstructorRow').style.display = 'none';
+  }
+
+  // Show dynamic plan/credits if fetched from API
+  if (window._memberPlan) {
+    document.getElementById('summaryPlan').textContent = window._memberPlan;
+    document.getElementById('summaryPlanRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryPlanRow').style.display = 'none';
+  }
+  if (window._memberCredits != null) {
+    document.getElementById('summaryCredits').textContent = window._memberCredits + ' remaining';
+    document.getElementById('summaryCreditsRow').style.display = 'flex';
+  } else {
+    document.getElementById('summaryCreditsRow').style.display = 'none';
+  }
+
+  // Show static pricing or lead offer (from location config)
+  var pricingEl = document.getElementById('summaryPricing');
+  var html = '';
+  if (userInfo.leadId && currentLocation.leadOffer) {
+    var offer = currentLocation.leadOffer;
+    var offerLabel = offer.label;
+    if (selectedSlot && selectedSlot.type) {
+      var st = (selectedSlot.type || '').toLowerCase();
+      if (st.indexOf('25') !== -1 && offer.label25) offerLabel = offer.label25;
+      else if (st.indexOf('50') !== -1 && offer.label50) offerLabel = offer.label50;
+    }
+    html = '<div class="pricing-box">' +
+      '<div class="pricing-title">' + escapeHtml(offerLabel) + '</div>' +
+      (offer.detail ? '<div class="pricing-note">' + escapeHtml(offer.detail) + '</div>' : '') +
+      '</div>';
+  } else if (currentLocation.pricing) {
+    var p = currentLocation.pricing;
+    html = '<div class="pricing-box">';
+    html += '<div class="pricing-title">' + escapeHtml(p.title) + '</div>';
+    if (p.rows && p.rows.length > 0) {
+      // Filter pricing rows to match selected session type if available
+      var filteredRows = p.rows;
+      if (selectedSlot && selectedSlot.type) {
+        var slotType = (selectedSlot.type || '').toLowerCase();
+        var is25 = slotType.indexOf('25') !== -1;
+        var is50 = slotType.indexOf('50') !== -1;
+        if (is25 || is50) {
+          var keyword = is25 ? '25' : '50';
+          filteredRows = p.rows.filter(function(row) { return row[0].indexOf(keyword) !== -1; });
+          if (filteredRows.length === 0) filteredRows = p.rows; // fallback to all if no match
+        }
+      }
+      html += '<table>';
+      for (var i = 0; i < filteredRows.length; i++) {
+        html += '<tr><td>' + escapeHtml(filteredRows[i][0]) + '</td><td>' + escapeHtml(filteredRows[i][1]) + '</td></tr>';
+      }
+      html += '</table>';
+    }
+    if (p.note) {
+      html += '<div class="pricing-note">' + escapeHtml(p.note) + '</div>';
+    }
+    html += '</div>';
+  }
+  pricingEl.innerHTML = html;
+  pricingEl.style.display = html ? 'block' : 'none';
+
+  // "Book online, pay in store" note: hide for free sessions
+  var showPayNote = true;
+  var offerLabel = (currentLocation.leadOffer && currentLocation.leadOffer.label) || '';
+  if (userInfo.leadId && offerLabel.toUpperCase().indexOf('FREE') !== -1) {
+    showPayNote = false;
+  }
+  document.getElementById('summaryPayNote').style.display = showPayNote ? 'flex' : 'none';
+}
+
+// ============================================================
+// FORM VALIDATION & SUBMIT
+// ============================================================
+function updateSubmitButton() {
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = !(selectedDate && selectedSlot);
+}
+
+async function submitBooking() {
+  var btn = document.getElementById('submitBtn');
+  if (btn.disabled) return;
+
+  var name = userInfo.name || '';
+  var email = userInfo.email || '';
+  var phone = userInfo.phone || '';
+  btn.disabled = true;
+  document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Booking...';
+
+  var d = new Date(selectedDate + 'T12:00:00');
+  var monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  var formattedDate = monthNames[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+
+  var payload = {
+    location: currentLocationSlug,
+    locationName: currentLocation.displayName,
+    brand: currentLocation.brand,
+    crm: currentLocation.crm,
+    storeId: currentLocation.clubreadyStoreId || null,
+    locationEmail: currentLocation.email,
+    timezone: currentLocation.timezone,
+    leadId: userInfo.leadId || '',
+    memberId: userInfo.memberId || '',
+    name: name,
+    email: email,
+    phone: cleanPhone(phone),
+    date: formattedDate,
+    time: selectedSlot.time || '',
+    instructor: selectedSlot.instructor || '',
+    classId: selectedSlot.classId || '',
+    type: selectedSlot.type || currentLocation.sessionLabel,
+    className: (currentLocation.uiMode === 'classes') ? (selectedSlot.type || '') : '',
+    source: 'booking_page',
+  };
+
+  try {
+    var response = await fetch(CONFIG.bookingApi, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    var result = {};
+    try { result = await response.json(); } catch (e) {}
+
+    if (result.success) {
+      showConfirmation(payload, result);
+    } else if (result.noCredits) {
+      showNoCreditsPopup();
+    } else {
+      var msg = result.message || 'Booking could not be completed.';
+      showBookingError(msg);
+    }
+  } catch (err) {
+    console.error('Booking submission error:', err);
+    showBookingError('Something went wrong. Please try again or call us.');
+  }
+}
+
+// ============================================================
+// CONFIRMATION
+// ============================================================
+function showConfirmation(payload, result) {
+  var firstName = payload.name ? payload.name.split(' ')[0] : '';
+  var title = firstName ? 'Thank you, ' + firstName + '!' : 'You\'re All Set!';
+
+  var detail = 'Your ' + currentLocation.sessionLabel.toLowerCase() +
+    ' is booked for <strong>' + payload.date + '</strong> at <strong>' + payload.time + '</strong>.';
+
+  if (payload.className) {
+    detail += '<br>Class: <strong>' + escapeHtml(payload.className) + '</strong>';
+  }
+
+  if (result && result.booking_id) {
+    detail += '<br>Confirmation #: <strong>' + escapeHtml(result.booking_id) + '</strong>';
+  }
+
+  detail += '<br><br>We\'ll see you there!';
+
+  document.getElementById('popupTitle').textContent = title;
+  document.getElementById('popupDetail').innerHTML = detail;
+  document.getElementById('calendarButtons').innerHTML = '<div class="cal-loading">Loading calendar options...</div>';
+  document.getElementById('popupOverlay').classList.add('visible');
+
+  fetchCalendarLinks(payload);
+
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitText').textContent = 'Confirm Booking';
+}
+
+async function fetchCalendarLinks(payload) {
+  var container = document.getElementById('calendarButtons');
+  if (!container) return;
+
+  var ADDRESS_MAP = {
+    'stretch-zone-westborough': '600 Union St Suite 102, Westborough, MA 01581',
+    'sz-westborough': '600 Union St Suite 102, Westborough, MA 01581',
+    'stretch-zone-west-boylston': '342 W Boylston St, West Boylston, MA 01583',
+    'sz-west-boylston': '342 W Boylston St, West Boylston, MA 01583',
+    'stretchlab-carlsbad': '1850 Marron Rd Suite 102, Carlsbad, CA 92008',
+    'stretch-zone-dfw': '405 N Carroll Ave, Southlake, TX 76092',
+    'sz-dfw': '405 N Carroll Ave, Southlake, TX 76092',
+    'stretch-zone-baton-rouge': '7575 Jefferson Hwy Suite E, Baton Rouge, LA 70806',
+    'sz-baton-rouge': '7575 Jefferson Hwy Suite E, Baton Rouge, LA 70806',
+    'integrated-martial-arts-westborough': '227 Turnpike Rd Suite C, Westborough, MA 01581',
+    'ima-westborough': '227 Turnpike Rd Suite C, Westborough, MA 01581',
+    'integrated-martial-arts-worcester': '342A W Boylston St, West Boylston, MA 01583',
+    'ima-worcester': '342A W Boylston St, West Boylston, MA 01583',
+  };
+  var PHONE_MAP = {
+    'stretch-zone-westborough': '(508) 329-1134',
+    'sz-westborough': '(508) 329-1134',
+    'stretch-zone-west-boylston': '(774) 261-4238',
+    'sz-west-boylston': '(774) 261-4238',
+    'stretchlab-carlsbad': '(760) 283-7126',
+    'stretch-zone-dfw': '(817) 612-1666',
+    'sz-dfw': '(817) 612-1666',
+    'stretch-zone-baton-rouge': '(225) 456-2734',
+    'sz-baton-rouge': '(225) 456-2734',
+    'integrated-martial-arts-westborough': '(774) 772-4759',
+    'ima-westborough': '(774) 772-4759',
+    'integrated-martial-arts-worcester': '(508) 251-9469',
+    'ima-worcester': '(508) 251-9469',
+  };
+
+  var MONTHS_MAP = {January:'01',February:'02',March:'03',April:'04',May:'05',June:'06',July:'07',August:'08',September:'09',October:'10',November:'11',December:'12'};
+  var isoDate = '';
+  var dm = payload.date.match(/(\w+)\s+(\d+),?\s*(\d{4})/);
+  if (dm) isoDate = dm[3] + '-' + MONTHS_MAP[dm[1]] + '-' + dm[2].padStart(2, '0');
+
+  var isoTime = '';
+  var tm = payload.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (tm) {
+    var h = parseInt(tm[1]);
+    if (tm[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+    if (tm[3].toUpperCase() === 'AM' && h === 12) h = 0;
+    isoTime = h.toString().padStart(2, '0') + ':' + tm[2];
+  }
+
+  if (!isoDate || !isoTime) { container.innerHTML = ''; return; }
+
+  var tz = currentLocation.timezone || 'America/New_York';
+  var locName = currentLocation.displayName || '';
+  var locSlug = currentLocationSlug || '';
+  var addr = ADDRESS_MAP[locSlug] || '';
+  var phone = PHONE_MAP[locSlug] || '';
+  var desc = phone ? 'Phone: ' + phone : '';
+
+  try {
+    var resp = await fetch('https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/add-to-calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-secret': 'vcal_k8m2p4x7w9' },
+      body: JSON.stringify({ title: 'Session at ' + locName, event_date: isoDate, event_time: isoTime, duration_min: 60, location_name: locName, location_address: addr, description: desc, timezone: tz }),
+    });
+    var data = await resp.json();
+    if (data.gcal_url || data.ics_url) {
+      var html = '<div class="cal-buttons"><div class="cal-label">Add to Calendar</div>';
+      if (data.gcal_url) html += '<a class="cal-btn cal-btn-google" href="' + data.gcal_url + '" target="_blank" rel="noopener">&#128197; Google Calendar</a>';
+      if (data.ics_url) html += '<a class="cal-btn cal-btn-apple" href="' + data.ics_url + '">&#128198; Apple / Outlook</a>';
+      html += '</div>';
+      container.innerHTML = html;
+    } else { container.innerHTML = ''; }
+  } catch (e) { container.innerHTML = ''; }
+}
+function showBookingError(msg) {
+  var calEl = document.getElementById('calendarButtons');
+  if (calEl) calEl.innerHTML = '';
+  var phone = currentLocation.phone || '';
+  var detail = escapeHtml(msg);
+  if (phone) {
+    detail += '<br><br>Please call us at <strong>' + formatPhone(phone) + '</strong> to book directly.';
+  }
+
+  document.getElementById('popupTitle').textContent = 'Booking Issue';
+  document.getElementById('popupDetail').innerHTML = detail;
+  document.getElementById('popupOverlay').classList.add('visible');
+
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitText').textContent = 'Confirm Booking';
+}
+
+// ============================================================
+// FALLBACK SLOTS (ClubReady locations, from business hours)
+// ============================================================
+
+function showNoCreditsPopup() {
+  var WEBSITE_MAP = {
+    'stretch-zone-westborough': 'https://www.stretchzone.com/locations/westborough-ma',
+    'stretch-zone-west-boylston': 'https://www.stretchzone.com/locations/west-boylston-ma',
+    'stretchlab-carlsbad': 'https://www.stretchlab.com/location/carlsbad',
+    'stretch-zone-dfw': 'https://www.stretchzone.com/locations/southlake-tx',
+    'stretch-zone-baton-rouge': 'https://www.stretchzone.com/locations/bocage-la',
+  };
+  var PHONE_MAP = {
+    'stretch-zone-westborough': '(508) 329-1134',
+    'stretch-zone-west-boylston': '(774) 261-4238',
+    'stretchlab-carlsbad': '(760) 283-7126',
+    'stretch-zone-dfw': '(817) 612-1666',
+    'stretch-zone-baton-rouge': '(225) 456-2734',
+  };
+  var slug = currentLocationSlug || '';
+  var phone = PHONE_MAP[slug] || currentLocation.phone || '';
+  var website = WEBSITE_MAP[slug] || '';
+  var locName = currentLocation.displayName || '';
+
+  var calEl = document.getElementById('calendarButtons');
+  if (calEl) calEl.innerHTML = '';
+
+  document.getElementById('popupTitle').textContent = 'No Session Credits';
+  var detail = 'You do not have any remaining session credits at <strong>' + escapeHtml(locName) + '</strong>.';
+  detail += '<div class="no-credits-info"><div class="nc-label">Purchase More Sessions</div>';
+  if (phone) detail += '&#128222; Call us: <strong>' + escapeHtml(phone) + '</strong><br>';
+  if (website) detail += '&#127760; Visit: <a href="' + website + '" target="_blank" rel="noopener">' + escapeHtml(locName) + ' Website</a><br>';
+  if (!phone && !website) detail += 'Please contact the studio directly to purchase more sessions.';
+  detail += '</div>';
+
+  document.getElementById('popupDetail').innerHTML = detail;
+  document.getElementById('popupOverlay').classList.add('visible');
+
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitText').textContent = 'Confirm Booking';
+}
+
+function generateFallbackSlots(dateStr) {
+  var d = new Date(dateStr + 'T12:00:00');
+  var dayOfWeek = d.getDay();
+  var hours = currentLocation.hours;
+
+  if (!hours) return [];
+
+  var range = null;
+  if (dayOfWeek === 0) range = hours.sunday;
+  else if (dayOfWeek === 6) range = hours.saturday;
+  else range = hours.weekday;
+
+  if (!range) return [];
+
+  var slots = [];
+  for (var h = range[0]; h < range[1]; h++) {
+    var hour12 = h > 12 ? h - 12 : h;
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    var displayHour = hour12 === 0 ? 12 : hour12;
+    slots.push({
+      time: displayHour + ':00 ' + ampm,
+      type: currentLocation.sessionLabel,
+    });
+  }
+
+  return slots;
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function isDayOpen(date) {
+  if (!currentLocation || !currentLocation.hours) return true;
+  var day = date.getDay();
+  if (day === 0) return !!currentLocation.hours.sunday;
+  if (day === 6) return !!currentLocation.hours.saturday;
+  return !!currentLocation.hours.weekday;
+}
+
+function getLocationNow() {
+  if (!currentLocation) return new Date();
+  var now = new Date();
+  var tzString = now.toLocaleString('en-US', { timeZone: currentLocation.timezone });
+  return new Date(tzString);
+}
+
+function toLocalDateStr(d) {
+  var y = d.getFullYear();
+  var m = ('0' + (d.getMonth() + 1)).slice(-2);
+  var day = ('0' + d.getDate()).slice(-2);
+  return y + '-' + m + '-' + day;
+}
+
+function formatPhone(phone) {
+  if (!phone) return '';
+  var digits = phone.replace(/\D/g, '');
+  if (digits.length === 11 && digits[0] === '1') {
+    return '(' + digits.slice(1, 4) + ') ' + digits.slice(4, 7) + '-' + digits.slice(7);
+  }
+  if (digits.length === 10) {
+    return '(' + digits.slice(0, 3) + ') ' + digits.slice(3, 6) + '-' + digits.slice(6);
+  }
+  return phone;
+}
+
+function cleanPhone(phone) {
+  return phone.replace(/\D/g, '');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+// MEMBER INFO FETCH (ClubReady only)
+// ============================================================
+async function fetchMemberInfo(locationSlug, memberId) {
+  // Map booking-page slugs to lead-scraper slugs
+  var slugMap = {
+    'stretch-zone-westborough': 'sz-westborough',
+    'stretch-zone-west-boylston': 'sz-west-boylston',
+    'stretchlab-carlsbad': 'stretchlab-carlsbad',
+    'stretch-zone-dfw': 'sz-dfw',
+    'stretch-zone-baton-rouge': 'sz-baton-rouge',
+  };
+  var apiSlug = slugMap[locationSlug] || locationSlug;
+
+  try {
+    var url = CONFIG.memberInfoApi + '?location=' + encodeURIComponent(apiSlug) + '&member_id=' + encodeURIComponent(memberId);
+    var resp = await fetch(url);
+    if (!resp.ok) return;
+    var data = await resp.json();
+
+    // Derive plan from membershipType or creditDetails
+    if (data.membershipType) {
+      window._memberPlan = data.membershipType;
+    } else if (data.creditDetails && data.creditDetails.length > 0) {
+      // Summarize credit types (e.g. "5x Stretch 50 mins")
+      var counts = {};
+      data.creditDetails.forEach(function(c) { counts[c] = (counts[c] || 0) + 1; });
+      var parts = Object.keys(counts).map(function(k) { return counts[k] + 'x ' + k; });
+      window._memberPlan = parts.join(', ');
+    }
+    if (data.credits != null) window._memberCredits = data.credits;
+    if (data.name && !userInfo.name) userInfo.name = data.name;
+
+    // Re-render summary if already visible
+    if (selectedDate && selectedSlot) updateSelectionSummary();
+    // Update greeting if name was filled in
+    if (data.name && !document.getElementById('greetingText').textContent.includes('Hi ')) {
+      populateGreeting();
+    }
+  } catch (e) {
+    // Silently fail; member info is optional enhancement
+  }
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
