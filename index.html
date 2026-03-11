@@ -946,6 +946,31 @@
 
 <script>
 // ============================================================
+// PAGE VISIT TRACKING
+// ============================================================
+(function() {
+  try {
+    var p = new URLSearchParams(window.location.search);
+    fetch('https://jjckotsrhuxxftwmdlwc.supabase.co/rest/v1/page_visits', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY2tvdHNyaHV4eGZ0d21kbHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MTU4ODUsImV4cCI6MjA4MzM5MTg4NX0.AAQSDK4gu7lDUrFFk540HHELQ85S0vyATNQT6up-pXE',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        source: 'booking-page',
+        location_slug: p.get('loc') || p.get('location') || null,
+        customer_id: p.get('mid') || p.get('memberId') || null,
+        lead_id: p.get('lid') || p.get('leadId') || null,
+        referrer: document.referrer || null,
+        url_params: Object.fromEntries(p.entries())
+      })
+    }).catch(function() {});
+  } catch(e) {}
+})();
+
+// ============================================================
 // CONFIGURATION
 // ============================================================
 var CONFIG = {
