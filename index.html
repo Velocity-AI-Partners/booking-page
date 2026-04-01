@@ -1733,6 +1733,23 @@ async function fetchSlots(dateStr) {
   classLoading.classList.add('hidden');
   loadingIndicator.classList.add('hidden');
 
+  // Filter out past slots when viewing today
+  var locationNow = getLocationNow();
+  var todayStr = toLocalDateStr(locationNow);
+  if (dateStr === todayStr) {
+    var nowMinutes = locationNow.getHours() * 60 + locationNow.getMinutes();
+    availableSlots = availableSlots.filter(function(s) {
+      var parts = s.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!parts) return true;
+      var h = parseInt(parts[1]);
+      var m = parseInt(parts[2]);
+      var ampm = parts[3].toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      return (h * 60 + m) > nowMinutes;
+    });
+  }
+
   if (availableSlots.length === 0) {
     noSlots.classList.remove('hidden');
   } else {
