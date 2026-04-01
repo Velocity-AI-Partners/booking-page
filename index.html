@@ -1725,8 +1725,8 @@ async function fetchSlots(dateStr) {
     var data = await response.json();
     availableSlots = Array.isArray(data) ? data : (data.slots || []);
   } catch (err) {
-    console.warn('Availability webhook unavailable, using fallback:', err.message);
-    availableSlots = generateFallbackSlots(dateStr);
+    console.warn('Availability webhook unavailable:', err.message);
+    availableSlots = [];
   }
 
   slotsLoading.classList.add('hidden');
