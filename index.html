@@ -1697,8 +1697,10 @@ async function fetchSlots(dateStr) {
     loadingIndicator.classList.add('hidden');
 
     if (availableSlots.length === 0) {
+      classList.classList.add('hidden');
       noSlots.classList.remove('hidden');
     } else {
+      noSlots.classList.add('hidden');
       renderClasses(availableSlots);
       classList.classList.remove('hidden');
     }
@@ -1751,8 +1753,10 @@ async function fetchSlots(dateStr) {
   }
 
   if (availableSlots.length === 0) {
+    grid.classList.add('hidden');
     noSlots.classList.remove('hidden');
   } else {
+    noSlots.classList.add('hidden');
     renderSlots(availableSlots);
     grid.classList.remove('hidden');
   }
