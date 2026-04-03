@@ -976,7 +976,7 @@
 var CONFIG = {
   bookingApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/book-session',
   checkoutApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/create-checkout-session',
-  availabilityWebhook: 'https://velocityaipartners.app.n8n.cloud/webhook/booking-availability',
+  availabilityApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/book-session',
   memberInfoApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/member-info',
   daysAhead: 30,
 };
@@ -1577,18 +1577,9 @@ async function checkLeadSlotExpansion() {
 
   try {
     var requests = dates.map(function(dateStr) {
-      return fetch(CONFIG.availabilityWebhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: currentLocationSlug,
-          date: dateStr,
-          leadId: userInfo.leadId || '',
-          timezone: currentLocation.timezone,
-          crm: currentLocation.crm,
-          storeId: currentLocation.clubreadyStoreId || null,
-        }),
-      }).then(function(r) { return r.ok ? r.json() : []; })
+      var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
+      return fetch(slotsUrl)
+        .then(function(r) { return r.ok ? r.json() : []; })
         .catch(function() { return []; });
     });
 
@@ -1707,22 +1698,12 @@ async function fetchSlots(dateStr) {
     return;
   }
 
-  // For ClubReady locations, try webhook then fallback
+  // For ClubReady locations, fetch from edge function
   try {
-    var response = await fetch(CONFIG.availabilityWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: currentLocationSlug,
-        date: dateStr,
-        leadId: userInfo.leadId || '',
-        timezone: currentLocation.timezone,
-        crm: currentLocation.crm,
-        storeId: currentLocation.clubreadyStoreId || null,
-      }),
-    });
+    var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
+    var response = await fetch(slotsUrl);
 
-    if (!response.ok) throw new Error('Webhook returned ' + response.status);
+    if (!response.ok) throw new Error('Availability API returned ' + response.status);
 
     var data = await response.json();
     availableSlots = Array.isArray(data) ? data : (data.slots || []);
