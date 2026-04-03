@@ -1577,10 +1577,18 @@ async function checkLeadSlotExpansion() {
 
   try {
     var requests = dates.map(function(dateStr) {
-      var slotsUrl = CONFIG.bookingApi + '?action=get-slots&location=' +
-        encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
-      return fetch(slotsUrl)
-        .then(function(r) { return r.ok ? r.json() : []; })
+      return fetch(CONFIG.availabilityWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: currentLocationSlug,
+          date: dateStr,
+          leadId: userInfo.leadId || '',
+          timezone: currentLocation.timezone,
+          crm: currentLocation.crm,
+          storeId: currentLocation.clubreadyStoreId || null,
+        }),
+      }).then(function(r) { return r.ok ? r.json() : []; })
         .catch(function() { return []; });
     });
 
@@ -1699,18 +1707,27 @@ async function fetchSlots(dateStr) {
     return;
   }
 
-  // For ClubReady locations, fetch slots from book-session edge function (single data source)
+  // For ClubReady locations, try webhook then fallback
   try {
-    var slotsUrl = CONFIG.bookingApi + '?action=get-slots&location=' +
-      encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
-    var response = await fetch(slotsUrl);
+    var response = await fetch(CONFIG.availabilityWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: currentLocationSlug,
+        date: dateStr,
+        leadId: userInfo.leadId || '',
+        timezone: currentLocation.timezone,
+        crm: currentLocation.crm,
+        storeId: currentLocation.clubreadyStoreId || null,
+      }),
+    });
 
-    if (!response.ok) throw new Error('Slots API returned ' + response.status);
+    if (!response.ok) throw new Error('Webhook returned ' + response.status);
 
     var data = await response.json();
     availableSlots = Array.isArray(data) ? data : (data.slots || []);
   } catch (err) {
-    console.warn('Slots API unavailable:', err.message);
+    console.warn('Availability webhook unavailable:', err.message);
     availableSlots = [];
   }
 
