@@ -1746,63 +1746,79 @@ async function fetchSlots(dateStr) {
 // ============================================================
 // RENDER: SLOT GRID (Stretch Zone / StretchLab)
 // ============================================================
+var activeDurationFilter = null;
+
 function renderSlots(slots) {
   var grid = document.getElementById('slotsGrid');
   grid.innerHTML = '';
 
-  // Check if we have multiple types (e.g. "25 Min Stretch" and "50 Min Stretch")
-  var types = [];
-  var typeSet = {};
+  // Check if slots have multiple durations (Carlsbad)
+  var durations = [];
+  var durSet = {};
   slots.forEach(function(s) {
-    var t = s.type || 'Available';
-    if (!typeSet[t]) { typeSet[t] = true; types.push(t); }
+    if (s.duration && !durSet[s.duration]) {
+      durSet[s.duration] = true;
+      durations.push({ duration: s.duration, label: s.type || (s.duration + ' Min') });
+    }
   });
 
-  if (types.length > 1) {
-    // Grouped collapsible view
-    types.forEach(function(typeName, gi) {
-      var group = document.createElement('div');
-      group.className = 'slot-group';
+  if (durations.length > 1) {
+    // Duration toggle for locations with multiple session lengths
+    var toggleWrap = document.createElement('div');
+    toggleWrap.className = 'duration-toggle';
+    toggleWrap.style.cssText = 'display:flex;gap:8px;justify-content:center;margin-bottom:16px;';
 
-      var typeSlots = [];
-      slots.forEach(function(s, idx) {
-        if ((s.type || 'Available') === typeName) typeSlots.push({ slot: s, idx: idx });
+    // Default to first duration if none selected
+    if (!activeDurationFilter) activeDurationFilter = durations[0].duration;
+
+    durations.forEach(function(d) {
+      var btn = document.createElement('button');
+      btn.className = 'duration-btn';
+      btn.textContent = d.label;
+      var isActive = activeDurationFilter === d.duration;
+      btn.style.cssText = 'flex:1;max-width:180px;padding:12px 16px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;border:2px solid ' + (isActive ? 'var(--primary-color,#2563eb)' : '#e0e0e0') + ';background:' + (isActive ? 'var(--primary-color,#2563eb)' : '#fff') + ';color:' + (isActive ? '#fff' : '#333') + ';';
+      btn.addEventListener('click', function() {
+        activeDurationFilter = d.duration;
+        selectedSlot = null;
+        updateSubmitButton();
+        renderSlots(availableSlots);
       });
-
-      var header = document.createElement('div');
-      header.className = 'slot-group-header';
-      header.innerHTML =
-        '<div><span class="slot-group-header-title">' + escapeHtml(typeName) + '</span>' +
-        '<span class="slot-group-header-count">' + typeSlots.length + ' times</span></div>';
-
-      var content = document.createElement('div');
-      content.className = 'slot-group-content';
-
-      var innerGrid = document.createElement('div');
-      innerGrid.className = 'slots-grid';
-
-      typeSlots.forEach(function(item) {
-        var el = document.createElement('div');
-        el.className = 'slot';
-        el.dataset.index = item.idx;
-
-        var html = '<div class="slot-time">' + escapeHtml(item.slot.time || item.slot.displayTime || '') + '</div>';
-        if (item.slot.instructor) {
-          html += '<div class="slot-instructor">' + escapeHtml(item.slot.instructor) + '</div>';
-        }
-        el.innerHTML = html;
-
-        el.addEventListener('click', function() { selectSlot(item.idx); });
-        innerGrid.appendChild(el);
-      });
-
-      content.appendChild(innerGrid);
-      group.appendChild(header);
-      group.appendChild(content);
-      grid.appendChild(group);
+      toggleWrap.appendChild(btn);
     });
+
+    grid.appendChild(toggleWrap);
+
+    // Filter slots by selected duration
+    var filtered = [];
+    slots.forEach(function(s, idx) {
+      if (s.duration === activeDurationFilter) filtered.push({ slot: s, idx: idx });
+    });
+
+    var innerGrid = document.createElement('div');
+    innerGrid.className = 'slots-grid';
+    filtered.forEach(function(item) {
+      var el = document.createElement('div');
+      el.className = 'slot';
+      el.dataset.index = item.idx;
+      var html = '<div class="slot-time">' + escapeHtml(item.slot.time || item.slot.displayTime || '') + '</div>';
+      if (item.slot.instructor) {
+        html += '<div class="slot-instructor">' + escapeHtml(item.slot.instructor) + '</div>';
+      }
+      el.innerHTML = html;
+      el.addEventListener('click', function() { selectSlot(item.idx); });
+      innerGrid.appendChild(el);
+    });
+    grid.appendChild(innerGrid);
+
+    if (filtered.length === 0) {
+      var noMsg = document.createElement('div');
+      noMsg.style.cssText = 'text-align:center;padding:20px;color:#666;';
+      noMsg.textContent = 'No ' + activeDurationFilter + '-minute slots available on this day.';
+      grid.appendChild(noMsg);
+    }
   } else {
-    // Flat grid (single type or Stretch Zone)
+    // Flat grid (single duration: SZ locations)
+    activeDurationFilter = null;
     slots.forEach(function(slot, idx) {
       var el = document.createElement('div');
       el.className = 'slot';
@@ -1811,9 +1827,6 @@ function renderSlots(slots) {
       var html = '<div class="slot-time">' + escapeHtml(slot.time || slot.displayTime || '') + '</div>';
       if (slot.instructor) {
         html += '<div class="slot-instructor">' + escapeHtml(slot.instructor) + '</div>';
-      }
-      if (slot.type) {
-        html += '<div class="slot-type">' + escapeHtml(slot.type) + '</div>';
       }
       el.innerHTML = html;
 
@@ -2078,6 +2091,7 @@ async function submitBooking() {
     type: selectedSlot.type || currentLocation.sessionLabel,
     className: (currentLocation.uiMode === 'classes') ? (selectedSlot.type || '') : '',
     source: 'booking_page',
+    duration: selectedSlot.duration || 0,
   };
 
   // Stripe payment required for IMA leads
