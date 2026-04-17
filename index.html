@@ -1397,8 +1397,12 @@ function init() {
   populateHeader();
   populateGreeting();
   setupLoadingSkeleton();
-  buildDateCarousel();
-  checkLeadSlotExpansion();
+
+  // For leads with expansion config, decide the final date range BEFORE first render
+  // so the carousel paints once with the correct width instead of 3-then-5.
+  checkLeadSlotExpansion().finally(function() {
+    buildDateCarousel();
+  });
 
   // Fetch member info if member ID present and location is ClubReady
   if (memberId && currentLocation.crm === 'clubready') {
@@ -1599,9 +1603,7 @@ async function checkLeadSlotExpansion() {
 
     if (totalSlots <= 2) {
       currentLocation.leadDaysAhead = currentLocation.leadDaysAheadExpanded;
-      selectedDate = null;
       dateOffset = 0;
-      buildDateCarousel();
     }
   } catch (err) {
     console.warn('Lead slot expansion check failed:', err.message);
