@@ -978,8 +978,10 @@ var CONFIG = {
   checkoutApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/create-checkout-session',
   availabilityApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/book-session',
   memberInfoApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/member-info',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY2tvdHNyaHV4eGZ0d21kbHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MTU4ODUsImV4cCI6MjA4MzM5MTg4NX0.AAQSDK4gu7lDUrFFk540HHELQ85S0vyATNQT6up-pXE',
   daysAhead: 30,
 };
+var EDGE_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONFIG.anonKey };
 
 // ============================================================
 // LOCATION DATABASE
@@ -1589,7 +1591,7 @@ async function checkLeadSlotExpansion() {
   try {
     var requests = dates.map(function(dateStr) {
       var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
-      return fetch(slotsUrl)
+      return fetch(slotsUrl, { headers: EDGE_HEADERS })
         .then(function(r) { return r.ok ? r.json() : []; })
         .catch(function() { return []; });
     });
@@ -1714,7 +1716,7 @@ async function fetchSlots(dateStr) {
   // For ClubReady locations, fetch from edge function
   try {
     var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
-    var response = await fetch(slotsUrl);
+    var response = await fetch(slotsUrl, { headers: EDGE_HEADERS });
     // Drop the response if the user has since picked a different date.
     if (selectedDate !== requestedDate) return;
 
