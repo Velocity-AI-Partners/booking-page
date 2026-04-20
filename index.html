@@ -1194,6 +1194,37 @@ var LOCATIONS = {
       ],
     },
   },
+  'stretch-zone-scottsdale-thomas': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Scottsdale Thomas AZ',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/Phoenix',
+    phone: '14808668523',
+    email: 'scottsdalethomasaz@stretchzone.com',
+    address: '2825 N Scottsdale Road, Suite 152A, Scottsdale, AZ 85257',
+    clubreadyStoreId: 14905,
+    crm: 'clubready',
+    hours: { weekday: [7, 19], saturday: [8, 16], sunday: [8, 16] },
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'FREE First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['Basic Bi-Weekly (2/mo)', '$119/mo'],
+        ['1x/week (4/mo)', '$200/mo'],
+        ['2x/week (8/mo)', '$360/mo'],
+        ['3x/week (12/mo)', '$480/mo'],
+        ['4x/week (16/mo)', '$640/mo'],
+        ['Drop-in', '$85/session'],
+      ],
+    },
+  },
 };
 
 // ============================================================
@@ -2259,6 +2290,8 @@ async function fetchCalendarLinks(payload) {
     'sz-baton-rouge': '7575 Jefferson Hwy Suite E, Baton Rouge, LA 70806',
     'stretch-zone-ahwatukee': '4825 E Warner Rd, Suite D9, Phoenix, AZ 85044',
     'sz-ahwatukee': '4825 E Warner Rd, Suite D9, Phoenix, AZ 85044',
+    'stretch-zone-scottsdale-thomas': '2825 N Scottsdale Road, Suite 152A, Scottsdale, AZ 85257',
+    'sz-scottsdale-thomas': '2825 N Scottsdale Road, Suite 152A, Scottsdale, AZ 85257',
     'integrated-martial-arts-westborough': '227 Turnpike Rd Suite C, Westborough, MA 01581',
     'ima-westborough': '227 Turnpike Rd Suite C, Westborough, MA 01581',
     'integrated-martial-arts-worcester': '342A W Boylston St, West Boylston, MA 01583',
@@ -2276,6 +2309,8 @@ async function fetchCalendarLinks(payload) {
     'sz-baton-rouge': '(225) 456-2734',
     'stretch-zone-ahwatukee': '(480) 696-7566',
     'sz-ahwatukee': '(480) 696-7566',
+    'stretch-zone-scottsdale-thomas': '(480) 866-8523',
+    'sz-scottsdale-thomas': '(480) 866-8523',
     'integrated-martial-arts-westborough': '(774) 772-4759',
     'ima-westborough': '(774) 772-4759',
     'integrated-martial-arts-worcester': '(508) 251-9469',
@@ -2350,6 +2385,7 @@ function showNoCreditsPopup() {
     'stretch-zone-dfw': 'https://www.stretchzone.com/locations/southlake-tx',
     'stretch-zone-baton-rouge': 'https://www.stretchzone.com/locations/bocage-la',
     'stretch-zone-ahwatukee': 'https://www.stretchzone.com/locations/ahwatukee-az',
+    'stretch-zone-scottsdale-thomas': 'https://www.stretchzone.com/locations/scottsdale-thomas-az',
   };
   var PHONE_MAP = {
     'stretch-zone-westborough': '(508) 329-1134',
@@ -2358,6 +2394,7 @@ function showNoCreditsPopup() {
     'stretch-zone-dfw': '(817) 612-1666',
     'stretch-zone-baton-rouge': '(225) 456-2734',
     'stretch-zone-ahwatukee': '(480) 696-7566',
+    'stretch-zone-scottsdale-thomas': '(480) 866-8523',
   };
   var slug = currentLocationSlug || '';
   var phone = PHONE_MAP[slug] || currentLocation.phone || '';
@@ -2470,6 +2507,7 @@ async function fetchMemberInfo(locationSlug, memberId) {
     'stretch-zone-dfw': 'sz-dfw',
     'stretch-zone-baton-rouge': 'sz-baton-rouge',
     'stretch-zone-ahwatukee': 'sz-ahwatukee',
+    'stretch-zone-scottsdale-thomas': 'sz-scottsdale-thomas',
   };
   var apiSlug = slugMap[locationSlug] || locationSlug;
 
