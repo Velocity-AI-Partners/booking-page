@@ -2149,7 +2149,7 @@ async function autoSubmitPaidBooking(payload, sessionId) {
   try {
     var response = await fetch(CONFIG.bookingApi, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: Object.assign({ 'Content-Type': 'application/json' }, EDGE_HEADERS),
       body: JSON.stringify(payload),
     });
     var result = {};
@@ -2222,7 +2222,7 @@ async function submitBooking() {
       var returnUrl = window.location.origin + window.location.pathname + '?' + returnParams.toString();
       var checkoutResp = await fetch(CONFIG.checkoutApi, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' }, EDGE_HEADERS),
         body: JSON.stringify({
           location: currentLocationSlug,
           locationName: currentLocation.displayName,
@@ -2253,7 +2253,7 @@ async function submitBooking() {
   try {
     var response = await fetch(CONFIG.bookingApi, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: Object.assign({ 'Content-Type': 'application/json' }, EDGE_HEADERS),
       body: JSON.stringify(payload),
     });
 
