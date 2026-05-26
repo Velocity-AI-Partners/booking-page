@@ -1429,6 +1429,7 @@ var dateOffset = 0;
 var selectedDate = null;
 var selectedSlot = null;
 var availableSlots = [];
+var bookingCompleted = false;
 
 // Dynamic member info (populated by API call)
 window._memberPlan = null;
@@ -2136,6 +2137,11 @@ function getSubmitButtonText() {
 
 function updateSubmitButton() {
   var btn = document.getElementById('submitBtn');
+  if (bookingCompleted) {
+    btn.disabled = true;
+    document.getElementById('submitText').textContent = 'Booking Confirmed';
+    return;
+  }
   btn.disabled = !(selectedDate && selectedSlot);
   document.getElementById('submitText').textContent = getSubmitButtonText();
 }
@@ -2301,8 +2307,9 @@ function showConfirmation(payload, result) {
 
   fetchCalendarLinks(payload);
 
-  document.getElementById('submitBtn').disabled = false;
-  document.getElementById('submitText').textContent = getSubmitButtonText();
+  bookingCompleted = true;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitText').textContent = 'Booking Confirmed';
 }
 
 async function fetchCalendarLinks(payload) {
