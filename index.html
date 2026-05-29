@@ -2162,6 +2162,8 @@ async function autoSubmitPaidBooking(payload, sessionId) {
     try { result = await response.json(); } catch (e) {}
     if (result.success) {
       showConfirmation(payload, result);
+    } else if (result.code === 'already_has_booking' || result.code === 'already_completed_demo') {
+      showAlreadyBookedNotice(result.message || 'You already have a booking on file.');
     } else {
       var msg = result.message || 'Booking could not be completed after payment. Please contact us.';
       showBookingError(msg);
@@ -2270,6 +2272,8 @@ async function submitBooking() {
       showConfirmation(payload, result);
     } else if (result.noCredits) {
       showNoCreditsPopup();
+    } else if (result.code === 'already_has_booking' || result.code === 'already_completed_demo') {
+      showAlreadyBookedNotice(result.message || 'You already have a booking on file.');
     } else {
       var msg = result.message || 'Booking could not be completed.';
       showBookingError(msg);
@@ -2413,6 +2417,29 @@ function showBookingError(msg) {
 
   document.getElementById('submitBtn').disabled = false;
   document.getElementById('submitText').textContent = getSubmitButtonText();
+}
+
+// Shown when the server reports the customer already has a booking on file
+// (code 'already_has_booking' = an upcoming booking exists; 'already_completed_demo'
+// = they've already done their intro). This is NOT a retryable error, so the submit
+// button stays disabled — the server message already tells them to cancel first or
+// call the studio.
+function showAlreadyBookedNotice(msg) {
+  var calEl = document.getElementById('calendarButtons');
+  if (calEl) calEl.innerHTML = '';
+  var phone = currentLocation.phone || '';
+  var detail = escapeHtml(msg);
+  if (phone) {
+    detail += '<br><br>Questions? Call us at <strong>' + formatPhone(phone) + '</strong>.';
+  }
+
+  document.getElementById('popupTitle').textContent = "You're Already Booked";
+  document.getElementById('popupDetail').innerHTML = detail;
+  document.getElementById('popupOverlay').classList.add('visible');
+
+  // No retry: nothing to resubmit while a booking is already on file.
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitText').textContent = 'Already Booked';
 }
 
 // ============================================================
