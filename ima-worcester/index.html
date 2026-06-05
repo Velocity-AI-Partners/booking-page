@@ -11,7 +11,12 @@
 <link rel="preconnect" href="https://widgets-api.www.wellnessliving.com" crossorigin>
 <link rel="preconnect" href="https://www.google.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<link rel="modulepreload" href="https://widgets.wellnessliving.com/lead-capture/widget.js">
+<!-- The lead widget's app is ES modules (always CORS-fetched), so cross-origin modulepreload warms
+     the same cache the iframe uses. Preload its ~1MB of JS in parallel up front. -->
+<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/widget.js">
+<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/app.js">
+<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/assets/index--aPE7sD1.js">
+<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/assets/app-DCLxTzBE.js">
 <!--
   IMA WORCESTER SINGLE-PAGE TRIAL  (lead capture writes to WellnessLiving)
     Step 1  class picker (our page, for routing) + WL Lead Capture widget (writes the lead to WL).
@@ -170,15 +175,16 @@
       '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>';
   }
 
-  // Preload (hidden) the matching trial + schedule when a class is picked, so the reveal is instant.
+  // Record the chosen class. We DON'T preload the trial/schedule yet if the lead widget is still
+  // loading (3 heavy iframes at once is what made the page crawl); we wait until the lead form is up.
   el('interest').addEventListener('change', function(){
     if (!el('interest').value) return;
-    loadStoreWidget(audForInterest());
-    loadScheduleWidget();
+    pendingAud = audForInterest();
+    if (leadArmed) { loadStoreWidget(pendingAud); loadScheduleWidget(); }
   });
 
   // Reveal the matching trial + schedule. Triggered when the WL lead form is submitted.
-  var revealed = false, leadMaxH = 0, leadArmed = false, leadLowTimer = null;
+  var revealed = false, leadMaxH = 0, leadArmed = false, leadLowTimer = null, pendingAud = null;
   function revealTrial(){
     if (revealed) return; revealed = true;
     var interest = el('interest').value || '';
@@ -207,7 +213,11 @@
         && d.widgetId.indexOf('wl-lead-capture-widget') === 0) {
       var lh = d.height || 0;
       if (lh > leadMaxH) leadMaxH = lh;
-      if (leadMaxH > 450) leadArmed = true;
+      if (leadMaxH > 450 && !leadArmed) {
+        leadArmed = true;
+        // Lead form is up; now quietly preload the trial + schedule so the reveal is instant.
+        if (pendingAud) { loadStoreWidget(pendingAud); loadScheduleWidget(); }
+      }
       if (leadArmed && lh > 0 && lh < leadMaxH - 180) {
         if (!leadLowTimer) leadLowTimer = setTimeout(revealTrial, 1500);
       } else if (leadLowTimer) { clearTimeout(leadLowTimer); leadLowTimer = null; }
