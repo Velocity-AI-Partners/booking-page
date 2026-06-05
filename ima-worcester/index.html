@@ -164,33 +164,44 @@
       '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>';
   }
 
-  // Keep our deep-linked store iframe sized to its content.
   window.addEventListener('message', function(e){
     if (!/wellnessliving/i.test(e.origin)) return;
     var d = e.data; if (!d || typeof d !== 'object') return;
+    // Keep our deep-linked store iframe sized to its content.
     if (d.source === 'wl-widget' && d.type === 'widget:height' && d.widgetId === storeWidgetId) {
       var fr = el('wl-store-frame'); if (fr && d.height) fr.style.height = d.height + 'px';
+      return;
+    }
+    // WL lead form submitted -> open the matching trial. The widget reports the submit as an
+    // ecommerce "generate_lead" analytics event. Logged so the exact name can be confirmed live.
+    if (d.type === 'analytics:event') {
+      var ev = d.data || {};
+      var name = String(ev.event || ev.name || ev.eventName || '').toLowerCase();
+      console.log('[wl lead analytics:event]', name || ev);
+      if (/generate_lead|(^|[_-])lead([_-]|$)|submit/.test(name)) revealTrial();
     }
   });
 
-  // Auto-open the matching trial + schedule the moment a class is chosen (no manual button).
-  // Step 1 stays open so the WL lead form is still there to capture the lead.
+  // Audience (adult/kids) derived from the chosen class. The dropdown only records the
+  // choice; the trial opens when the WL lead form is SUBMITTED (see the message listener).
   function audForInterest(){
     var sel = el('interest'); var opt = sel.options[sel.selectedIndex];
     var grp = opt && opt.parentElement && opt.parentElement.label ? opt.parentElement.label : '';
     return /kid/i.test(grp) ? 'kids' : 'adult';
   }
-  el('interest').addEventListener('change', function(){
-    var interest = el('interest').value;
-    if (!interest) return;
+  var revealed = false;
+  function revealTrial(){
+    if (revealed) return; revealed = true;
+    var interest = el('interest').value || '';
     var aud = audForInterest();
     el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
-      ' trial pass<small>For ' + interest + '. Secure checkout on WellnessLiving.</small>';
+      ' trial pass<small>' + (interest ? ('For ' + interest + '. ') : '') + 'Secure checkout on WellnessLiving.</small>';
     loadStoreWidget(aud);
     loadScheduleWidget();
-    ['step2','step3'].forEach(function(id){ el(id).classList.remove('hidden'); el(id).classList.add('has-body'); });
+    setActive(2);  // collapse Step 1 (done) and show the trial
+    el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
     el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
-  });
+  }
 </script>
 
 </body>
