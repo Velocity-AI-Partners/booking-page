@@ -5,19 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMA Worcester &middot; 3-Class Trial for $19.99</title>
 <!--
-  IMA WORCESTER SINGLE-PAGE TRIAL  (all in-page, no redirects)
-    Step 1  enter info + interest   -> captured to website_inquiries for SMS follow-up.
-    Step 2  buy the trial pass      -> embedded WellnessLiving STORE widget (k_skin 345157).
-    Step 3  pick + book the class   -> embedded WellnessLiving SCHEDULE widget (k_skin 345152).
+  IMA WORCESTER SINGLE-PAGE TRIAL  (all WellnessLiving tools, business 697216)
+    Step 1  WL Lead Capture widget  -> stores the lead (name/email/cell/program) in WL natively.
+            Embed: widgets.wellnessliving.com/lead-capture, k_schema 019e9954-a02c-702c-ab16-1d9aabff2d97
+            (form trimmed in WL admin to First name, Email, Cell phone, Select A Program).
+    Step 2  WL Store widget          -> deep-linked to the selected $19.99 trial pass
+            (adult k_id 3667025 / kids 3909348), in-page checkout.
+    Step 3  WL Schedule widget       -> visual class calendar (k_skin 345152), "Book now".
 
-  Both widgets are IMA Worcester's own WL "website widgets" (business 697216), embedded
-  cross-origin via WL's iframe widget loaders. They render in-page and transact inside WL,
-  so no API / write access is needed. Embed codes pulled from WL admin (Setup > Website Widgets).
+  Lead entry + checkout both run inside WellnessLiving (same widgets.wellnessliving.com origin),
+  so the customer entered in Step 1 is known to checkout. No API / write access needed from us.
 
-  Step 2 -> Step 3 advances automatically on the store widget's checkout/confirmation
-  postMessage. (The exact event is confirmed live; see onWlMessage.)
-
-  TO GO LIVE the lead capture: activate n8n workflow "Wellness Living Booking" (DtrC6eLmrlR87uEj).
+  Because the WL lead form submits inside its own cross-origin iframe, we can't reliably read its
+  submit event, so after filling Step 1 the customer taps which trial to continue with; that
+  reveals the (WL) checkout + schedule.
 -->
 <style>
   :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
@@ -44,16 +45,12 @@
   .step .body { padding:16px; }
   .step.done .body, .step:not(.has-body) .body { display:none; }
 
-  .form { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:4px; }
-  .form .full { grid-column:1 / -1; }
-  label { display:block; font-size:11.5px; font-weight:700; color:#4a5160; margin-bottom:4px; }
-  input, select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; }
-  input:focus, select:focus { outline:none; border-color:var(--red); }
-  .btn { display:block; width:100%; text-align:center; background:var(--red); color:#fff; border:0; border-radius:10px; padding:14px 18px; font-size:15px; font-weight:700; cursor:pointer; }
-  .btn:disabled { opacity:.6; cursor:default; }
-  .err { grid-column:1 / -1; color:var(--red); font-size:12px; display:none; }
-
-  .wl-mount { width:100%; min-height:420px; }
+  .wl-mount { width:100%; min-height:200px; }
+  .pick { margin-top:14px; border-top:1px dashed var(--line); padding-top:16px; }
+  .pick p { font-size:13px; font-weight:700; color:#4a5160; margin-bottom:10px; text-align:center; }
+  .pick .btns { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .btn { display:block; width:100%; text-align:center; background:var(--red); color:#fff; border:0; border-radius:10px; padding:13px 14px; font-size:14.5px; font-weight:700; cursor:pointer; }
+  .btn.alt { background:#2a3340; }
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
 </style>
@@ -69,53 +66,30 @@
 
   <div class="wrap">
 
-    <!-- STEP 1: info + interest capture (lead capture for SMS follow-up) -->
+    <!-- STEP 1: WL Lead Capture widget (stores the lead in WellnessLiving) -->
     <div class="step has-body" id="step1">
-      <div class="bar"><div class="n">1</div><div class="h">Tell us who you are<small>Takes 20 seconds. We'll hold your spot.</small></div></div>
+      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Quick details and which class you're interested in</small></div></div>
       <div class="body">
-        <form class="form" id="lead-form" novalidate>
-          <div><label for="firstName">First name</label><input id="firstName" name="firstName" autocomplete="given-name" required></div>
-          <div><label for="phone">Mobile phone</label><input id="phone" name="phone" type="tel" autocomplete="tel" required></div>
-          <div class="full"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
-          <div class="full"><label for="interest">Which class are you most interested in?</label>
-            <select id="interest" name="interest">
-              <optgroup label="Adults &amp; Teens">
-                <option>Brazilian Jiu-Jitsu (BJJ)</option>
-                <option>Muay Thai Kickboxing</option>
-                <option>Mixed Martial Arts (MMA)</option>
-                <option>NoGi Grappling / Submission Wrestling</option>
-                <option>Combat Karate</option>
-                <option>Karate Kempo</option>
-                <option>Kali: Filipino Stick &amp; Knife Fighting</option>
-                <option>Women's-Only BJJ</option>
-                <option>IMA Fit (fitness)</option>
-                <option>Not sure yet, help me choose</option>
-              </optgroup>
-              <optgroup label="Kids">
-                <option>Tiny Tigers (ages 5-7)</option>
-                <option>Mighty Dragons (ages 8-13)</option>
-                <option>Kids Kempo Karate</option>
-                <option>Combat Karate (Kids)</option>
-                <option>Adaptive: Autism / ADHD</option>
-                <option>Parent &amp; Me</option>
-              </optgroup>
-            </select>
+        <div id="wl-lead-widget" class="wl-mount"></div>
+        <div class="pick">
+          <p>After you submit above, pick your trial to continue:</p>
+          <div class="btns">
+            <button class="btn" type="button" data-aud="adult">Adults &amp; Teens trial &rarr;</button>
+            <button class="btn alt" type="button" data-aud="kids">Kids trial &rarr;</button>
           </div>
-          <div class="err" id="err">Please add your name, a valid phone, and email.</div>
-          <button class="btn" type="submit" id="continueBtn">Continue to checkout &rarr;</button>
-        </form>
+        </div>
       </div>
     </div>
 
-    <!-- STEP 2: buy the pass (embedded WL Store widget) -->
+    <!-- STEP 2: WL Store widget, deep-linked to the chosen trial -->
     <div class="step hidden" id="step2">
-      <div class="bar"><div class="n">2</div><div class="h" id="step2head">Get your $19.99 trial pass<small>Buy the "Kids and Adult Trial Packages" pass below</small></div></div>
+      <div class="bar"><div class="n">2</div><div class="h" id="step2head">Get your $19.99 trial pass<small>Secure checkout, handled by WellnessLiving</small></div></div>
       <div class="body"><div id="wl-store-widget" class="wl-mount"></div></div>
     </div>
 
-    <!-- STEP 3: pick + book (embedded WL Schedule widget) -->
+    <!-- STEP 3: WL Schedule widget -->
     <div class="step hidden" id="step3">
-      <div class="bar"><div class="n">3</div><div class="h" id="step3head">Pick your first class<small>Choose a time and book it against your new pass</small></div></div>
+      <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small>Choose a time and book it against your new pass</small></div></div>
       <div class="body"><div id="wl-schedule-widget" class="wl-mount"></div></div>
     </div>
 
@@ -123,22 +97,14 @@
   </div>
 
 <script>
-  var LEAD_WEBHOOK = 'https://velocityaipartners.app.n8n.cloud/webhook/ima-worcester-landing-lead';
-  // IMA Worcester WellnessLiving website widgets (business 697216).
   var WL_BUSINESS = '697216';
-  var WL_SCHEDULE_SKIN = '345152';  // Standard Schedule widget (visual class calendar, "Book now")
-  // The two $19.99 3-class trial passes. We deep-link the store to just the one matching Step 1.
-  var TRIAL_KID = { adult: '3667025', kids: '3909348' };
-  var storeWidgetId = 'wl-store-widget:ima';  // set per load; echoed back in widget messages
+  var WL_LEAD_SCHEMA = '019e9954-a02c-702c-ab16-1d9aabff2d97'; // trimmed Lead Capture form
+  var WL_SCHEDULE_SKIN = '345152';                              // visual class schedule
+  var TRIAL_KID = { adult: '3667025', kids: '3909348' };        // the two $19.99 3-class passes
+  var storeWidgetId = 'wl-store-widget:ima';
 
   function el(id){ return document.getElementById(id); }
-  function audience(){
-    var sel = el('interest'); var opt = sel.options[sel.selectedIndex];
-    var grp = opt && opt.parentElement && opt.parentElement.label ? opt.parentElement.label : '';
-    return /kid/i.test(grp) ? 'kids' : 'adult';
-  }
 
-  // Reveal exactly one section at a time; completed steps collapse to a green check bar.
   function setActive(n){
     [1,2,3].forEach(function(i){
       var s = el('step'+i);
@@ -147,15 +113,19 @@
       else if (i === n) { s.classList.add('has-body'); }
       else { s.classList.add('hidden'); }
     });
-    el('step'+n).scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
-  // ----- WL widget loaders -----
+  // Step 1: load the WL Lead Capture widget (self-rendering iframe; stores lead in WL on Submit).
+  (function loadLeadWidget(){
+    var s = document.createElement('script');
+    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/lead-capture/widget.js';
+    document.head.appendChild(s);
+    el('wl-lead-widget').innerHTML =
+      '<wl-lead-capture-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_LEAD_SCHEMA + '"></wl-lead-capture-widget>';
+  })();
+
+  // Step 2: deep-link the WL store host to ONLY the chosen trial pass.
   var storeLoaded = false, scheduleLoaded = false;
-  // Deep-link the WL store host to ONLY the selected trial pass (id_sale=1&k_id=<trial>).
-  // The handshake params (__wl-widget-id__, __wl-parent-origin__) are what the web component
-  // normally adds; including them lets us frame a single product directly and still receive
-  // the widget:height (resize) and analytics:event (purchase) messages on our window.
   function loadStoreWidget(aud){
     if (storeLoaded) return; storeLoaded = true;
     storeWidgetId = 'wl-store-widget:ima-' + Math.random().toString(36).slice(2, 9);
@@ -177,60 +147,27 @@
     document.body.appendChild(s);
   }
 
-  // ----- Advance to scheduling ONLY on a real completed purchase -----
-  // The WL store loader (widgets.wellnessliving.com/store/widget.js) posts these inbound
-  // types: widget:height (resize), widget:branding, widget:scroll, widget:redirect:self,
-  // and analytics:event (its ecommerce tracking pipe). The only event that fires at order
-  // completion is the standard ecommerce "purchase" event, carried inside analytics:event.
-  // Matching strictly that name avoids false-advancing on browse / add_to_cart / resize.
-  var advanced = false;
-  function advanceToSchedule(){ if (advanced) return; advanced = true; loadScheduleWidget(); setActive(3); }
-  function onWlMessage(e){
+  // Keep our deep-linked store iframe sized to its content.
+  window.addEventListener('message', function(e){
     if (!/wellnessliving/i.test(e.origin)) return;
     var d = e.data; if (!d || typeof d !== 'object') return;
-    // Resize our deep-linked store iframe to its content (the web component does this for us;
-    // here we own the iframe, so we apply the reported height ourselves).
     if (d.source === 'wl-widget' && d.type === 'widget:height' && d.widgetId === storeWidgetId) {
-      var fr = document.getElementById('wl-store-frame');
-      if (fr && d.height) fr.style.height = d.height + 'px';
-      return;
+      var fr = el('wl-store-frame'); if (fr && d.height) fr.style.height = d.height + 'px';
     }
-    if (d.type !== 'analytics:event') return;            // ignore view/scroll/branding/redirect
-    var ev = d.data || {};
-    var name = String(ev.event || ev.name || ev.eventName || '').toLowerCase();
-    console.log('[wl analytics:event]', name || ev);      // surfaces the exact payload for live confirmation
-    if (name === 'purchase') advanceToSchedule();
-  }
-  window.addEventListener('message', onWlMessage);
+  });
 
-  // ----- Step 1 submit -----
-  el('lead-form').addEventListener('submit', function(e){
-    e.preventDefault();
-    var fn = el('firstName').value.trim();
-    var ph = el('phone').value.replace(/[^0-9]/g, '');
-    var em = el('email').value.trim();
-    if (!(fn && ph.length >= 10 && /.+@.+\..+/.test(em))) { el('err').style.display = 'block'; return; }
-    el('err').style.display = 'none';
-    var btn = el('continueBtn'); btn.disabled = true; btn.textContent = 'One moment...';
-
-    var aud = audience();
-    var interest = el('interest').value;
-    var payload = { firstName: fn, phone: el('phone').value.trim(), email: em, interest: interest, audience: aud };
-    // Capture the lead for SMS follow-up. Best-effort; the customer proceeds either way.
-    fetch(LEAD_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-      .catch(function(){ /* non-blocking */ });
-
-    el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
-      ' trial pass<small>For ' + interest + '. Tap "Buy now" below to grab your 3-class pass.</small>';
-    el('step3head').innerHTML = 'Pick your first ' + interest + ' class<small>Choose a time and book it against your new pass</small>';
-
-    loadStoreWidget(aud);
-    setActive(2);
-    // TEMPORARY (testing): also reveal the schedule now, without waiting for a real checkout.
-    // The purchase-gated auto-advance (analytics:event "purchase") stays wired above for later.
-    loadScheduleWidget();
-    el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
-    btn.disabled = false; btn.textContent = 'Continue to checkout →';
+  // Trial picker: reveal the WL checkout + schedule for the chosen audience.
+  [].forEach.call(document.querySelectorAll('.pick .btn'), function(b){
+    b.addEventListener('click', function(){
+      var aud = b.getAttribute('data-aud');
+      el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
+        ' trial pass<small>Secure checkout, handled by WellnessLiving</small>';
+      loadStoreWidget(aud);
+      loadScheduleWidget();
+      setActive(2);
+      el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
+      el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
+    });
   });
 </script>
 
