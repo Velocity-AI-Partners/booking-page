@@ -46,11 +46,9 @@
   .step.done .body, .step:not(.has-body) .body { display:none; }
 
   .wl-mount { width:100%; min-height:200px; }
-  .pick { margin-top:14px; border-top:1px dashed var(--line); padding-top:16px; }
-  .pick p { font-size:13px; font-weight:700; color:#4a5160; margin-bottom:10px; text-align:center; }
-  .pick .btns { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .btn { display:block; width:100%; text-align:center; background:var(--red); color:#fff; border:0; border-radius:10px; padding:13px 14px; font-size:14.5px; font-weight:700; cursor:pointer; }
-  .btn.alt { background:#2a3340; }
+  .lead-label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
+  .lead-select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; margin-bottom:16px; }
+  .lead-select:focus { outline:none; border-color:var(--red); }
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
 </style>
@@ -70,14 +68,31 @@
     <div class="step has-body" id="step1">
       <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Quick details and which class you're interested in</small></div></div>
       <div class="body">
+        <label for="interest" class="lead-label">Which class are you interested in?</label>
+        <select id="interest" class="lead-select">
+          <option value="">Please select...</option>
+          <optgroup label="Adults &amp; Teens">
+            <option>Brazilian Jiu-Jitsu (BJJ)</option>
+            <option>Muay Thai Kickboxing</option>
+            <option>Mixed Martial Arts (MMA)</option>
+            <option>NoGi Grappling / Submission Wrestling</option>
+            <option>Combat Karate</option>
+            <option>Karate Kempo</option>
+            <option>Kali: Filipino Stick &amp; Knife Fighting</option>
+            <option>Women's-Only BJJ</option>
+            <option>IMA Fit (fitness)</option>
+            <option>Not sure yet, help me choose</option>
+          </optgroup>
+          <optgroup label="Kids">
+            <option>Tiny Tigers (ages 5-7)</option>
+            <option>Mighty Dragons (ages 8-13)</option>
+            <option>Kids Kempo Karate</option>
+            <option>Combat Karate (Kids)</option>
+            <option>Adaptive: Autism / ADHD</option>
+            <option>Parent &amp; Me</option>
+          </optgroup>
+        </select>
         <div id="wl-lead-widget" class="wl-mount"></div>
-        <div class="pick">
-          <p>After you submit above, pick your trial to continue:</p>
-          <div class="btns">
-            <button class="btn" type="button" data-aud="adult">Adults &amp; Teens trial &rarr;</button>
-            <button class="btn alt" type="button" data-aud="kids">Kids trial &rarr;</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -126,8 +141,10 @@
 
   // Step 2: deep-link the WL store host to ONLY the chosen trial pass.
   var storeLoaded = false, scheduleLoaded = false;
+  var loadedAud = null;
   function loadStoreWidget(aud){
-    if (storeLoaded) return; storeLoaded = true;
+    if (storeLoaded && loadedAud === aud) return;   // reload if the audience (adult/kids) changed
+    storeLoaded = true; loadedAud = aud;
     storeWidgetId = 'wl-store-widget:ima-' + Math.random().toString(36).slice(2, 9);
     var kid = TRIAL_KID[aud] || TRIAL_KID.adult;
     var src = 'https://widgets.wellnessliving.com/store?k_business=' + WL_BUSINESS + '&k_location=' +
@@ -156,18 +173,23 @@
     }
   });
 
-  // Trial picker: reveal the WL checkout + schedule for the chosen audience.
-  [].forEach.call(document.querySelectorAll('.pick .btn'), function(b){
-    b.addEventListener('click', function(){
-      var aud = b.getAttribute('data-aud');
-      el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
-        ' trial pass<small>Secure checkout, handled by WellnessLiving</small>';
-      loadStoreWidget(aud);
-      loadScheduleWidget();
-      setActive(2);
-      el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
-      el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
-    });
+  // Auto-open the matching trial + schedule the moment a class is chosen (no manual button).
+  // Step 1 stays open so the WL lead form is still there to capture the lead.
+  function audForInterest(){
+    var sel = el('interest'); var opt = sel.options[sel.selectedIndex];
+    var grp = opt && opt.parentElement && opt.parentElement.label ? opt.parentElement.label : '';
+    return /kid/i.test(grp) ? 'kids' : 'adult';
+  }
+  el('interest').addEventListener('change', function(){
+    var interest = el('interest').value;
+    if (!interest) return;
+    var aud = audForInterest();
+    el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
+      ' trial pass<small>For ' + interest + '. Secure checkout on WellnessLiving.</small>';
+    loadStoreWidget(aud);
+    loadScheduleWidget();
+    ['step2','step3'].forEach(function(id){ el(id).classList.remove('hidden'); el(id).classList.add('has-body'); });
+    el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
   });
 </script>
 
