@@ -4,27 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMA Worcester &middot; 3-Class Trial for $19.99</title>
+<!-- Warm the WellnessLiving widget connections up front so the checkout/schedule load faster. -->
+<link rel="preconnect" href="https://widgets.wellnessliving.com" crossorigin>
+<link rel="dns-prefetch" href="https://widgets.wellnessliving.com">
+<link rel="preconnect" href="https://www.wellnessliving.com" crossorigin>
 <!--
-  IMA WORCESTER SINGLE-PAGE TRIAL  (all WellnessLiving tools, business 697216)
-    Step 1  WL Lead Capture widget  -> stores the lead (name/email/cell/program) in WL natively.
-            Embed: widgets.wellnessliving.com/lead-capture, k_schema 019e9954-a02c-702c-ab16-1d9aabff2d97
-            (form trimmed in WL admin to First name, Email, Cell phone, Select A Program).
-    Step 2  WL Store widget          -> deep-linked to the selected $19.99 trial pass
-            (adult k_id 3667025 / kids 3909348), in-page checkout.
-    Step 3  WL Schedule widget       -> visual class calendar (k_skin 345152), "Book now".
-
-  Lead entry + checkout both run inside WellnessLiving (same widgets.wellnessliving.com origin),
-  so the customer entered in Step 1 is known to checkout. No API / write access needed from us.
-
-  Because the WL lead form submits inside its own cross-origin iframe, we can't reliably read its
-  submit event, so after filling Step 1 the customer taps which trial to continue with; that
-  reveals the (WL) checkout + schedule.
+  IMA WORCESTER SINGLE-PAGE TRIAL
+    Step 1  our own fast form (name / phone / email / class) -> instant, reliable, no reCAPTCHA.
+            On submit: posts the lead to our n8n webhook (website_inquiries, for SMS follow-up)
+            and opens the matching trial. (WL-native lead write is handled server-side, not here:
+            the WL public lead API is reCAPTCHA-domain-locked to WL, so a browser POST from our
+            origin is rejected.)
+    Step 2  WL Store widget, deep-linked to the chosen $19.99 trial pass (adult 3667025 / kids 3909348).
+    Step 3  WL Schedule widget (public Custom Schedule, self-sizing).
 -->
 <style>
   :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; color:var(--ink); background:#f6f7f9; line-height:1.45; }
-  .wrap { max-width:760px; margin:0 auto; padding:0 14px 60px; }
+  .wrap { max-width:680px; margin:0 auto; padding:0 14px 60px; }
 
   header.hero { background:var(--dark); color:#fff; text-align:center; padding:34px 18px 30px; }
   header.hero img { height:74px; width:auto; margin-bottom:14px; }
@@ -45,10 +43,16 @@
   .step .body { padding:16px; }
   .step.done .body, .step:not(.has-body) .body { display:none; }
 
-  .wl-mount { width:100%; min-height:200px; }
-  .lead-label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
-  .lead-select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; margin-bottom:16px; }
-  .lead-select:focus { outline:none; border-color:var(--red); }
+  .form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .form .full { grid-column:1 / -1; }
+  label { display:block; font-size:11.5px; font-weight:700; color:#4a5160; margin-bottom:4px; }
+  input, select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; }
+  input:focus, select:focus { outline:none; border-color:var(--red); }
+  .btn { display:block; width:100%; text-align:center; background:var(--red); color:#fff; border:0; border-radius:10px; padding:14px 18px; font-size:15px; font-weight:700; cursor:pointer; }
+  .btn:disabled { opacity:.6; cursor:default; }
+  .err { grid-column:1 / -1; color:var(--red); font-size:12px; display:none; }
+
+  .wl-mount { width:100%; min-height:300px; }
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
 </style>
@@ -64,35 +68,42 @@
 
   <div class="wrap">
 
-    <!-- STEP 1: WL Lead Capture widget (stores the lead in WellnessLiving) -->
+    <!-- STEP 1: our own fast form -->
     <div class="step has-body" id="step1">
-      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Quick details and which class you're interested in</small></div></div>
+      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Takes 20 seconds. Then grab your trial below.</small></div></div>
       <div class="body">
-        <label for="interest" class="lead-label">Which class are you interested in?</label>
-        <select id="interest" class="lead-select">
-          <option value="">Please select...</option>
-          <optgroup label="Adults &amp; Teens">
-            <option>Brazilian Jiu-Jitsu (BJJ)</option>
-            <option>Muay Thai Kickboxing</option>
-            <option>Mixed Martial Arts (MMA)</option>
-            <option>NoGi Grappling / Submission Wrestling</option>
-            <option>Combat Karate</option>
-            <option>Karate Kempo</option>
-            <option>Kali: Filipino Stick &amp; Knife Fighting</option>
-            <option>Women's-Only BJJ</option>
-            <option>IMA Fit (fitness)</option>
-            <option>Not sure yet, help me choose</option>
-          </optgroup>
-          <optgroup label="Kids">
-            <option>Tiny Tigers (ages 5-7)</option>
-            <option>Mighty Dragons (ages 8-13)</option>
-            <option>Kids Kempo Karate</option>
-            <option>Combat Karate (Kids)</option>
-            <option>Adaptive: Autism / ADHD</option>
-            <option>Parent &amp; Me</option>
-          </optgroup>
-        </select>
-        <div id="wl-lead-widget" class="wl-mount"></div>
+        <form class="form" id="lead-form" novalidate>
+          <div><label for="firstName">First name</label><input id="firstName" autocomplete="given-name" required></div>
+          <div><label for="phone">Mobile phone</label><input id="phone" type="tel" autocomplete="tel" required></div>
+          <div class="full"><label for="email">Email</label><input id="email" type="email" autocomplete="email" required></div>
+          <div class="full"><label for="interest">Which class are you most interested in?</label>
+            <select id="interest">
+              <option value="">Please select...</option>
+              <optgroup label="Adults &amp; Teens">
+                <option>Brazilian Jiu-Jitsu (BJJ)</option>
+                <option>Muay Thai Kickboxing</option>
+                <option>Mixed Martial Arts (MMA)</option>
+                <option>NoGi Grappling / Submission Wrestling</option>
+                <option>Combat Karate</option>
+                <option>Karate Kempo</option>
+                <option>Kali: Filipino Stick &amp; Knife Fighting</option>
+                <option>Women's-Only BJJ</option>
+                <option>IMA Fit (fitness)</option>
+                <option>Not sure yet, help me choose</option>
+              </optgroup>
+              <optgroup label="Kids">
+                <option>Tiny Tigers (ages 5-7)</option>
+                <option>Mighty Dragons (ages 8-13)</option>
+                <option>Kids Kempo Karate</option>
+                <option>Combat Karate (Kids)</option>
+                <option>Adaptive: Autism / ADHD</option>
+                <option>Parent &amp; Me</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="err" id="err">Please add your name, a valid phone, email, and pick a class.</div>
+          <button class="btn" type="submit" id="submitBtn">Get my $19.99 trial &rarr;</button>
+        </form>
       </div>
     </div>
 
@@ -112,14 +123,18 @@
   </div>
 
 <script>
+  var LEAD_WEBHOOK = 'https://velocityaipartners.app.n8n.cloud/webhook/ima-worcester-landing-lead';
   var WL_BUSINESS = '697216';
-  var WL_LEAD_SCHEMA = '019e9954-a02c-702c-ab16-1d9aabff2d97'; // trimmed Lead Capture form
-  var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b'; // public Custom Schedule widget (self-sizing)
-  var TRIAL_KID = { adult: '3667025', kids: '3909348' };        // the two $19.99 3-class passes
+  var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b';
+  var TRIAL_KID = { adult: '3667025', kids: '3909348' };
   var storeWidgetId = 'wl-store-widget:ima';
 
   function el(id){ return document.getElementById(id); }
-
+  function audForInterest(){
+    var sel = el('interest'); var opt = sel.options[sel.selectedIndex];
+    var grp = opt && opt.parentElement && opt.parentElement.label ? opt.parentElement.label : '';
+    return /kid/i.test(grp) ? 'kids' : 'adult';
+  }
   function setActive(n){
     [1,2,3].forEach(function(i){
       var s = el('step'+i);
@@ -130,20 +145,10 @@
     });
   }
 
-  // Step 1: load the WL Lead Capture widget (self-rendering iframe; stores lead in WL on Submit).
-  (function loadLeadWidget(){
-    var s = document.createElement('script');
-    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/lead-capture/widget.js';
-    document.head.appendChild(s);
-    el('wl-lead-widget').innerHTML =
-      '<wl-lead-capture-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_LEAD_SCHEMA + '"></wl-lead-capture-widget>';
-  })();
-
-  // Step 2: deep-link the WL store host to ONLY the chosen trial pass.
-  var storeLoaded = false, scheduleLoaded = false;
-  var loadedAud = null;
+  // ----- WL widget loaders (deep-linked store + self-sizing schedule) -----
+  var storeLoaded = false, scheduleLoaded = false, loadedAud = null;
   function loadStoreWidget(aud){
-    if (storeLoaded && loadedAud === aud) return;   // reload if the audience (adult/kids) changed
+    if (storeLoaded && loadedAud === aud) return;   // reload if the audience changed
     storeLoaded = true; loadedAud = aud;
     storeWidgetId = 'wl-store-widget:ima-' + Math.random().toString(36).slice(2, 9);
     var kid = TRIAL_KID[aud] || TRIAL_KID.adult;
@@ -163,45 +168,49 @@
     el('wl-schedule-widget').innerHTML =
       '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>';
   }
-
+  // Keep our deep-linked store iframe sized to its content.
   window.addEventListener('message', function(e){
     if (!/wellnessliving/i.test(e.origin)) return;
     var d = e.data; if (!d || typeof d !== 'object') return;
-    // Keep our deep-linked store iframe sized to its content.
     if (d.source === 'wl-widget' && d.type === 'widget:height' && d.widgetId === storeWidgetId) {
       var fr = el('wl-store-frame'); if (fr && d.height) fr.style.height = d.height + 'px';
-      return;
-    }
-    // WL lead form submitted -> open the matching trial. The widget reports the submit as an
-    // ecommerce "generate_lead" analytics event. Logged so the exact name can be confirmed live.
-    if (d.type === 'analytics:event') {
-      var ev = d.data || {};
-      var name = String(ev.event || ev.name || ev.eventName || '').toLowerCase();
-      console.log('[wl lead analytics:event]', name || ev);
-      if (/generate_lead|(^|[_-])lead([_-]|$)|submit/.test(name)) revealTrial();
     }
   });
 
-  // Audience (adult/kids) derived from the chosen class. The dropdown only records the
-  // choice; the trial opens when the WL lead form is SUBMITTED (see the message listener).
-  function audForInterest(){
-    var sel = el('interest'); var opt = sel.options[sel.selectedIndex];
-    var grp = opt && opt.parentElement && opt.parentElement.label ? opt.parentElement.label : '';
-    return /kid/i.test(grp) ? 'kids' : 'adult';
-  }
-  var revealed = false;
-  function revealTrial(){
-    if (revealed) return; revealed = true;
-    var interest = el('interest').value || '';
+  // Preload (hidden) the matching trial + schedule the moment a class is picked, so the reveal
+  // on submit is instant. This does NOT show them yet.
+  el('interest').addEventListener('change', function(){
+    if (!el('interest').value) return;
+    loadStoreWidget(audForInterest());
+    loadScheduleWidget();
+  });
+
+  // ----- Submit: capture the lead + open the trial -----
+  el('lead-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var fn = el('firstName').value.trim();
+    var ph = el('phone').value.replace(/[^0-9]/g, '');
+    var em = el('email').value.trim();
+    var interest = el('interest').value;
+    if (!(fn && ph.length >= 10 && /.+@.+\..+/.test(em) && interest)) { el('err').style.display = 'block'; return; }
+    el('err').style.display = 'none';
+
     var aud = audForInterest();
+    // Capture the lead in our system (for SMS follow-up). Best-effort; the customer proceeds either way.
+    fetch(LEAD_WEBHOOK, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firstName: fn, phone: el('phone').value.trim(), email: em, interest: interest, audience: aud })
+    }).catch(function(){ /* non-blocking */ });
+
+    // Open the matching trial + schedule (already preloaded), collapse Step 1.
     el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
-      ' trial pass<small>' + (interest ? ('For ' + interest + '. ') : '') + 'Secure checkout on WellnessLiving.</small>';
+      ' trial pass<small>For ' + interest + '. Secure checkout on WellnessLiving.</small>';
     loadStoreWidget(aud);
     loadScheduleWidget();
-    setActive(2);  // collapse Step 1 (done) and show the trial
+    setActive(2);
     el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
     el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
-  }
+  });
 </script>
 
 </body>
