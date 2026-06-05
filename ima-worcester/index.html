@@ -226,6 +226,10 @@
 
     loadStoreWidget(aud);
     setActive(2);
+    // TEMPORARY (testing): also reveal the schedule now, without waiting for a real checkout.
+    // The purchase-gated auto-advance (analytics:event "purchase") stays wired above for later.
+    loadScheduleWidget();
+    el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
     btn.disabled = false; btn.textContent = 'Continue to checkout →';
   });
 </script>
