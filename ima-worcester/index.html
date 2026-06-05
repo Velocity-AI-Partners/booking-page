@@ -6,23 +6,26 @@
 <title>IMA Worcester &middot; 3-Class Trial for $19.99</title>
 <!--
   IMA WORCESTER SINGLE-PAGE TRIAL
-  Flow:  Step 1 enter info (we capture the lead for SMS backup)
-      -> Step 2 WL Store Widget  (buy the $19.99 pass)
-      -> Step 3 WL Schedule Widget (pick + book a class)
+  Flow (one section revealed at a time):
+    Step 1  enter info + pick interest  -> we capture the lead (name/phone/email/interest)
+            so we can follow up even if they never finish checkout.
+    Step 2  buy the $19.99 trial pass    -> WellnessLiving catalog (adult k_id 3667025 / kids 3909348).
+    Step 3  pick + book the first class  -> WellnessLiving schedule.
   Buy + book transact inside WellnessLiving (business 697216). No write API needed.
 
-  TO GO LIVE:
-   1) Activate n8n workflow "Wellness Living Booking" (DtrC6eLmrlR87uEj) so the lead webhook is live.
-   2) Paste the two WellnessLiving embed codes (Setup > Widgets, business 697216) into:
-        #wl-store-widget     (Store Widget -> Worcester Trials Pass 3 Sessions $19.99)
-        #wl-schedule-widget  (Schedule Widget -> class schedule)
-      Same signed-in WL client across both so the pass redeems at booking.
+  INTERIM vs FINAL:
+    Until the WL embed codes are generated (WL admin, Setup > Widgets, business 697216),
+    Steps 2 and 3 use working buttons to the real WL catalog + schedule pages.
+    When the embed codes arrive, paste them into #wl-store-widget / #wl-schedule-widget
+    and hide the .interim button blocks.
+
+  TO GO LIVE the lead capture: activate n8n workflow "Wellness Living Booking" (DtrC6eLmrlR87uEj).
 -->
 <style>
-  :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --dark:#0f1622; }
+  :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; color:var(--ink); background:#f6f7f9; line-height:1.45; }
-  .wrap { max-width:920px; margin:0 auto; padding:0 18px 60px; }
+  .wrap { max-width:680px; margin:0 auto; padding:0 18px 60px; }
 
   header.hero { background:var(--dark); color:#fff; text-align:center; padding:34px 18px 30px; }
   header.hero img { height:74px; width:auto; margin-bottom:14px; }
@@ -32,30 +35,33 @@
   .progs { margin-top:14px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
   .progs span { font-size:11.5px; font-weight:600; color:#dfe3ea; border:1px solid #2a3340; border-radius:20px; padding:4px 11px; }
 
-  .step { background:#fff; border:1px solid var(--line); border-radius:16px; margin-top:22px; overflow:hidden; }
-  .step.locked { opacity:.5; pointer-events:none; }
-  .step .bar { display:flex; align-items:center; gap:11px; padding:15px 20px; border-bottom:1px solid var(--line); }
+  .step { background:#fff; border:1px solid var(--line); border-radius:16px; margin-top:18px; overflow:hidden; }
+  .step.hidden { display:none; }
+  .step .bar { display:flex; align-items:center; gap:11px; padding:15px 20px; }
+  .step.has-body .bar { border-bottom:1px solid var(--line); }
   .step .n { width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%; background:var(--red); color:#fff; font-weight:700; font-size:14px; flex:0 0 auto; }
+  .step.done .n { background:var(--green); }
   .step .h { font-size:16px; font-weight:700; }
   .step .h small { display:block; font-size:11.5px; font-weight:500; color:var(--muted); margin-top:1px; }
-  .body { padding:20px; }
+  .step .body { padding:20px; }
+  .step.done .body, .step:not(.has-body) .body { display:none; }
 
   .form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .form .full { grid-column:1 / -1; }
   label { display:block; font-size:11.5px; font-weight:700; color:#4a5160; margin-bottom:4px; }
-  input, select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; }
+  input, select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; }
   input:focus, select:focus { outline:none; border-color:var(--red); }
-  button.cta { grid-column:1 / -1; background:var(--red); color:#fff; border:0; border-radius:10px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; }
-  button.cta:disabled { opacity:.6; cursor:default; }
+  .btn { display:inline-block; text-align:center; text-decoration:none; background:var(--red); color:#fff; border:0; border-radius:10px; padding:14px 18px; font-size:15px; font-weight:700; cursor:pointer; }
+  .btn.full { display:block; width:100%; }
+  .btn.ghost { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .btn:disabled { opacity:.6; cursor:default; }
   .err { grid-column:1 / -1; color:var(--red); font-size:12px; display:none; }
-
-  .mount { min-height:300px; display:flex; align-items:center; justify-content:center; text-align:center;
-           background:repeating-linear-gradient(45deg,#fbfbfc,#fbfbfc 12px,#f4f5f7 12px,#f4f5f7 24px);
-           color:#9aa1ad; font-size:13px; padding:24px; }
-  .mount code { background:#eef0f4; color:#3a4150; padding:2px 6px; border-radius:5px; font-size:12px; }
+  .hint { font-size:12.5px; color:var(--muted); margin:0 0 14px; }
+  .stack > * + * { margin-top:12px; }
 
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
+  .wl-mount:empty { display:none; }
 </style>
 </head>
 <body>
@@ -63,50 +69,77 @@
   <header class="hero">
     <img src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png" alt="Integrated Martial Arts Worcester">
     <h1>Your <span class="px">3-Class Trial</span> for $19.99</h1>
-    <p>Brazilian Jiu-Jitsu &middot; Muay Thai &middot; MMA &middot; Wrestling &middot; Karate. Buy and book your first class right here.</p>
-    <div class="progs"><span>Adults</span><span>Kids</span><span>Beginners welcome</span></div>
+    <p>Brazilian Jiu-Jitsu &middot; Muay Thai &middot; MMA &middot; Wrestling &middot; Karate &middot; Kids classes.</p>
+    <div class="progs"><span>Adults &amp; Teens</span><span>Kids</span><span>Beginners welcome</span></div>
   </header>
 
   <div class="wrap">
 
-    <!-- STEP 1: info capture (lead capture for SMS backup) -->
-    <div class="step" id="step1">
-      <div class="bar"><div class="n">1</div><div class="h">Tell us who you are<small>So we can hold your spot and help if you get stuck</small></div></div>
+    <!-- STEP 1: info + interest capture (lead capture for SMS follow-up) -->
+    <div class="step has-body" id="step1">
+      <div class="bar"><div class="n">1</div><div class="h">Tell us who you are<small>Takes 20 seconds. We'll hold your spot.</small></div></div>
       <div class="body">
         <form class="form" id="lead-form" novalidate>
           <div><label for="firstName">First name</label><input id="firstName" name="firstName" autocomplete="given-name" required></div>
           <div><label for="phone">Mobile phone</label><input id="phone" name="phone" type="tel" autocomplete="tel" required></div>
-          <div><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
-          <div><label for="program">Who is this for?</label>
-            <select id="program" name="program">
-              <option value="adult">Adult</option>
-              <option value="kids">Kids</option>
+          <div class="full"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+          <div class="full"><label for="interest">Which class are you most interested in?</label>
+            <select id="interest" name="interest">
+              <optgroup label="Adults &amp; Teens">
+                <option>Brazilian Jiu-Jitsu (BJJ)</option>
+                <option>Muay Thai Kickboxing</option>
+                <option>Mixed Martial Arts (MMA)</option>
+                <option>NoGi Grappling / Submission Wrestling</option>
+                <option>Combat Karate</option>
+                <option>Karate Kempo</option>
+                <option>Kali: Filipino Stick &amp; Knife Fighting</option>
+                <option>Women's-Only BJJ</option>
+                <option>IMA Fit (fitness)</option>
+                <option>Not sure yet, help me choose</option>
+              </optgroup>
+              <optgroup label="Kids">
+                <option>Tiny Tigers (ages 5-7)</option>
+                <option>Mighty Dragons (ages 8-13)</option>
+                <option>Kids Kempo Karate</option>
+                <option>Combat Karate (Kids)</option>
+                <option>Adaptive: Autism / ADHD</option>
+                <option>Parent &amp; Me</option>
+              </optgroup>
             </select>
           </div>
-          <div class="err" id="err">Please fill in your name, a valid phone, and email.</div>
-          <button class="cta" type="submit" id="continueBtn">Continue to checkout &rarr;</button>
+          <div class="err" id="err">Please add your name, a valid phone, and email.</div>
+          <button class="btn full" type="submit" id="continueBtn">Continue to checkout &rarr;</button>
         </form>
       </div>
     </div>
 
-    <!-- STEP 2: buy the pass (WL Store Widget) -->
-    <div class="step locked" id="step2">
-      <div class="bar"><div class="n">2</div><div class="h">Get your $19.99 trial pass<small>Secure checkout, handled by WellnessLiving</small></div></div>
-      <!-- ============ WL STORE WIDGET MOUNT ============ -->
-      <div id="wl-store-widget" class="mount">
-        WellnessLiving <b style="color:#3a4150;margin:0 4px;">Store Widget</b> goes here &mdash; paste embed code into <code>#wl-store-widget</code>
+    <!-- STEP 2: buy the pass -->
+    <div class="step hidden" id="step2">
+      <div class="bar"><div class="n">2</div><div class="h" id="step2head">Get your $19.99 trial pass<small>Secure checkout on WellnessLiving</small></div></div>
+      <div class="body">
+        <!-- ===== WL STORE WIDGET MOUNT (paste embed code here, then remove .interim block below) ===== -->
+        <div id="wl-store-widget" class="wl-mount"></div>
+        <!-- ===== interim: real WL catalog buy link, routed by interest ===== -->
+        <div class="interim stack">
+          <p class="hint" id="buyCopy">Buy your 3-class pass below. It opens in a new tab; come back here when you're done to book your first class.</p>
+          <a class="btn full" id="buyLink" href="#" target="_blank" rel="noopener">Buy my $19.99 pass &rarr;</a>
+          <button class="btn ghost full" type="button" id="paidBtn">I've bought my pass &mdash; pick my class &rarr;</button>
+        </div>
       </div>
-      <!-- ============ END STORE WIDGET ============ -->
     </div>
 
-    <!-- STEP 3: pick + book (WL Schedule Widget) -->
-    <div class="step locked" id="step3">
-      <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small>Live schedule, books against the pass you just bought</small></div></div>
-      <!-- ============ WL SCHEDULE WIDGET MOUNT ============ -->
-      <div id="wl-schedule-widget" class="mount">
-        WellnessLiving <b style="color:#3a4150;margin:0 4px;">Schedule Widget</b> goes here &mdash; paste embed code into <code>#wl-schedule-widget</code>
+    <!-- STEP 3: pick + book -->
+    <div class="step hidden" id="step3">
+      <div class="bar"><div class="n">3</div><div class="h" id="step3head">Pick your first class<small>Live schedule on WellnessLiving</small></div></div>
+      <div class="body">
+        <!-- ===== WL SCHEDULE WIDGET MOUNT (paste embed code here, then remove .interim block below) ===== -->
+        <div id="wl-schedule-widget" class="wl-mount"></div>
+        <!-- ===== interim: real WL schedule link ===== -->
+        <div class="interim stack">
+          <p class="hint">Open the class schedule, choose a time that works, and book it against the pass you just bought.</p>
+          <a class="btn full" id="scheduleLink" href="https://www.wellnessliving.com/rs/schedule-list.html?k_business=697216" target="_blank" rel="noopener">Open the class schedule &rarr;</a>
+        </div>
       </div>
-      <!-- ============ END SCHEDULE WIDGET ============ -->
     </div>
 
     <p class="trust">Questions? Call the studio at <b>(508) 251-9469</b> &middot; 342A West Boylston Street, West Boylston, MA</p>
@@ -115,46 +148,77 @@
 <script>
   // Lead webhook (n8n "Wellness Living Booking" DtrC6eLmrlR87uEj). Activate the workflow to make this live.
   var LEAD_WEBHOOK = 'https://velocityaipartners.app.n8n.cloud/webhook/ima-worcester-landing-lead';
+  // WellnessLiving trial catalog pages (business 697216), routed by chosen interest.
+  var CATALOG = {
+    adult: 'https://www.wellnessliving.com/rs/catalog-view.html?k_business=697216&id_sale=1&k_id=3667025',
+    kids:  'https://www.wellnessliving.com/rs/catalog-view.html?k_business=697216&id_sale=1&k_id=3909348'
+  };
 
   var form = document.getElementById('lead-form');
   var err  = document.getElementById('err');
   var btn  = document.getElementById('continueBtn');
+  var sel  = document.getElementById('interest');
 
-  function valid() {
-    var fn = document.getElementById('firstName').value.trim();
-    var ph = document.getElementById('phone').value.replace(/[^0-9]/g, '');
-    var em = document.getElementById('email').value.trim();
-    return fn.length > 0 && ph.length >= 10 && /.+@.+\..+/.test(em);
+  function el(id){ return document.getElementById(id); }
+  function audience(){
+    var opt = sel.options[sel.selectedIndex];
+    var grp = opt && opt.parentElement && opt.parentElement.label ? opt.parentElement.label : '';
+    return /kid/i.test(grp) ? 'kids' : 'adult';
   }
 
-  function unlock() {
-    ['step2','step3'].forEach(function(id){ document.getElementById(id).classList.remove('locked'); });
-    document.getElementById('step2').scrollIntoView({ behavior:'smooth', block:'start' });
+  // Reveal exactly one section at a time; completed steps collapse to a green check bar.
+  function setActive(n){
+    [1,2,3].forEach(function(i){
+      var s = el('step'+i);
+      s.classList.remove('hidden','has-body','done');
+      if (i < n) { s.classList.add('done'); s.querySelector('.n').textContent = '✓'; }
+      else if (i === n) { s.classList.add('has-body'); }
+      else { s.classList.add('hidden'); }
+    });
+    el('step'+n).scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function validInfo(){
+    var fn = el('firstName').value.trim();
+    var ph = el('phone').value.replace(/[^0-9]/g, '');
+    var em = el('email').value.trim();
+    return fn.length > 0 && ph.length >= 10 && /.+@.+\..+/.test(em);
   }
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
-    if (!valid()) { err.style.display = 'block'; return; }
+    if (!validInfo()) { err.style.display = 'block'; return; }
     err.style.display = 'none';
     btn.disabled = true; btn.textContent = 'One moment...';
 
+    var aud = audience();
+    var interest = sel.value;
     var payload = {
-      firstName: document.getElementById('firstName').value.trim(),
-      phone:     document.getElementById('phone').value.trim(),
-      email:     document.getElementById('email').value.trim(),
-      program:   document.getElementById('program').value
+      firstName: el('firstName').value.trim(),
+      phone:     el('phone').value.trim(),
+      email:     el('email').value.trim(),
+      interest:  interest,
+      audience:  aud
     };
 
-    // Best-effort lead capture for the SMS backup. The customer proceeds either way.
+    // Capture the lead for the SMS follow-up. Best-effort; the customer proceeds either way.
     fetch(LEAD_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }).catch(function(){ /* non-blocking */ });
 
-    unlock();
+    // Configure Step 2 for the chosen interest, then reveal it (Step 1 collapses).
+    el('buyLink').href = CATALOG[aud];
+    el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
+      ' trial pass<small>For ' + interest + '. Secure checkout on WellnessLiving.</small>';
+    el('step3head').innerHTML = 'Pick your first ' + interest + ' class<small>Live schedule on WellnessLiving</small>';
+
+    setActive(2);
     btn.disabled = false; btn.textContent = 'Continue to checkout →';
   });
+
+  el('paidBtn').addEventListener('click', function(){ setActive(3); });
 </script>
 
 </body>
