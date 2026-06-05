@@ -167,22 +167,22 @@
     document.body.appendChild(s);
   }
 
-  // ----- Advance to scheduling when the store widget reports a completed checkout -----
-  // WL widgets post {source:"wl-widget", type:"widget:...", ...}. "widget:height" is resize.
-  // A checkout/confirmation event advances us to Step 3. We match defensively on the type.
+  // ----- Advance to scheduling ONLY on a real completed purchase -----
+  // The WL store loader (widgets.wellnessliving.com/store/widget.js) posts these inbound
+  // types: widget:height (resize), widget:branding, widget:scroll, widget:redirect:self,
+  // and analytics:event (its ecommerce tracking pipe). The only event that fires at order
+  // completion is the standard ecommerce "purchase" event, carried inside analytics:event.
+  // Matching strictly that name avoids false-advancing on browse / add_to_cart / resize.
   var advanced = false;
+  function advanceToSchedule(){ if (advanced) return; advanced = true; loadScheduleWidget(); setActive(3); }
   function onWlMessage(e){
     if (!/wellnessliving/i.test(e.origin)) return;
-    var d = e.data; if (!d || typeof d !== 'object' || d.source !== 'wl-widget') return;
-    var type = String(d.type || '');
-    if (type === 'widget:height') return; // resize, ignore
-    var blob = '';
-    try { blob = JSON.stringify(d).toLowerCase(); } catch(_){ }
-    if (!advanced && /complete|confirm|purchase|checkout|order|receipt|success|thank/.test(type.toLowerCase() + ' ' + blob)) {
-      advanced = true;
-      loadScheduleWidget();
-      setActive(3);
-    }
+    var d = e.data; if (!d || typeof d !== 'object') return;
+    if (d.type !== 'analytics:event') return;            // ignore height/view/scroll/branding
+    var ev = d.data || {};
+    var name = String(ev.event || ev.name || ev.eventName || '').toLowerCase();
+    console.log('[wl analytics:event]', name || ev);      // surfaces the exact payload for live confirmation
+    if (name === 'purchase') advanceToSchedule();
   }
   window.addEventListener('message', onWlMessage);
 
