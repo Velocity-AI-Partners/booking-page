@@ -11,12 +11,10 @@
 <link rel="preconnect" href="https://widgets-api.www.wellnessliving.com" crossorigin>
 <link rel="preconnect" href="https://www.google.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<!-- The lead widget's app is ES modules (always CORS-fetched), so cross-origin modulepreload warms
-     the same cache the iframe uses. Preload its ~1MB of JS in parallel up front. -->
+<!-- Only the loader is worth preloading (our page fetches it cross-origin, so the cache matches).
+     The widget's heavy app bundles are fetched same-origin by the iframe, so preloading them from
+     here would double-download and compete, it can't be sped up from our side. -->
 <link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/widget.js">
-<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/app.js">
-<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/assets/index--aPE7sD1.js">
-<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/assets/app-DCLxTzBE.js">
 <!--
   IMA WORCESTER SINGLE-PAGE TRIAL  (lead capture writes to WellnessLiving)
     Step 1  class picker (our page, for routing) + WL Lead Capture widget (writes the lead to WL).
