@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://widgets.wellnessliving.com" crossorigin>
 <link rel="dns-prefetch" href="https://widgets.wellnessliving.com">
 <link rel="preconnect" href="https://www.wellnessliving.com" crossorigin>
+<link rel="preconnect" href="https://widgets-api.www.wellnessliving.com" crossorigin>
+<link rel="preconnect" href="https://www.google.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="modulepreload" href="https://widgets.wellnessliving.com/lead-capture/widget.js">
 <!--
   IMA WORCESTER SINGLE-PAGE TRIAL  (lead capture writes to WellnessLiving)
     Step 1  class picker (our page, for routing) + WL Lead Capture widget (writes the lead to WL).
@@ -173,8 +177,8 @@
     loadScheduleWidget();
   });
 
-  // Reveal the matching trial + schedule. Triggered by the WL lead form's submit event.
-  var revealed = false;
+  // Reveal the matching trial + schedule. Triggered when the WL lead form is submitted.
+  var revealed = false, leadMaxH = 0, leadArmed = false, leadLowTimer = null;
   function revealTrial(){
     if (revealed) return; revealed = true;
     var interest = el('interest').value || '';
@@ -196,8 +200,20 @@
       var fr = el('wl-store-frame'); if (fr && d.height) fr.style.height = d.height + 'px';
       return;
     }
-    // WL lead form submitted -> open the trial. The widget reports the submit as an analytics
-    // event. Logged so the exact name can be confirmed if the trial doesn't open on a real submit.
+    // Primary submit signal (config-independent): the lead form collapses from the tall form to a
+    // short "thank you" screen on success. Detect a sustained height drop, debounced 1.5s so a
+    // reCAPTCHA challenge expanding/collapsing doesn't false-trigger.
+    if (d.source === 'wl-widget' && d.type === 'widget:height' && typeof d.widgetId === 'string'
+        && d.widgetId.indexOf('wl-lead-capture-widget') === 0) {
+      var lh = d.height || 0;
+      if (lh > leadMaxH) leadMaxH = lh;
+      if (leadMaxH > 450) leadArmed = true;
+      if (leadArmed && lh > 0 && lh < leadMaxH - 180) {
+        if (!leadLowTimer) leadLowTimer = setTimeout(revealTrial, 1500);
+      } else if (leadLowTimer) { clearTimeout(leadLowTimer); leadLowTimer = null; }
+      return;
+    }
+    // Secondary submit signal: ecommerce analytics event (only fires if analytics is configured).
     if (d.type === 'analytics:event') {
       var ev = d.data || {};
       var name = String(ev.event || ev.name || ev.eventName || '').toLowerCase();
