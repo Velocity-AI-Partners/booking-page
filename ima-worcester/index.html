@@ -99,7 +99,7 @@
 <script>
   var WL_BUSINESS = '697216';
   var WL_LEAD_SCHEMA = '019e9954-a02c-702c-ab16-1d9aabff2d97'; // trimmed Lead Capture form
-  var WL_SCHEDULE_SKIN = '345152';                              // visual class schedule
+  var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b'; // public Custom Schedule widget (self-sizing)
   var TRIAL_KID = { adult: '3667025', kids: '3909348' };        // the two $19.99 3-class passes
   var storeWidgetId = 'wl-store-widget:ima';
 
@@ -140,11 +140,11 @@
   }
   function loadScheduleWidget(){
     if (scheduleLoaded) return; scheduleLoaded = true;
-    el('wl-schedule-widget').innerHTML =
-      '<div class="wl-widget" data="k_skin=' + WL_SCHEDULE_SKIN + '&k_business=' + WL_BUSINESS + '"></div>';
     var s = document.createElement('script');
-    s.src = 'https://www.wellnessliving.com/rs/skin-widget-static.js'; s.type = 'text/javascript';
-    document.body.appendChild(s);
+    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
+    document.head.appendChild(s);
+    el('wl-schedule-widget').innerHTML =
+      '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>';
   }
 
   // Keep our deep-linked store iframe sized to its content.
