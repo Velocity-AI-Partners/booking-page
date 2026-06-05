@@ -126,8 +126,10 @@
   var LEAD_WEBHOOK = 'https://velocityaipartners.app.n8n.cloud/webhook/ima-worcester-landing-lead';
   // IMA Worcester WellnessLiving website widgets (business 697216).
   var WL_BUSINESS = '697216';
-  var WL_STORE_SKIN = '345157';     // Store widget (catalog incl. "Kids and Adult Trial Packages")
   var WL_SCHEDULE_SKIN = '345152';  // Standard Schedule widget (visual class calendar, "Book now")
+  // The two $19.99 3-class trial passes. We deep-link the store to just the one matching Step 1.
+  var TRIAL_KID = { adult: '3667025', kids: '3909348' };
+  var storeWidgetId = 'wl-store-widget:ima';  // set per load; echoed back in widget messages
 
   function el(id){ return document.getElementById(id); }
   function audience(){
@@ -150,13 +152,21 @@
 
   // ----- WL widget loaders -----
   var storeLoaded = false, scheduleLoaded = false;
-  function loadStoreWidget(){
+  // Deep-link the WL store host to ONLY the selected trial pass (id_sale=1&k_id=<trial>).
+  // The handshake params (__wl-widget-id__, __wl-parent-origin__) are what the web component
+  // normally adds; including them lets us frame a single product directly and still receive
+  // the widget:height (resize) and analytics:event (purchase) messages on our window.
+  function loadStoreWidget(aud){
     if (storeLoaded) return; storeLoaded = true;
-    var s = document.createElement('script');
-    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/store/widget.js';
-    document.head.appendChild(s);
+    storeWidgetId = 'wl-store-widget:ima-' + Math.random().toString(36).slice(2, 9);
+    var kid = TRIAL_KID[aud] || TRIAL_KID.adult;
+    var src = 'https://widgets.wellnessliving.com/store?k_business=' + WL_BUSINESS + '&k_location=' +
+      '&__wl-widget-id__=' + encodeURIComponent(storeWidgetId) +
+      '&__wl-parent-origin__=' + encodeURIComponent(window.location.origin) +
+      '&id_sale=1&k_id=' + kid;
     el('wl-store-widget').innerHTML =
-      '<wl-store-widget k_business="' + WL_BUSINESS + '" k_skin="' + WL_STORE_SKIN + '" k_location=""></wl-store-widget>';
+      '<iframe id="wl-store-frame" src="' + src + '" allow="clipboard-write; web-share" ' +
+      'style="width:100%;border:0;height:680px;max-height:none"></iframe>';
   }
   function loadScheduleWidget(){
     if (scheduleLoaded) return; scheduleLoaded = true;
@@ -178,7 +188,14 @@
   function onWlMessage(e){
     if (!/wellnessliving/i.test(e.origin)) return;
     var d = e.data; if (!d || typeof d !== 'object') return;
-    if (d.type !== 'analytics:event') return;            // ignore height/view/scroll/branding
+    // Resize our deep-linked store iframe to its content (the web component does this for us;
+    // here we own the iframe, so we apply the reported height ourselves).
+    if (d.source === 'wl-widget' && d.type === 'widget:height' && d.widgetId === storeWidgetId) {
+      var fr = document.getElementById('wl-store-frame');
+      if (fr && d.height) fr.style.height = d.height + 'px';
+      return;
+    }
+    if (d.type !== 'analytics:event') return;            // ignore view/scroll/branding/redirect
     var ev = d.data || {};
     var name = String(ev.event || ev.name || ev.eventName || '').toLowerCase();
     console.log('[wl analytics:event]', name || ev);      // surfaces the exact payload for live confirmation
@@ -204,10 +221,10 @@
       .catch(function(){ /* non-blocking */ });
 
     el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
-      ' trial pass<small>In the store below, open "Kids and Adult Trial Packages" and buy your 3-class pass.</small>';
+      ' trial pass<small>For ' + interest + '. Tap "Buy now" below to grab your 3-class pass.</small>';
     el('step3head').innerHTML = 'Pick your first ' + interest + ' class<small>Choose a time and book it against your new pass</small>';
 
-    loadStoreWidget();
+    loadStoreWidget(aud);
     setActive(2);
     btn.disabled = false; btn.textContent = 'Continue to checkout →';
   });
