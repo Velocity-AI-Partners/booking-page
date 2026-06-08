@@ -126,22 +126,22 @@
           <select id="interest">
             <option value="">Please select...</option>
             <optgroup label="Adults &amp; Teens" data-aud="adult">
-              <option>Brazilian Jiu-Jitsu (BJJ)</option>
-              <option>Muay Thai Kickboxing</option>
-              <option>Mixed Martial Arts (MMA)</option>
-              <option>NoGi Grappling / Submission Wrestling</option>
-              <option>Kempo / Combat Karate</option>
-              <option>Kali: Filipino Stick &amp; Knife Fighting</option>
-              <option>Women's-Only BJJ</option>
-              <option>IMA Fit (fitness)</option>
-              <option>Not sure yet, help me choose</option>
+              <option data-kclass="811711">Brazilian Jiu-Jitsu (BJJ)</option>
+              <option data-kclass="919492">Muay Thai Kickboxing</option>
+              <option data-kclass="811710">Mixed Martial Arts (MMA)</option>
+              <option data-kclass="919784">NoGi Grappling / Submission Wrestling</option>
+              <option data-kclass="813863">Kempo / Combat Karate</option>
+              <option data-kclass="893432">Kali: Filipino Stick &amp; Knife Fighting</option>
+              <option data-kclass="926336">Women's-Only BJJ</option>
+              <option data-kclass="836923">IMA Fit (fitness)</option>
+              <option data-kclass="">Not sure yet, help me choose</option>
             </optgroup>
             <optgroup label="Kids" data-aud="kids">
-              <option>Tiny Tigers (ages 5-8)</option>
-              <option>Mighty Dragons (ages 8-12)</option>
-              <option>Kids Kempo Karate</option>
-              <option>Adaptive: Autism / ADHD</option>
-              <option>Parent &amp; Me</option>
+              <option data-kclass="919755">Tiny Tigers (ages 5-8)</option>
+              <option data-kclass="874059">Mighty Dragons (ages 8-12)</option>
+              <option data-kclass="919918">Kids Kempo Karate</option>
+              <option data-kclass="813855">Adaptive: Autism / ADHD</option>
+              <option data-kclass="967845">Parent &amp; Me</option>
             </optgroup>
           </select>
           <div class="err">Please pick a class.</div>
@@ -171,6 +171,10 @@
   var TRIAL_KID = { adult: '3667025', kids: '3909348' };
   var CAPTURE = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/capture-trial-lead';
   var CHECK   = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/check-wl-trial-purchase';
+  // Class-filtered standalone schedule. The embeddable widget can't filter, but this
+  // hosted schedule page honors k_class (verified), so we link out to it pre-filtered.
+  var SCHEDULE_BASE = 'https://www.wellnessliving.com/rs/schedule/integrated_martial_arts-y0hoou?k_business=697216&id_class_tab=1';
+  var chosenKClass = '', chosenInterest = '';
 
   function el(id){ return document.getElementById(id); }
   function digits(s){ return String(s||'').replace(/\D/g,'').slice(-10); }
@@ -207,6 +211,9 @@
 
     phoneDigits = ph;
     chosenAud = audOf(el('interest'));
+    var iopt = el('interest').options[el('interest').selectedIndex];
+    chosenKClass = (iopt && iopt.getAttribute('data-kclass')) || '';
+    chosenInterest = interest;
     var email = el('email').value.trim();
 
     // Fire-and-store the lead (don't block the funnel on it).
@@ -254,30 +261,25 @@
       'style="width:100%;border:0;height:700px;max-height:none"></iframe>';
   }
 
-  // ---- Step 3: embedded schedule (loaded ONLY after purchase detected) ----
-  var scheduleLoaded = false;
-  function loadScheduleWidget(){
-    if (scheduleLoaded) return; scheduleLoaded = true;
+  // ---- Step 3: nice button to the class-filtered schedule, shown ONLY after purchase ----
+  var scheduleShown = false;
+  function buildScheduleUrl(kclass){
+    return SCHEDULE_BASE + (kclass ? ('&k_class=' + kclass) : '');
+  }
+  function renderScheduleButton(){
+    var label = chosenInterest ? ('your ' + chosenInterest + ' class') : 'your first class';
     el('wl-schedule').innerHTML =
-      '<div class="pending" id="sched-loading"><div class="spinner"></div><p>Loading the class schedule&hellip;</p></div>';
-    var s = document.createElement('script');
-    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
-    document.head.appendChild(s);
-    el('wl-schedule').insertAdjacentHTML('beforeend',
-      '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>');
-    var tries = 0;
-    var poll = setInterval(function(){
-      tries++;
-      var w = document.querySelector('wl-schedule-widget');
-      var rendered = w && (w.shadowRoot || w.querySelector('iframe') || w.children.length > 0 || (w.innerHTML || '').length > 50);
-      if (rendered || tries > 60) { var l = el('sched-loading'); if (l) l.style.display = 'none'; clearInterval(poll); }
-    }, 500);
+      '<a class="go" href="' + buildScheduleUrl(chosenKClass) + '" target="_blank" rel="noopener">' +
+      '<span>Book ' + label + '</span><span class="arw">&rarr;</span></a>' +
+      '<p class="hint">Opens your class schedule on WellnessLiving' +
+      (chosenInterest ? (', already filtered to ' + chosenInterest) : '') +
+      '. Pick a time and book it against your new trial pass.</p>';
   }
 
   function revealSchedule(){
-    if (scheduleLoaded) return;
+    if (scheduleShown) return; scheduleShown = true;
     el('step2').classList.add('done'); el('step2').querySelector('.n').textContent = '✓';
-    loadScheduleWidget();
+    renderScheduleButton();
     setStepper(3);
     el('step3').scrollIntoView({ behavior:'smooth', block:'start' });
   }
@@ -285,7 +287,7 @@
   // ---- Purchase detection: poll WL sales report by phone until it lands ----
   var pollTimer = null, polls = 0, checking = false;
   function checkPurchase(){
-    if (!phoneDigits || scheduleLoaded || checking) return;
+    if (!phoneDigits || scheduleShown || checking) return;
     checking = true;
     fetch(CHECK + '?phone=' + phoneDigits)
       .then(function(r){ return r.json(); })

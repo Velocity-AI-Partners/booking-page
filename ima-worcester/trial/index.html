@@ -138,10 +138,15 @@
   var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b';
   var TRIAL_KID = { adult: '3667025', kids: '3909348' };
   var CHECK = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/check-wl-trial-purchase';
+  // Class-filtered standalone schedule (this hosted page honors k_class; the embed can't).
+  var SCHEDULE_BASE = 'https://www.wellnessliving.com/rs/schedule/integrated_martial_arts-y0hoou?k_business=697216&id_class_tab=1';
 
   function el(id){ return document.getElementById(id); }
   function digits(s){ return String(s||'').replace(/\D/g,'').slice(-10); }
   var qp = new URLSearchParams(location.search);
+  // Optional: an SMS link can pre-filter the schedule, e.g. ?k_class=811711&interest=BJJ
+  var kClassParam = (qp.get('k_class') || '').replace(/\D/g,'');
+  var interestParam = qp.get('interest') || '';
 
   // ----- audience (from ?aud, default adult) -----
   var aud = (qp.get('aud') === 'kids') ? 'kids' : 'adult';
@@ -193,29 +198,21 @@
   }
   setAud(aud); // sync the toggle highlight AND load the store for the (possibly ?aud=) audience
 
-  // ----- Step 2: schedule, loaded ONLY after the purchase is detected -----
-  var scheduleLoaded = false;
-  function loadScheduleWidget(){
-    if (scheduleLoaded) return; scheduleLoaded = true;
+  // ----- Step 2: nice button to the class-filtered schedule, shown ONLY after purchase -----
+  var scheduleShown = false;
+  function renderScheduleButton(){
+    var url = SCHEDULE_BASE + (kClassParam ? ('&k_class=' + kClassParam) : '');
+    var label = interestParam ? ('your ' + interestParam + ' class') : 'your first class';
     el('wl-schedule').innerHTML =
-      '<div class="pending" id="sched-loading"><div class="spinner"></div><p>Loading the class schedule&hellip;</p></div>';
-    var s = document.createElement('script');
-    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
-    document.head.appendChild(s);
-    el('wl-schedule').insertAdjacentHTML('beforeend',
-      '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>');
-    var tries = 0;
-    var poll = setInterval(function(){
-      tries++;
-      var w = document.querySelector('wl-schedule-widget');
-      var rendered = w && (w.shadowRoot || w.querySelector('iframe') || w.children.length > 0 || (w.innerHTML || '').length > 50);
-      if (rendered || tries > 60) { var l = el('sched-loading'); if (l) l.style.display = 'none'; clearInterval(poll); }
-    }, 500);
+      '<a class="go" href="' + url + '" target="_blank" rel="noopener"><span>Book ' + label + '</span> &rarr;</a>' +
+      '<p class="hint">Opens your class schedule on WellnessLiving' +
+      (interestParam ? (', already filtered to ' + interestParam) : '') +
+      '. Pick a time and book it against your new trial pass.</p>';
   }
   function revealSchedule(){
-    if (scheduleLoaded) return;
+    if (scheduleShown) return; scheduleShown = true;
     el('step1').classList.add('done'); el('step1').querySelector('.n').textContent = '✓';
-    loadScheduleWidget();
+    renderScheduleButton();
     setStepper(2);
     el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
   }
@@ -223,7 +220,7 @@
   // ----- purchase detection: poll WL sales report by phone -----
   var pollTimer = null, polls = 0, checking = false;
   function checkPurchase(){
-    if (!phoneDigits || phoneDigits.length !== 10 || scheduleLoaded || checking) return;
+    if (!phoneDigits || phoneDigits.length !== 10 || scheduleShown || checking) return;
     checking = true;
     fetch(CHECK + '?phone=' + phoneDigits)
       .then(function(r){ return r.json(); })
