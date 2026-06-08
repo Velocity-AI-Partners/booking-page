@@ -107,28 +107,14 @@
           <button type="button" data-aud="adult" class="sel">Adults &amp; Teens</button>
           <button type="button" data-aud="kids">Kids</button>
         </div>
-        <!-- Phone is needed to detect the purchase. Hidden when supplied via ?phone=. -->
-        <div class="field" id="f-phone">
-          <label for="phone">Your cell phone</label>
-          <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555">
-          <div class="err">Enter the 10-digit phone you'll use at checkout.</div>
-        </div>
         <div id="wl-store" class="wl-mount"></div>
       </div>
     </div>
 
-    <!-- STEP 2: schedule, revealed only after purchase is detected -->
+    <!-- STEP 2: single button to the class-filtered schedule -->
     <div class="step" id="step2">
-      <div class="bar"><div class="n">2</div><div class="h">Pick your first class<small>Choose a time and book it on the schedule</small></div></div>
-      <div class="body">
-        <div id="wl-schedule" class="wl-mount">
-          <div class="pending" id="sched-pending">
-            <p>Finished checkout? Tap below to open your class schedule.</p>
-            <button class="go" id="showsched" type="button" style="max-width:360px"><span>Show my class schedule</span> &rarr;</button>
-            <small>It also appears automatically once a paid purchase is detected.</small>
-          </div>
-        </div>
-      </div>
+      <div class="bar"><div class="n">2</div><div class="h">Pick your first class<small>Book it on the schedule once you've bought your trial</small></div></div>
+      <div class="body"><div id="wl-schedule" class="wl-mount"></div></div>
     </div>
 
     <p class="trust">Questions? Call the studio at <b>(508) 251-9469</b> &middot; 342A West Boylston Street, West Boylston, MA</p>
@@ -160,18 +146,6 @@
     b.addEventListener('click', function(){ setAud(this.getAttribute('data-aud')); });
   });
 
-  // ----- phone (from ?phone, else field) -----
-  var phoneDigits = digits(qp.get('phone'));
-  if (phoneDigits.length === 10) {
-    el('f-phone').style.display = 'none';        // supplied by the link, no need to ask
-  } else {
-    el('phone').addEventListener('input', function(){
-      var d = digits(this.value);
-      el('f-phone').classList.remove('invalid');
-      if (d.length === 10) { phoneDigits = d; startPolling(); }
-    });
-  }
-
   // ----- step indicator -----
   function setStepper(n){
     [1,2].forEach(function(i){
@@ -199,47 +173,21 @@
   }
   setAud(aud); // sync the toggle highlight AND load the store for the (possibly ?aud=) audience
 
-  // ----- Step 2: nice button to the class-filtered schedule, shown ONLY after purchase -----
-  var scheduleShown = false;
+  // ----- Step 2: single "Book your class" button (class-filtered schedule link) -----
   function renderScheduleButton(){
     var url = SCHEDULE_BASE + (kClassParam ? ('&k_class=' + kClassParam) : '');
     var label = interestParam ? ('your ' + interestParam + ' class') : 'your first class';
     el('wl-schedule').innerHTML =
-      '<a class="go" href="' + url + '" target="_blank" rel="noopener"><span>Book ' + label + '</span> &rarr;</a>' +
-      '<p class="hint">Opens your class schedule on WellnessLiving' +
-      (interestParam ? (', already filtered to ' + interestParam) : '') +
-      '. Pick a time and book it against your new trial pass.</p>';
+      '<a class="go" id="bookbtn" href="' + url + '" target="_blank" rel="noopener"><span>Book ' + label + '</span> &rarr;</a>' +
+      '<p class="hint">After you buy your $19.99 trial above, tap to pick your class time' +
+      (interestParam ? (' (already filtered to ' + interestParam + ')') : '') +
+      ' and book it against your new pass.</p>';
+    el('bookbtn').addEventListener('click', function(){
+      el('step1').classList.add('done'); el('step1').querySelector('.n').textContent = '✓';
+      setStepper(2);
+    });
   }
-  function revealSchedule(){
-    if (scheduleShown) return; scheduleShown = true;
-    el('step1').classList.add('done'); el('step1').querySelector('.n').textContent = '✓';
-    renderScheduleButton();
-    setStepper(2);
-    el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
-  }
-
-  // ----- purchase detection: poll WL sales report by phone -----
-  var pollTimer = null, polls = 0, checking = false;
-  function checkPurchase(){
-    if (!phoneDigits || phoneDigits.length !== 10 || scheduleShown || checking) return;
-    checking = true;
-    fetch(CHECK + '?phone=' + phoneDigits)
-      .then(function(r){ return r.json(); })
-      .then(function(d){ checking = false; if (d && d.purchased) { stopPolling(); revealSchedule(); } })
-      .catch(function(){ checking = false; });
-  }
-  function startPolling(){
-    if (pollTimer || !phoneDigits || phoneDigits.length !== 10) return;
-    checkPurchase();
-    pollTimer = setInterval(function(){
-      polls++;
-      if (polls > 100) { stopPolling(); return; }
-      checkPurchase();
-    }, 12000);
-  }
-  function stopPolling(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
-
-  el('showsched') && el('showsched').addEventListener('click', function(){ revealSchedule(); });
+  renderScheduleButton();
 
   // resize the embedded store iframe as it grows
   window.addEventListener('message', function(e){
@@ -250,12 +198,6 @@
     }
   });
 
-  // if the phone arrived via the link, start watching right away
-  if (phoneDigits.length === 10) startPolling();
-
-  // TEMP preview: ?preview=1 reveals the schedule WITHOUT a purchase, so the schedule
-  // step can be inspected. Real users (no param) still must buy first. Remove when done.
-  if (qp.get('preview') === '1') revealSchedule();
 </script>
 
 </body>
