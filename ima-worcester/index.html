@@ -8,6 +8,7 @@
 <link rel="dns-prefetch" href="https://imaworcester.com">
 <link rel="dns-prefetch" href="https://integrated-martial-arts.vap-app.com">
 <link rel="dns-prefetch" href="https://www.wellnessliving.com">
+<link rel="preconnect" href="https://widgets.wellnessliving.com" crossorigin>
 <!--
   IMA WORCESTER  -  3-CLASS TRIAL LAUNCHER  (no embedded widgets)
   ----------------------------------------------------------------
@@ -32,6 +33,14 @@
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; color:var(--ink); background:#f6f7f9; line-height:1.45; }
   .wrap { max-width:680px; margin:0 auto; padding:0 14px 60px; }
+
+  .banner { position:sticky; top:0; z-index:50; background:#ffe9ad; color:#5a4500; border-bottom:1px solid #e7c976; font-size:13px; font-weight:700; text-align:center; padding:10px 14px; line-height:1.35; }
+
+  .wl-mount { width:100%; min-height:320px; position:relative; }
+  .sched-loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:40px 20px; text-align:center; color:var(--muted); background:#fff; }
+  .sched-loading .spinner { width:38px; height:38px; border:4px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:wl-spin .9s linear infinite; }
+  .sched-loading p { font-size:13px; font-weight:600; color:var(--ink); }
+  @keyframes wl-spin { to { transform:rotate(360deg); } }
 
   header.hero { background:var(--dark); color:#fff; text-align:center; padding:34px 18px 30px; }
   header.hero img { height:74px; width:auto; margin-bottom:14px; }
@@ -82,6 +91,8 @@
 </style>
 </head>
 <body>
+
+  <div class="banner">Keep this page open until you finish all 3 steps. Each button opens in a new tab, come back here to continue.</div>
 
   <header class="hero">
     <img src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png" alt="Integrated Martial Arts Worcester">
@@ -145,8 +156,10 @@
     <div class="step locked" id="step3">
       <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small>Choose a time and book it on the schedule</small></div></div>
       <div class="body">
-        <a id="go3" class="go secondary locked" href="https://www.wellnessliving.com/schedule/integrated_martial_arts-y0hoou" target="_blank" rel="noopener"><span>View the class schedule</span><span class="arw">&rarr;</span></a>
-        <p class="hint">After you buy, book your first class here. Our team helps you slot the other two in person.</p>
+        <div id="wl-schedule" class="wl-mount">
+          <div class="sched-loading" id="sched-loading"><p>Pick a class above and the schedule appears here.</p></div>
+        </div>
+        <p class="hint">After you buy, book your first class on the schedule above. Our team helps you slot the other two in person. Trouble booking? <a id="go3" href="https://www.wellnessliving.com/schedule/integrated_martial_arts-y0hoou" target="_blank" rel="noopener">open the full schedule</a>.</p>
       </div>
     </div>
 
@@ -159,8 +172,37 @@
     adult: 'https://integrated-martial-arts.vap-app.com/f008ab5',
     kids:  'https://integrated-martial-arts.vap-app.com/98b94c9'
   };
+  var WL_BUSINESS = '697216';
+  var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b'; // public Custom Schedule
+  var scheduleLoaded = false;
 
   function el(id){ return document.getElementById(id); }
+
+  // Embed the WL schedule (web component). Renders inline so it works for everyone, no link bounce.
+  function loadScheduleWidget(){
+    if (scheduleLoaded) return; scheduleLoaded = true;
+    var ld = el('sched-loading'); if (ld) ld.innerHTML = '<div class="spinner"></div><p>Loading the class schedule&hellip;</p>';
+    var s = document.createElement('script');
+    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
+    document.head.appendChild(s);
+    el('wl-schedule').insertAdjacentHTML('beforeend',
+      '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>');
+    // Hide the loading overlay as soon as the widget actually renders (iframe/shadow/children appear),
+    // with a 30s hard cap so it never hangs.
+    var tries = 0;
+    var poll = setInterval(function(){
+      tries++;
+      var w = document.querySelector('wl-schedule-widget');
+      var rendered = w && (w.shadowRoot || w.querySelector('iframe') || w.children.length > 0 || (w.innerHTML || '').length > 50);
+      if (rendered || tries > 60) { var l = el('sched-loading'); if (l) l.style.display = 'none'; clearInterval(poll); }
+    }, 500);
+  }
+  // Drop the spinner as soon as the embedded schedule reports a height.
+  window.addEventListener('message', function(e){
+    if (!/wellnessliving/i.test(e.origin)) return;
+    var d = e.data; if (!d || typeof d !== 'object') return;
+    if (d.type === 'widget:height') { var l = el('sched-loading'); if (l) l.style.display = 'none'; }
+  });
 
   // 3-step progress indicator: steps < n done, step n active.
   function setStepper(n){
@@ -193,6 +235,7 @@
     el('hint1').innerHTML = 'Opens the <b>' + label + '</b> sign-up page in a new tab.';
 
     unlockStep(1); unlockStep(2); unlockStep(3);
+    loadScheduleWidget();
     setStepper(1);
   });
 
