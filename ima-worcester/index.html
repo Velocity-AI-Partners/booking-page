@@ -54,9 +54,31 @@
   .lead-label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
   .lead-select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; margin-bottom:14px; }
   .lead-select:focus { outline:none; border-color:var(--red); }
-  .wl-mount { width:100%; min-height:300px; }
+  .wl-mount { width:100%; min-height:300px; position:relative; }
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
+
+  /* 3-step progress indicator */
+  .stepper { display:flex; align-items:flex-start; justify-content:center; gap:4px; margin:20px auto 2px; max-width:520px; }
+  .sstep { display:flex; flex-direction:column; align-items:center; gap:7px; flex:0 0 auto; width:96px; opacity:.5; transition:opacity .3s; }
+  .sstep.active, .sstep.done { opacity:1; }
+  .sdot { width:32px; height:32px; border-radius:50%; background:#fff; border:2px solid var(--line); color:var(--muted); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; transition:all .25s; }
+  .sstep.active .sdot { background:var(--red); border-color:var(--red); color:#fff; box-shadow:0 0 0 4px rgba(179,18,43,.15); }
+  .sstep.done .sdot { background:var(--green); border-color:var(--green); color:#fff; }
+  .slabel { font-size:11px; font-weight:700; color:var(--muted); text-align:center; line-height:1.25; }
+  .sstep.active .slabel { color:var(--ink); }
+  .sline { flex:1 1 0; height:2px; background:var(--line); margin-top:16px; max-width:48px; transition:background .25s; }
+  .sline.done { background:var(--green); }
+
+  /* dynamic loading overlay over the heavy WL form while it loads */
+  .lead-loading { position:absolute; inset:0; z-index:2; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; padding:40px 20px; text-align:center; color:var(--muted); }
+  .lead-loading .spinner { width:40px; height:40px; border:4px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:wl-spin .9s linear infinite; }
+  @keyframes wl-spin { to { transform:rotate(360deg); } }
+  .lead-loading .loadbar { width:220px; max-width:80%; height:6px; background:var(--line); border-radius:4px; overflow:hidden; position:relative; }
+  .lead-loading .loadbar i { position:absolute; top:0; height:100%; width:40%; background:var(--red); border-radius:4px; animation:wl-slide 1.4s ease-in-out infinite; }
+  @keyframes wl-slide { 0% { left:-40%; } 100% { left:100%; } }
+  .lead-loading p { font-size:13.5px; font-weight:600; color:var(--ink); }
+  .lead-loading small { font-size:11.5px; }
 </style>
 </head>
 <body>
@@ -69,6 +91,15 @@
   </header>
 
   <div class="wrap">
+
+    <!-- 3-step progress indicator -->
+    <div class="stepper" id="stepper">
+      <div class="sstep" id="ss1"><div class="sdot">1</div><div class="slabel">Enter your info</div></div>
+      <div class="sline" id="sl1"></div>
+      <div class="sstep" id="ss2"><div class="sdot">2</div><div class="slabel">Purchase trial</div></div>
+      <div class="sline" id="sl2"></div>
+      <div class="sstep" id="ss3"><div class="sdot">3</div><div class="slabel">Pick a class time</div></div>
+    </div>
 
     <!-- STEP 1: class picker (ours) + WL Lead Capture widget (writes the lead to WL) -->
     <div class="step has-body" id="step1">
@@ -98,7 +129,14 @@
             <option>Parent &amp; Me</option>
           </optgroup>
         </select>
-        <div id="wl-lead-widget" class="wl-mount"></div>
+        <div id="wl-lead-widget" class="wl-mount">
+          <div class="lead-loading" id="lead-loading">
+            <div class="spinner"></div>
+            <div class="loadbar"><i></i></div>
+            <p>Loading your secure sign-up form&hellip;</p>
+            <small>This takes a few seconds, please don't refresh.</small>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -140,14 +178,31 @@
     });
   }
 
-  // Step 1: WL Lead Capture widget (writes the lead to WL on Submit).
+  // 3-step progress indicator: steps < n done, step n active.
+  function setStepper(n){
+    [1,2,3].forEach(function(i){
+      var s = el('ss'+i); if (!s) return;
+      var dot = s.querySelector('.sdot');
+      s.classList.remove('active','done');
+      if (i < n) { s.classList.add('done'); dot.textContent = '✓'; }
+      else { if (i === n) s.classList.add('active'); dot.textContent = String(i); }
+    });
+    if (el('sl1')) el('sl1').classList.toggle('done', n > 1);
+    if (el('sl2')) el('sl2').classList.toggle('done', n > 2);
+  }
+  setStepper(1);
+
+  // Step 1: WL Lead Capture widget (writes the lead to WL on Submit). Appended UNDER the loading
+  // overlay so the spinner shows until the form renders.
   (function loadLeadWidget(){
     var s = document.createElement('script');
     s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/lead-capture/widget.js';
     document.head.appendChild(s);
-    el('wl-lead-widget').innerHTML =
-      '<wl-lead-capture-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_LEAD_SCHEMA + '"></wl-lead-capture-widget>';
+    el('wl-lead-widget').insertAdjacentHTML('beforeend',
+      '<wl-lead-capture-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_LEAD_SCHEMA + '"></wl-lead-capture-widget>');
   })();
+  // Safety: never let the spinner hang forever if a height message never crosses the threshold.
+  setTimeout(function(){ var ld = el('lead-loading'); if (ld) ld.style.display = 'none'; }, 35000);
 
   // ----- WL widget loaders (deep-linked store + self-sizing schedule) -----
   var storeLoaded = false, scheduleLoaded = false, loadedAud = null;
@@ -192,6 +247,7 @@
     loadStoreWidget(aud);
     loadScheduleWidget();
     setActive(2);
+    setStepper(2);
     el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
     el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
   }
@@ -213,6 +269,7 @@
       if (lh > leadMaxH) leadMaxH = lh;
       if (leadMaxH > 450 && !leadArmed) {
         leadArmed = true;
+        var ld = el('lead-loading'); if (ld) ld.style.display = 'none';  // form rendered: drop the spinner
         // Lead form is up; now quietly preload the trial + schedule so the reveal is instant.
         if (pendingAud) { loadStoreWidget(pendingAud); loadScheduleWidget(); }
       }
