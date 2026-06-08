@@ -4,29 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMA Worcester &middot; 3-Class Trial for $19.99</title>
-<!-- Warm up the destinations so the outbound clicks resolve fast. -->
-<link rel="dns-prefetch" href="https://imaworcester.com">
-<link rel="dns-prefetch" href="https://integrated-martial-arts.vap-app.com">
-<link rel="dns-prefetch" href="https://www.wellnessliving.com">
 <link rel="preconnect" href="https://widgets.wellnessliving.com" crossorigin>
+<link rel="dns-prefetch" href="https://jjckotsrhuxxftwmdlwc.supabase.co">
 <!--
-  IMA WORCESTER  -  3-CLASS TRIAL LAUNCHER  (no embedded widgets)
-  ----------------------------------------------------------------
-  A single page with a 3-step progress bar. Each step is a button that opens the
-  RIGHT external page in a new tab. Nothing is embedded, so there are no widget
-  load times, no checkout prefill limits, and no missing discount field to fight.
-
-  Flow:
-    Step 1  Pick your class/interest, then open the matching imaworcester.com program
-            page. That page holds IMA's web-special Gravity form ("GET 3 CLASSES FOR
-            $19.99"), so the lead lands in IMA's own system for SMS/email follow-up.
-    Step 2  Button to the correct $19.99 trial purchase link (adult vs kids), the
-            branded short links IMA already uses (they redirect to WL checkout).
-    Step 3  Button to the WellnessLiving schedule to book the first class.
-
-  The interest pick drives Step 1 (program page) AND Step 2 (adult vs kids trial).
-  Each option below carries its program-page URL (value) and audience (data-aud).
-  All URLs were verified live 2026-06-08 against imaworcester.com nav + business_knowledge.
+  IMA WORCESTER SINGLE-PAGE TRIAL
+  -------------------------------
+  Step 1  Our own lead form (name + phone + class). Posts the lead into our
+          system (capture-trial-lead -> lead_conversations) so non-buyers can be
+          followed up, and gives us the phone we match the purchase on.
+  Step 2  Embedded WL store widget, deep-linked to the chosen $19.99 trial pass
+          (adult 3667025 / kids 3909348). They buy right on the page.
+  Step 3  Embedded WL schedule. Hidden until we DETECT the purchase: after Step 1
+          we poll check-wl-trial-purchase, which reads WL's sales report (Report
+          739) for a trial purchase matching their phone. When it lands (seconds
+          to ~a minute after paying) the schedule appears. If they leave first,
+          IMA's existing post-purchase scheduler text still covers them.
 -->
 <style>
   :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
@@ -35,12 +27,6 @@
   .wrap { max-width:680px; margin:0 auto; padding:0 14px 60px; }
 
   .banner { position:sticky; top:0; z-index:50; background:#ffe9ad; color:#5a4500; border-bottom:1px solid #e7c976; font-size:13px; font-weight:700; text-align:center; padding:10px 14px; line-height:1.35; }
-
-  .wl-mount { width:100%; min-height:320px; position:relative; }
-  .sched-loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:40px 20px; text-align:center; color:var(--muted); background:#fff; }
-  .sched-loading .spinner { width:38px; height:38px; border:4px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:wl-spin .9s linear infinite; }
-  .sched-loading p { font-size:13px; font-weight:600; color:var(--ink); }
-  @keyframes wl-spin { to { transform:rotate(360deg); } }
 
   header.hero { background:var(--dark); color:#fff; text-align:center; padding:34px 18px 30px; }
   header.hero img { height:74px; width:auto; margin-bottom:14px; }
@@ -51,33 +37,41 @@
   .progs span { font-size:11.5px; font-weight:600; color:#dfe3ea; border:1px solid #2a3340; border-radius:20px; padding:4px 11px; }
 
   .step { background:#fff; border:1px solid var(--line); border-radius:16px; margin-top:18px; overflow:hidden; }
+  .step.hidden { display:none; }
   .step .bar { display:flex; align-items:center; gap:11px; padding:15px 20px; border-bottom:1px solid var(--line); }
   .step .n { width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%; background:var(--red); color:#fff; font-weight:700; font-size:14px; flex:0 0 auto; }
-  .step.locked .n { background:#c2c7d0; }
   .step.done .n { background:var(--green); }
   .step .h { font-size:16px; font-weight:700; }
   .step .h small { display:block; font-size:11.5px; font-weight:500; color:var(--muted); margin-top:1px; }
   .step .body { padding:16px; }
 
-  .lead-label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
-  .lead-select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; margin-bottom:14px; }
-  .lead-select:focus { outline:none; border-color:var(--red); }
+  .field { margin-bottom:13px; }
+  .field label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
+  .field input, .field select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; }
+  .field input:focus, .field select:focus { outline:none; border-color:var(--red); }
+  .field .err { color:var(--red); font-size:11.5px; margin-top:4px; display:none; }
+  .field.invalid .err { display:block; }
+  .field.invalid input, .field.invalid select { border-color:var(--red); }
 
-  /* big primary action button (the thing each step routes through) */
-  .go { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px 18px;
-        background:var(--red); color:#fff; font-size:15.5px; font-weight:700; text-decoration:none;
-        border:0; border-radius:11px; cursor:pointer; transition:filter .15s, background .15s; }
+  .go { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px 18px; margin-top:4px;
+        background:var(--red); color:#fff; font-size:15.5px; font-weight:700; text-decoration:none; border:0; border-radius:11px; cursor:pointer; transition:filter .15s; }
   .go:hover { filter:brightness(1.07); }
+  .go[disabled] { background:#c2c7d0; cursor:not-allowed; }
   .go .arw { font-size:18px; line-height:1; }
-  .go.locked { background:#c2c7d0; cursor:not-allowed; pointer-events:none; }
-  .go.secondary { background:var(--dark); }
-  .hint { font-size:12px; color:var(--muted); margin-top:9px; text-align:center; }
-  .hint b { color:var(--ink); }
+  .hint { font-size:12px; color:var(--muted); margin-top:10px; text-align:center; }
+  .hint a { color:var(--red); cursor:pointer; }
+
+  .wl-mount { width:100%; min-height:300px; position:relative; }
+  .pending { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:34px 20px; text-align:center; color:var(--muted); }
+  .pending .spinner { width:36px; height:36px; border:4px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:wl-spin .9s linear infinite; }
+  .pending p { font-size:13.5px; font-weight:600; color:var(--ink); }
+  .pending small { font-size:11.5px; }
+  @keyframes wl-spin { to { transform:rotate(360deg); } }
 
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
 
-  /* 3-step progress indicator (the "loading bar") */
+  /* 3-step progress indicator */
   .stepper { display:flex; align-items:flex-start; justify-content:center; gap:4px; margin:20px auto 2px; max-width:520px; }
   .sstep { display:flex; flex-direction:column; align-items:center; gap:7px; flex:0 0 auto; width:96px; opacity:.5; transition:opacity .3s; }
   .sstep.active, .sstep.done { opacity:1; }
@@ -92,7 +86,7 @@
 </head>
 <body>
 
-  <div class="banner">Keep this page open until you finish all 3 steps. Each button opens in a new tab, come back here to continue.</div>
+  <div class="banner">Keep this page open until you finish all 3 steps. Your schedule appears here automatically once your purchase goes through.</div>
 
   <header class="hero">
     <img src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png" alt="Integrated Martial Arts Worcester">
@@ -103,112 +97,94 @@
 
   <div class="wrap">
 
-    <!-- 3-step progress indicator -->
     <div class="stepper" id="stepper">
-      <div class="sstep" id="ss1"><div class="sdot">1</div><div class="slabel">Enter your info</div></div>
+      <div class="sstep active" id="ss1"><div class="sdot">1</div><div class="slabel">Enter your info</div></div>
       <div class="sline" id="sl1"></div>
       <div class="sstep" id="ss2"><div class="sdot">2</div><div class="slabel">Purchase trial</div></div>
       <div class="sline" id="sl2"></div>
       <div class="sstep" id="ss3"><div class="sdot">3</div><div class="slabel">Pick a class time</div></div>
     </div>
 
-    <!-- STEP 1: pick interest, then open the matching program / sign-up page -->
+    <!-- STEP 1: our lead form -->
     <div class="step" id="step1">
-      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Pick a class, then open your sign-up form</small></div></div>
+      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>So we can hold your spot and help you book</small></div></div>
       <div class="body">
-        <label for="interest" class="lead-label">Which class are you interested in?</label>
-        <select id="interest" class="lead-select">
-          <option value="">Please select...</option>
-          <optgroup label="Adults &amp; Teens">
-            <option value="https://imaworcester.com/programs/teens-adults/jiu-jitsu/" data-aud="adult">Brazilian Jiu-Jitsu (BJJ)</option>
-            <option value="https://imaworcester.com/programs/teens-adults/jiu-jitsu/" data-aud="adult">NoGi Grappling / Submission Wrestling</option>
-            <option value="https://imaworcester.com/programs/teens-adults/muay-thai/" data-aud="adult">Muay Thai Kickboxing</option>
-            <option value="https://imaworcester.com/programs/teens-adults/mma/" data-aud="adult">Mixed Martial Arts (MMA)</option>
-            <option value="https://imaworcester.com/programs/teens-adults/kempo-karate/" data-aud="adult">Kempo / Combat Karate</option>
-            <option value="https://imaworcester.com/programs/teens-adults/kali/" data-aud="adult">Kali: Filipino Stick &amp; Knife Fighting</option>
-            <option value="https://imaworcester.com/programs/teens-adults/womens-only-bjj/" data-aud="adult">Women's-Only BJJ</option>
-            <option value="https://imaworcester.com/programs/ima-fit/" data-aud="adult">IMA Fit (fitness)</option>
-            <option value="https://imaworcester.com/programs/teens-adults/" data-aud="adult">Not sure yet, help me choose</option>
-          </optgroup>
-          <optgroup label="Kids">
-            <option value="https://imaworcester.com/programs/kids/ages-5-8/" data-aud="kids">Tiny Tigers (ages 5-8)</option>
-            <option value="https://imaworcester.com/programs/kids/ages-8-12/" data-aud="kids">Mighty Dragons (ages 8-12)</option>
-            <option value="https://imaworcester.com/programs/kids/" data-aud="kids">Kids Kempo Karate</option>
-            <option value="https://imaworcester.com/programs/kids/" data-aud="kids">Adaptive: Autism / ADHD</option>
-            <option value="https://imaworcester.com/programs/kids/" data-aud="kids">Parent &amp; Me</option>
-          </optgroup>
-        </select>
-        <a id="go1" class="go locked" target="_blank" rel="noopener"><span>Open my sign-up form</span><span class="arw">&rarr;</span></a>
-        <p class="hint" id="hint1">Pick a class above to unlock your sign-up form.</p>
-      </div>
-    </div>
-
-    <!-- STEP 2: open the correct $19.99 trial purchase link -->
-    <div class="step locked" id="step2">
-      <div class="bar"><div class="n">2</div><div class="h" id="step2head">Get your $19.99 trial pass<small>Secure checkout on WellnessLiving</small></div></div>
-      <div class="body">
-        <a id="go2" class="go secondary locked" target="_blank" rel="noopener"><span>Buy my $19.99 trial</span><span class="arw">&rarr;</span></a>
-        <p class="hint">3 classes for $19.99. Opens WellnessLiving's secure checkout.</p>
-      </div>
-    </div>
-
-    <!-- STEP 3: open the schedule to book the first class -->
-    <div class="step locked" id="step3">
-      <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small>Choose a time and book it on the schedule</small></div></div>
-      <div class="body">
-        <div id="wl-schedule" class="wl-mount">
-          <div class="sched-loading" id="sched-loading"><p>Pick a class above and the schedule appears here.</p></div>
+        <div class="field" id="f-name">
+          <label for="name">Your name</label>
+          <input id="name" type="text" autocomplete="name" placeholder="First and last name">
+          <div class="err">Please enter your name.</div>
         </div>
-        <p class="hint">After you buy, book your first class on the schedule above. Our team helps you slot the other two in person. Trouble booking? <a id="go3" href="https://www.wellnessliving.com/schedule/integrated_martial_arts-y0hoou" target="_blank" rel="noopener">open the full schedule</a>.</p>
+        <div class="field" id="f-phone">
+          <label for="phone">Cell phone</label>
+          <input id="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="(555) 555-5555">
+          <div class="err">Please enter a valid 10-digit phone number.</div>
+        </div>
+        <div class="field" id="f-email">
+          <label for="email">Email <span style="font-weight:500;color:#9aa1ad">(optional)</span></label>
+          <input id="email" type="email" autocomplete="email" placeholder="you@email.com">
+        </div>
+        <div class="field" id="f-interest">
+          <label for="interest">Which class are you interested in?</label>
+          <select id="interest">
+            <option value="">Please select...</option>
+            <optgroup label="Adults &amp; Teens" data-aud="adult">
+              <option>Brazilian Jiu-Jitsu (BJJ)</option>
+              <option>Muay Thai Kickboxing</option>
+              <option>Mixed Martial Arts (MMA)</option>
+              <option>NoGi Grappling / Submission Wrestling</option>
+              <option>Kempo / Combat Karate</option>
+              <option>Kali: Filipino Stick &amp; Knife Fighting</option>
+              <option>Women's-Only BJJ</option>
+              <option>IMA Fit (fitness)</option>
+              <option>Not sure yet, help me choose</option>
+            </optgroup>
+            <optgroup label="Kids" data-aud="kids">
+              <option>Tiny Tigers (ages 5-8)</option>
+              <option>Mighty Dragons (ages 8-12)</option>
+              <option>Kids Kempo Karate</option>
+              <option>Adaptive: Autism / ADHD</option>
+              <option>Parent &amp; Me</option>
+            </optgroup>
+          </select>
+          <div class="err">Please pick a class.</div>
+        </div>
+        <button class="go" id="go1" type="button"><span>Continue to my trial</span><span class="arw">&rarr;</span></button>
       </div>
+    </div>
+
+    <!-- STEP 2: embedded trial store -->
+    <div class="step hidden" id="step2">
+      <div class="bar"><div class="n">2</div><div class="h" id="step2head">Get your $19.99 trial pass<small>Secure checkout, handled by WellnessLiving</small></div></div>
+      <div class="body"><div id="wl-store" class="wl-mount"></div></div>
+    </div>
+
+    <!-- STEP 3: embedded schedule, revealed only after purchase is detected -->
+    <div class="step hidden" id="step3">
+      <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small>Choose a time and book it against your new pass</small></div></div>
+      <div class="body"><div id="wl-schedule" class="wl-mount"></div></div>
     </div>
 
     <p class="trust">Questions? Call the studio at <b>(508) 251-9469</b> &middot; 342A West Boylston Street, West Boylston, MA</p>
   </div>
 
 <script>
-  // Correct $19.99 trial purchase links (branded short links IMA already uses; redirect to WL checkout).
-  var TRIAL = {
-    adult: 'https://integrated-martial-arts.vap-app.com/f008ab5',
-    kids:  'https://integrated-martial-arts.vap-app.com/98b94c9'
-  };
   var WL_BUSINESS = '697216';
   var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b'; // public Custom Schedule
-  var scheduleLoaded = false;
+  var TRIAL_KID = { adult: '3667025', kids: '3909348' };
+  var CAPTURE = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/capture-trial-lead';
+  var CHECK   = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/check-wl-trial-purchase';
 
   function el(id){ return document.getElementById(id); }
-
-  // Embed the WL schedule (web component). Renders inline so it works for everyone, no link bounce.
-  function loadScheduleWidget(){
-    if (scheduleLoaded) return; scheduleLoaded = true;
-    var ld = el('sched-loading'); if (ld) ld.innerHTML = '<div class="spinner"></div><p>Loading the class schedule&hellip;</p>';
-    var s = document.createElement('script');
-    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
-    document.head.appendChild(s);
-    el('wl-schedule').insertAdjacentHTML('beforeend',
-      '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>');
-    // Hide the loading overlay as soon as the widget actually renders (iframe/shadow/children appear),
-    // with a 30s hard cap so it never hangs.
-    var tries = 0;
-    var poll = setInterval(function(){
-      tries++;
-      var w = document.querySelector('wl-schedule-widget');
-      var rendered = w && (w.shadowRoot || w.querySelector('iframe') || w.children.length > 0 || (w.innerHTML || '').length > 50);
-      if (rendered || tries > 60) { var l = el('sched-loading'); if (l) l.style.display = 'none'; clearInterval(poll); }
-    }, 500);
+  function digits(s){ return String(s||'').replace(/\D/g,'').slice(-10); }
+  function audOf(sel){
+    var opt = sel.options[sel.selectedIndex];
+    var grp = opt && opt.parentElement && opt.parentElement.getAttribute('data-aud');
+    return grp === 'kids' ? 'kids' : 'adult';
   }
-  // Drop the spinner as soon as the embedded schedule reports a height.
-  window.addEventListener('message', function(e){
-    if (!/wellnessliving/i.test(e.origin)) return;
-    var d = e.data; if (!d || typeof d !== 'object') return;
-    if (d.type === 'widget:height') { var l = el('sched-loading'); if (l) l.style.display = 'none'; }
-  });
 
-  // 3-step progress indicator: steps < n done, step n active.
   function setStepper(n){
     [1,2,3].forEach(function(i){
-      var s = el('ss'+i); if (!s) return;
-      var dot = s.querySelector('.sdot');
+      var s = el('ss'+i); var dot = s.querySelector('.sdot');
       s.classList.remove('active','done');
       if (i < n) { s.classList.add('done'); dot.textContent = '✓'; }
       else { if (i === n) s.classList.add('active'); dot.textContent = String(i); }
@@ -218,34 +194,125 @@
   }
   setStepper(1);
 
-  function unlockStep(i){ el('step'+i).classList.remove('locked'); el('go'+i).classList.remove('locked'); }
+  // ---- Step 1 submit: validate, capture lead, open the store, start polling ----
+  var phoneDigits = null, chosenAud = 'adult';
 
-  // Pick interest -> set Step 1 form URL + Step 2 trial URL, then unlock all three buttons.
-  el('interest').addEventListener('change', function(){
-    var opt = this.options[this.selectedIndex];
-    var formUrl = this.value;
-    if (!formUrl) return;
-    var aud = opt.getAttribute('data-aud') === 'kids' ? 'kids' : 'adult';
-    var label = (opt.textContent || '').trim();
+  el('go1').addEventListener('click', function(){
+    var name = el('name').value.trim();
+    var ph = digits(el('phone').value);
+    var interest = el('interest').value;
+    var ok = true;
+    el('f-name').classList.toggle('invalid', !name); if (!name) ok = false;
+    el('f-phone').classList.toggle('invalid', ph.length !== 10); if (ph.length !== 10) ok = false;
+    el('f-interest').classList.toggle('invalid', !interest); if (!interest) ok = false;
+    if (!ok) return;
 
-    el('go1').href = formUrl;
-    el('go2').href = TRIAL[aud];
-    el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
-      ' trial pass<small>For ' + label + '. Secure checkout on WellnessLiving.</small>';
-    el('hint1').innerHTML = 'Opens the <b>' + label + '</b> sign-up page in a new tab.';
+    phoneDigits = ph;
+    chosenAud = audOf(el('interest'));
+    var email = el('email').value.trim();
 
-    unlockStep(1); unlockStep(2); unlockStep(3);
-    loadScheduleWidget();
-    setStepper(1);
+    // Fire-and-store the lead (don't block the funnel on it).
+    try {
+      fetch(CAPTURE, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, phone: ph, email: email, interest: interest })
+      }).catch(function(){});
+    } catch (e) {}
+
+    // Mark step 1 done, open the trial store.
+    el('go1').disabled = true;
+    el('step1').classList.add('done'); el('step1').querySelector('.n').textContent = '✓';
+    el('step2head').innerHTML = 'Get your $19.99 ' + (chosenAud === 'kids' ? 'kids' : 'adult') +
+      ' trial pass<small>For ' + interest + '. Secure checkout on WellnessLiving.</small>';
+    loadStoreWidget(chosenAud);
+    el('step2').classList.remove('hidden');
+    setStepper(2);
+
+    // Step 3 placeholder: waiting for the purchase to land in WL.
+    el('wl-schedule').innerHTML =
+      '<div class="pending"><div class="spinner"></div>' +
+      '<p>Your class schedule unlocks the moment your purchase goes through.</p>' +
+      '<small>This usually takes under a minute after checkout. ' +
+      '<a id="checknow">Already done? Check now</a></small></div>';
+    el('step3').classList.remove('hidden');
+    el('checknow').addEventListener('click', function(){ checkPurchase(); });
+    setStepper(2);
+
+    el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
+    startPolling();
   });
 
-  // Clicking a step's button advances the progress bar (external pages open in a new tab,
-  // so the user returns to this page for the next step).
-  el('go1').addEventListener('click', function(){ if (this.classList.contains('locked')) return; markDone(1); setStepper(2); });
-  el('go2').addEventListener('click', function(){ if (this.classList.contains('locked')) return; markDone(2); setStepper(3); });
-  el('go3').addEventListener('click', function(){ if (this.classList.contains('locked')) return; markDone(3); setStepper(4); });
+  // ---- Step 2: embedded store widget, deep-linked to the chosen trial ----
+  var storeWidgetId = 'wl-store-ima';
+  function loadStoreWidget(aud){
+    storeWidgetId = 'wl-store-ima-' + Math.random().toString(36).slice(2, 9);
+    var kid = TRIAL_KID[aud] || TRIAL_KID.adult;
+    var src = 'https://widgets.wellnessliving.com/store?k_business=' + WL_BUSINESS + '&k_location=' +
+      '&__wl-widget-id__=' + encodeURIComponent(storeWidgetId) +
+      '&__wl-parent-origin__=' + encodeURIComponent(window.location.origin) +
+      '&id_sale=1&k_id=' + kid;
+    el('wl-store').innerHTML =
+      '<iframe id="wl-store-frame" src="' + src + '" allow="clipboard-write; web-share" ' +
+      'style="width:100%;border:0;height:700px;max-height:none"></iframe>';
+  }
 
-  function markDone(i){ var s = el('step'+i); s.classList.remove('locked'); s.classList.add('done'); s.querySelector('.n').textContent = '✓'; }
+  // ---- Step 3: embedded schedule (loaded ONLY after purchase detected) ----
+  var scheduleLoaded = false;
+  function loadScheduleWidget(){
+    if (scheduleLoaded) return; scheduleLoaded = true;
+    el('wl-schedule').innerHTML =
+      '<div class="pending" id="sched-loading"><div class="spinner"></div><p>Loading the class schedule&hellip;</p></div>';
+    var s = document.createElement('script');
+    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
+    document.head.appendChild(s);
+    el('wl-schedule').insertAdjacentHTML('beforeend',
+      '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>');
+    var tries = 0;
+    var poll = setInterval(function(){
+      tries++;
+      var w = document.querySelector('wl-schedule-widget');
+      var rendered = w && (w.shadowRoot || w.querySelector('iframe') || w.children.length > 0 || (w.innerHTML || '').length > 50);
+      if (rendered || tries > 60) { var l = el('sched-loading'); if (l) l.style.display = 'none'; clearInterval(poll); }
+    }, 500);
+  }
+
+  function revealSchedule(){
+    if (scheduleLoaded) return;
+    el('step2').classList.add('done'); el('step2').querySelector('.n').textContent = '✓';
+    loadScheduleWidget();
+    setStepper(3);
+    el('step3').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // ---- Purchase detection: poll WL sales report by phone until it lands ----
+  var pollTimer = null, polls = 0, checking = false;
+  function checkPurchase(){
+    if (!phoneDigits || scheduleLoaded || checking) return;
+    checking = true;
+    fetch(CHECK + '?phone=' + phoneDigits)
+      .then(function(r){ return r.json(); })
+      .then(function(d){ checking = false; if (d && d.purchased) { stopPolling(); revealSchedule(); } })
+      .catch(function(){ checking = false; });
+  }
+  function startPolling(){
+    if (pollTimer) return;
+    setTimeout(checkPurchase, 8000);                 // first check 8s after checkout opens
+    pollTimer = setInterval(function(){
+      polls++;
+      if (polls > 100) { stopPolling(); return; }    // ~20 min cap
+      checkPurchase();
+    }, 12000);
+  }
+  function stopPolling(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+  // Resize the embedded store iframe as its content grows.
+  window.addEventListener('message', function(e){
+    if (!/wellnessliving/i.test(e.origin)) return;
+    var d = e.data; if (!d || typeof d !== 'object') return;
+    if (d.source === 'wl-widget' && d.type === 'widget:height' && d.widgetId === storeWidgetId) {
+      var fr = el('wl-store-frame'); if (fr && d.height) fr.style.height = d.height + 'px';
+    }
+  });
 </script>
 
 </body>
