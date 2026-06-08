@@ -122,9 +122,10 @@
       <div class="bar"><div class="n">2</div><div class="h">Pick your first class<small>Choose a time and book it on the schedule</small></div></div>
       <div class="body">
         <div id="wl-schedule" class="wl-mount">
-          <div class="pending" id="sched-pending"><div class="spinner"></div>
-            <p>Your class schedule unlocks the moment your purchase goes through.</p>
-            <small id="sched-hint">Buy your trial above first. <a id="checknow">Already done? Check now</a></small>
+          <div class="pending" id="sched-pending">
+            <p>Finished checkout? Tap below to open your class schedule.</p>
+            <button class="go" id="showsched" type="button" style="max-width:360px"><span>Show my class schedule</span> &rarr;</button>
+            <small>It also appears automatically once a paid purchase is detected.</small>
           </div>
         </div>
       </div>
@@ -238,10 +239,7 @@
   }
   function stopPolling(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
-  el('checknow') && el('checknow').addEventListener('click', function(){
-    if (phoneDigits.length === 10) { checkPurchase(); }
-    else { el('f-phone').classList.add('invalid'); el('phone').focus(); }
-  });
+  el('showsched') && el('showsched').addEventListener('click', function(){ revealSchedule(); });
 
   // resize the embedded store iframe as it grows
   window.addEventListener('message', function(e){

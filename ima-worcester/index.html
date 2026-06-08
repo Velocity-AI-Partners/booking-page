@@ -233,14 +233,18 @@
     el('step2').classList.remove('hidden');
     setStepper(2);
 
-    // Step 3 placeholder: waiting for the purchase to land in WL.
+    // Step 3 placeholder: a button to open the schedule once they've checked out.
+    // (WL won't let anyone actually book a class without the trial pass on their
+    // account, so a manual reveal is safe; the auto-detector also reveals it for
+    // real paying purchases. A free/100%-off purchase makes no payment record, so
+    // it can't be auto-detected, this button covers that.)
     el('wl-schedule').innerHTML =
-      '<div class="pending"><div class="spinner"></div>' +
-      '<p>Your class schedule unlocks the moment your purchase goes through.</p>' +
-      '<small>This usually takes under a minute after checkout. ' +
-      '<a id="checknow">Already done? Check now</a></small></div>';
+      '<div class="pending">' +
+      '<p>Finished checkout? Tap below to open your class schedule.</p>' +
+      '<button class="go" id="showsched" type="button" style="max-width:360px"><span>Show my class schedule</span><span class="arw">&rarr;</span></button>' +
+      '<small>It also appears automatically once a paid purchase is detected.</small></div>';
     el('step3').classList.remove('hidden');
-    el('checknow').addEventListener('click', function(){ checkPurchase(); });
+    el('showsched').addEventListener('click', function(){ revealSchedule(); });
     setStepper(2);
 
     el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
