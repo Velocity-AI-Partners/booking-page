@@ -4,27 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMA Worcester &middot; 3-Class Trial for $19.99</title>
-<!-- Warm the WellnessLiving widget connections up front so they load faster. -->
-<link rel="preconnect" href="https://widgets.wellnessliving.com" crossorigin>
-<link rel="dns-prefetch" href="https://widgets.wellnessliving.com">
-<link rel="preconnect" href="https://www.wellnessliving.com" crossorigin>
-<link rel="preconnect" href="https://widgets-api.www.wellnessliving.com" crossorigin>
-<link rel="preconnect" href="https://www.google.com" crossorigin>
-<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<!-- Only the loader is worth preloading (our page fetches it cross-origin, so the cache matches).
-     The widget's heavy app bundles are fetched same-origin by the iframe, so preloading them from
-     here would double-download and compete, it can't be sped up from our side. -->
-<link rel="modulepreload" crossorigin href="https://widgets.wellnessliving.com/lead-capture/widget.js">
+<!-- Warm up the destinations so the outbound clicks resolve fast. -->
+<link rel="dns-prefetch" href="https://imaworcester.com">
+<link rel="dns-prefetch" href="https://integrated-martial-arts.vap-app.com">
+<link rel="dns-prefetch" href="https://www.wellnessliving.com">
 <!--
-  IMA WORCESTER SINGLE-PAGE TRIAL  (lead capture writes to WellnessLiving)
-    Step 1  class picker (our page, for routing) + WL Lead Capture widget (writes the lead to WL).
-            The widget is required: WL's lead API is reCAPTCHA-domain-locked to WL, so only the
-            widget (running on WL's domain) can create the lead. The trial opens when the WL form
-            is submitted (detected via its "generate_lead" analytics event; all events are logged).
-    Step 2  WL Store widget, deep-linked to the chosen $19.99 trial pass (adult 3667025 / kids 3909348).
-    Step 3  WL Schedule widget (public Custom Schedule, self-sizing).
-  NOTE: a submit only completes for an email WL hasn't seen; an existing email shows "profile
-  exists" and the form does NOT submit (so the trial won't open). Test with a fresh/alias email.
+  IMA WORCESTER  -  3-CLASS TRIAL LAUNCHER  (no embedded widgets)
+  ----------------------------------------------------------------
+  A single page with a 3-step progress bar. Each step is a button that opens the
+  RIGHT external page in a new tab. Nothing is embedded, so there are no widget
+  load times, no checkout prefill limits, and no missing discount field to fight.
+
+  Flow:
+    Step 1  Pick your class/interest, then open the matching imaworcester.com program
+            page. That page holds IMA's web-special Gravity form ("GET 3 CLASSES FOR
+            $19.99"), so the lead lands in IMA's own system for SMS/email follow-up.
+    Step 2  Button to the correct $19.99 trial purchase link (adult vs kids), the
+            branded short links IMA already uses (they redirect to WL checkout).
+    Step 3  Button to the WellnessLiving schedule to book the first class.
+
+  The interest pick drives Step 1 (program page) AND Step 2 (adult vs kids trial).
+  Each option below carries its program-page URL (value) and audience (data-aud).
+  All URLs were verified live 2026-06-08 against imaworcester.com nav + business_knowledge.
 -->
 <style>
   :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
@@ -41,24 +42,33 @@
   .progs span { font-size:11.5px; font-weight:600; color:#dfe3ea; border:1px solid #2a3340; border-radius:20px; padding:4px 11px; }
 
   .step { background:#fff; border:1px solid var(--line); border-radius:16px; margin-top:18px; overflow:hidden; }
-  .step.hidden { display:none; }
-  .step .bar { display:flex; align-items:center; gap:11px; padding:15px 20px; }
-  .step.has-body .bar { border-bottom:1px solid var(--line); }
+  .step .bar { display:flex; align-items:center; gap:11px; padding:15px 20px; border-bottom:1px solid var(--line); }
   .step .n { width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%; background:var(--red); color:#fff; font-weight:700; font-size:14px; flex:0 0 auto; }
+  .step.locked .n { background:#c2c7d0; }
   .step.done .n { background:var(--green); }
   .step .h { font-size:16px; font-weight:700; }
   .step .h small { display:block; font-size:11.5px; font-weight:500; color:var(--muted); margin-top:1px; }
   .step .body { padding:16px; }
-  .step.done .body, .step:not(.has-body) .body { display:none; }
 
   .lead-label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
   .lead-select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; margin-bottom:14px; }
   .lead-select:focus { outline:none; border-color:var(--red); }
-  .wl-mount { width:100%; min-height:300px; position:relative; }
+
+  /* big primary action button (the thing each step routes through) */
+  .go { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px 18px;
+        background:var(--red); color:#fff; font-size:15.5px; font-weight:700; text-decoration:none;
+        border:0; border-radius:11px; cursor:pointer; transition:filter .15s, background .15s; }
+  .go:hover { filter:brightness(1.07); }
+  .go .arw { font-size:18px; line-height:1; }
+  .go.locked { background:#c2c7d0; cursor:not-allowed; pointer-events:none; }
+  .go.secondary { background:var(--dark); }
+  .hint { font-size:12px; color:var(--muted); margin-top:9px; text-align:center; }
+  .hint b { color:var(--ink); }
+
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
 
-  /* 3-step progress indicator */
+  /* 3-step progress indicator (the "loading bar") */
   .stepper { display:flex; align-items:flex-start; justify-content:center; gap:4px; margin:20px auto 2px; max-width:520px; }
   .sstep { display:flex; flex-direction:column; align-items:center; gap:7px; flex:0 0 auto; width:96px; opacity:.5; transition:opacity .3s; }
   .sstep.active, .sstep.done { opacity:1; }
@@ -69,16 +79,6 @@
   .sstep.active .slabel { color:var(--ink); }
   .sline { flex:1 1 0; height:2px; background:var(--line); margin-top:16px; max-width:48px; transition:background .25s; }
   .sline.done { background:var(--green); }
-
-  /* dynamic loading overlay over the heavy WL form while it loads */
-  .lead-loading { position:absolute; inset:0; z-index:2; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; padding:40px 20px; text-align:center; color:var(--muted); }
-  .lead-loading .spinner { width:40px; height:40px; border:4px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:wl-spin .9s linear infinite; }
-  @keyframes wl-spin { to { transform:rotate(360deg); } }
-  .lead-loading .loadbar { width:220px; max-width:80%; height:6px; background:var(--line); border-radius:4px; overflow:hidden; position:relative; }
-  .lead-loading .loadbar i { position:absolute; top:0; height:100%; width:40%; background:var(--red); border-radius:4px; animation:wl-slide 1.4s ease-in-out infinite; }
-  @keyframes wl-slide { 0% { left:-40%; } 100% { left:100%; } }
-  .lead-loading p { font-size:13.5px; font-weight:600; color:var(--ink); }
-  .lead-loading small { font-size:11.5px; }
 </style>
 </head>
 <body>
@@ -101,82 +101,66 @@
       <div class="sstep" id="ss3"><div class="sdot">3</div><div class="slabel">Pick a class time</div></div>
     </div>
 
-    <!-- STEP 1: class picker (ours) + WL Lead Capture widget (writes the lead to WL) -->
-    <div class="step has-body" id="step1">
-      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Pick a class, add your details, and submit</small></div></div>
+    <!-- STEP 1: pick interest, then open the matching program / sign-up page -->
+    <div class="step" id="step1">
+      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Pick a class, then open your sign-up form</small></div></div>
       <div class="body">
         <label for="interest" class="lead-label">Which class are you interested in?</label>
         <select id="interest" class="lead-select">
           <option value="">Please select...</option>
           <optgroup label="Adults &amp; Teens">
-            <option>Brazilian Jiu-Jitsu (BJJ)</option>
-            <option>Muay Thai Kickboxing</option>
-            <option>Mixed Martial Arts (MMA)</option>
-            <option>NoGi Grappling / Submission Wrestling</option>
-            <option>Combat Karate</option>
-            <option>Karate Kempo</option>
-            <option>Kali: Filipino Stick &amp; Knife Fighting</option>
-            <option>Women's-Only BJJ</option>
-            <option>IMA Fit (fitness)</option>
-            <option>Not sure yet, help me choose</option>
+            <option value="https://imaworcester.com/programs/teens-adults/jiu-jitsu/" data-aud="adult">Brazilian Jiu-Jitsu (BJJ)</option>
+            <option value="https://imaworcester.com/programs/teens-adults/jiu-jitsu/" data-aud="adult">NoGi Grappling / Submission Wrestling</option>
+            <option value="https://imaworcester.com/programs/teens-adults/muay-thai/" data-aud="adult">Muay Thai Kickboxing</option>
+            <option value="https://imaworcester.com/programs/teens-adults/mma/" data-aud="adult">Mixed Martial Arts (MMA)</option>
+            <option value="https://imaworcester.com/programs/teens-adults/kempo-karate/" data-aud="adult">Kempo / Combat Karate</option>
+            <option value="https://imaworcester.com/programs/teens-adults/kali/" data-aud="adult">Kali: Filipino Stick &amp; Knife Fighting</option>
+            <option value="https://imaworcester.com/programs/teens-adults/womens-only-bjj/" data-aud="adult">Women's-Only BJJ</option>
+            <option value="https://imaworcester.com/programs/ima-fit/" data-aud="adult">IMA Fit (fitness)</option>
+            <option value="https://imaworcester.com/programs/teens-adults/" data-aud="adult">Not sure yet, help me choose</option>
           </optgroup>
           <optgroup label="Kids">
-            <option>Tiny Tigers (ages 5-7)</option>
-            <option>Mighty Dragons (ages 8-13)</option>
-            <option>Kids Kempo Karate</option>
-            <option>Combat Karate (Kids)</option>
-            <option>Adaptive: Autism / ADHD</option>
-            <option>Parent &amp; Me</option>
+            <option value="https://imaworcester.com/programs/kids/ages-5-8/" data-aud="kids">Tiny Tigers (ages 5-8)</option>
+            <option value="https://imaworcester.com/programs/kids/ages-8-12/" data-aud="kids">Mighty Dragons (ages 8-12)</option>
+            <option value="https://imaworcester.com/programs/kids/" data-aud="kids">Kids Kempo Karate</option>
+            <option value="https://imaworcester.com/programs/kids/" data-aud="kids">Adaptive: Autism / ADHD</option>
+            <option value="https://imaworcester.com/programs/kids/" data-aud="kids">Parent &amp; Me</option>
           </optgroup>
         </select>
-        <div id="wl-lead-widget" class="wl-mount">
-          <div class="lead-loading" id="lead-loading">
-            <div class="spinner"></div>
-            <div class="loadbar"><i></i></div>
-            <p>Loading your secure sign-up form&hellip;</p>
-            <small>This takes a few seconds, please don't refresh.</small>
-          </div>
-        </div>
+        <a id="go1" class="go locked" target="_blank" rel="noopener"><span>Open my sign-up form</span><span class="arw">&rarr;</span></a>
+        <p class="hint" id="hint1">Pick a class above to unlock your sign-up form.</p>
       </div>
     </div>
 
-    <!-- STEP 2: WL Store widget, deep-linked to the chosen trial -->
-    <div class="step hidden" id="step2">
-      <div class="bar"><div class="n">2</div><div class="h" id="step2head">Get your $19.99 trial pass<small>Secure checkout, handled by WellnessLiving</small></div></div>
-      <div class="body"><div id="wl-store-widget" class="wl-mount"></div></div>
+    <!-- STEP 2: open the correct $19.99 trial purchase link -->
+    <div class="step locked" id="step2">
+      <div class="bar"><div class="n">2</div><div class="h" id="step2head">Get your $19.99 trial pass<small>Secure checkout on WellnessLiving</small></div></div>
+      <div class="body">
+        <a id="go2" class="go secondary locked" target="_blank" rel="noopener"><span>Buy my $19.99 trial</span><span class="arw">&rarr;</span></a>
+        <p class="hint">3 classes for $19.99. Opens WellnessLiving's secure checkout.</p>
+      </div>
     </div>
 
-    <!-- STEP 3: WL Schedule widget -->
-    <div class="step hidden" id="step3">
-      <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small>Choose a time and book it against your new pass</small></div></div>
-      <div class="body"><div id="wl-schedule-widget" class="wl-mount"></div></div>
+    <!-- STEP 3: open the schedule to book the first class -->
+    <div class="step locked" id="step3">
+      <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small>Choose a time and book it on the schedule</small></div></div>
+      <div class="body">
+        <a id="go3" class="go secondary locked" href="https://www.wellnessliving.com/schedule/integrated_martial_arts-y0hoou" target="_blank" rel="noopener"><span>View the class schedule</span><span class="arw">&rarr;</span></a>
+        <p class="hint">After you buy, book your first class here. Our team helps you slot the other two in person.</p>
+      </div>
     </div>
 
     <p class="trust">Questions? Call the studio at <b>(508) 251-9469</b> &middot; 342A West Boylston Street, West Boylston, MA</p>
   </div>
 
 <script>
-  var WL_BUSINESS = '697216';
-  var WL_LEAD_SCHEMA = '019e9954-a02c-702c-ab16-1d9aabff2d97';      // Lead Capture form (writes lead to WL)
-  var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b'; // public Custom Schedule
-  var TRIAL_KID = { adult: '3667025', kids: '3909348' };
-  var storeWidgetId = 'wl-store-widget:ima';
+  // Correct $19.99 trial purchase links (branded short links IMA already uses; redirect to WL checkout).
+  var TRIAL = {
+    adult: 'https://integrated-martial-arts.vap-app.com/f008ab5',
+    kids:  'https://integrated-martial-arts.vap-app.com/98b94c9'
+  };
 
   function el(id){ return document.getElementById(id); }
-  function audForInterest(){
-    var sel = el('interest'); var opt = sel.options[sel.selectedIndex];
-    var grp = opt && opt.parentElement && opt.parentElement.label ? opt.parentElement.label : '';
-    return /kid/i.test(grp) ? 'kids' : 'adult';
-  }
-  function setActive(n){
-    [1,2,3].forEach(function(i){
-      var s = el('step'+i);
-      s.classList.remove('hidden','has-body','done');
-      if (i < n) { s.classList.add('done'); s.querySelector('.n').textContent = '✓'; }
-      else if (i === n) { s.classList.add('has-body'); }
-      else { s.classList.add('hidden'); }
-    });
-  }
 
   // 3-step progress indicator: steps < n done, step n active.
   function setStepper(n){
@@ -187,115 +171,38 @@
       if (i < n) { s.classList.add('done'); dot.textContent = '✓'; }
       else { if (i === n) s.classList.add('active'); dot.textContent = String(i); }
     });
-    if (el('sl1')) el('sl1').classList.toggle('done', n > 1);
-    if (el('sl2')) el('sl2').classList.toggle('done', n > 2);
+    el('sl1').classList.toggle('done', n > 1);
+    el('sl2').classList.toggle('done', n > 2);
   }
   setStepper(1);
 
-  // Step 1: WL Lead Capture widget (writes the lead to WL on Submit). Appended UNDER the loading
-  // overlay so the spinner shows until the form renders.
-  (function loadLeadWidget(){
-    var s = document.createElement('script');
-    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/lead-capture/widget.js';
-    document.head.appendChild(s);
-    el('wl-lead-widget').insertAdjacentHTML('beforeend',
-      '<wl-lead-capture-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_LEAD_SCHEMA + '"></wl-lead-capture-widget>');
-  })();
-  // Safety: never let the spinner hang forever if a height message never crosses the threshold.
-  setTimeout(function(){ var ld = el('lead-loading'); if (ld) ld.style.display = 'none'; }, 35000);
+  function unlockStep(i){ el('step'+i).classList.remove('locked'); el('go'+i).classList.remove('locked'); }
 
-  // ----- WL widget loaders (deep-linked store + self-sizing schedule) -----
-  var storeLoaded = false, scheduleLoaded = false, loadedAud = null;
-  function loadStoreWidget(aud){
-    if (storeLoaded && loadedAud === aud) return;
-    storeLoaded = true; loadedAud = aud;
-    storeWidgetId = 'wl-store-widget:ima-' + Math.random().toString(36).slice(2, 9);
-    var kid = TRIAL_KID[aud] || TRIAL_KID.adult;
-    var src = 'https://widgets.wellnessliving.com/store?k_business=' + WL_BUSINESS + '&k_location=' +
-      '&__wl-widget-id__=' + encodeURIComponent(storeWidgetId) +
-      '&__wl-parent-origin__=' + encodeURIComponent(window.location.origin) +
-      '&id_sale=1&k_id=' + kid;
-    el('wl-store-widget').innerHTML =
-      '<iframe id="wl-store-frame" src="' + src + '" allow="clipboard-write; web-share" ' +
-      'style="width:100%;border:0;height:680px;max-height:none"></iframe>';
-  }
-  function loadScheduleWidget(){
-    if (scheduleLoaded) return; scheduleLoaded = true;
-    var s = document.createElement('script');
-    s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
-    document.head.appendChild(s);
-    el('wl-schedule-widget').innerHTML =
-      '<wl-schedule-widget k_business="' + WL_BUSINESS + '" k_schema="' + WL_SCHEDULE_SCHEMA + '"></wl-schedule-widget>';
-  }
-
-  // Record the chosen class. We DON'T preload the trial/schedule yet if the lead widget is still
-  // loading (3 heavy iframes at once is what made the page crawl); we wait until the lead form is up.
+  // Pick interest -> set Step 1 form URL + Step 2 trial URL, then unlock all three buttons.
   el('interest').addEventListener('change', function(){
-    if (!el('interest').value) return;
-    pendingAud = audForInterest();
-    if (leadArmed) { loadStoreWidget(pendingAud); loadScheduleWidget(); }
-  });
+    var opt = this.options[this.selectedIndex];
+    var formUrl = this.value;
+    if (!formUrl) return;
+    var aud = opt.getAttribute('data-aud') === 'kids' ? 'kids' : 'adult';
+    var label = (opt.textContent || '').trim();
 
-  // Reveal the matching trial + schedule. Triggered when the WL lead form is submitted.
-  var revealed = false, leadMaxH = 0, leadArmed = false, leadLowTimer = null, pendingAud = null;
-  function revealTrial(){
-    if (revealed) return; revealed = true;
-    var interest = el('interest').value || '';
-    var aud = audForInterest();
+    el('go1').href = formUrl;
+    el('go2').href = TRIAL[aud];
     el('step2head').innerHTML = 'Get your $19.99 ' + (aud === 'kids' ? 'kids' : 'adult') +
-      ' trial pass<small>' + (interest ? ('For ' + interest + '. ') : '') + 'Secure checkout on WellnessLiving.</small>';
-    loadStoreWidget(aud);
-    loadScheduleWidget();
-    setActive(2);
-    setStepper(2);
-    el('step3').classList.remove('hidden'); el('step3').classList.add('has-body');
-    el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
-  }
+      ' trial pass<small>For ' + label + '. Secure checkout on WellnessLiving.</small>';
+    el('hint1').innerHTML = 'Opens the <b>' + label + '</b> sign-up page in a new tab.';
 
-  window.addEventListener('message', function(e){
-    if (!/wellnessliving/i.test(e.origin)) return;
-    var d = e.data; if (!d || typeof d !== 'object') return;
-    // size our deep-linked store iframe
-    if (d.source === 'wl-widget' && d.type === 'widget:height' && d.widgetId === storeWidgetId) {
-      var fr = el('wl-store-frame'); if (fr && d.height) fr.style.height = d.height + 'px';
-      return;
-    }
-    // Primary submit signal (config-independent): the lead form collapses from the tall form to a
-    // short "thank you" screen on success. Detect a sustained height drop, debounced 1.5s so a
-    // reCAPTCHA challenge expanding/collapsing doesn't false-trigger.
-    if (d.source === 'wl-widget' && d.type === 'widget:height' && typeof d.widgetId === 'string'
-        && d.widgetId.indexOf('wl-lead-capture-widget') === 0) {
-      var lh = d.height || 0;
-      if (lh > leadMaxH) leadMaxH = lh;
-      if (leadMaxH > 450 && !leadArmed) {
-        leadArmed = true;
-        var ld = el('lead-loading'); if (ld) ld.style.display = 'none';  // form rendered: drop the spinner
-        // Lead form is up; now quietly preload the trial + schedule so the reveal is instant.
-        if (pendingAud) { loadStoreWidget(pendingAud); loadScheduleWidget(); }
-      }
-      if (leadArmed && lh > 0 && lh < leadMaxH - 180) {
-        if (!leadLowTimer) leadLowTimer = setTimeout(revealTrial, 1500);
-      } else if (leadLowTimer) { clearTimeout(leadLowTimer); leadLowTimer = null; }
-      return;
-    }
-    // Secondary submit signal: ecommerce analytics event (only fires if analytics is configured).
-    if (d.type === 'analytics:event') {
-      var ev = d.data || {};
-      var name = String(ev.event || ev.name || ev.eventName || '').toLowerCase();
-      console.log('[wl lead analytics:event]', name || ev);
-      if (/generate_lead|(^|[_-])lead([_-]|$)|submit/.test(name)) revealTrial();
-    }
+    unlockStep(1); unlockStep(2); unlockStep(3);
+    setStepper(1);
   });
 
-  // TEST BYPASS: add ?test=adult or ?test=kids to the URL to jump straight to the trial purchase +
-  // schedule, skipping the (captcha-gated) lead form. For testing the discount code + booking only.
-  (function(){
-    var m = (location.search.match(/[?&]test=(adult|kids)/i) || [])[1];
-    if (!m) return;
-    el('interest').value = (m.toLowerCase() === 'kids') ? 'Tiny Tigers (ages 5-7)' : 'Brazilian Jiu-Jitsu (BJJ)';
-    var ld = el('lead-loading'); if (ld) ld.style.display = 'none';
-    revealTrial();
-  })();
+  // Clicking a step's button advances the progress bar (external pages open in a new tab,
+  // so the user returns to this page for the next step).
+  el('go1').addEventListener('click', function(){ if (this.classList.contains('locked')) return; markDone(1); setStepper(2); });
+  el('go2').addEventListener('click', function(){ if (this.classList.contains('locked')) return; markDone(2); setStepper(3); });
+  el('go3').addEventListener('click', function(){ if (this.classList.contains('locked')) return; markDone(3); setStepper(4); });
+
+  function markDone(i){ var s = el('step'+i); s.classList.remove('locked'); s.classList.add('done'); s.querySelector('.n').textContent = '✓'; }
 </script>
 
 </body>
