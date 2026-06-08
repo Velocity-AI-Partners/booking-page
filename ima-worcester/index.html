@@ -233,22 +233,14 @@
     el('step2').classList.remove('hidden');
     setStepper(2);
 
-    // Step 3 placeholder: a button to open the schedule once they've checked out.
-    // (WL won't let anyone actually book a class without the trial pass on their
-    // account, so a manual reveal is safe; the auto-detector also reveals it for
-    // real paying purchases. A free/100%-off purchase makes no payment record, so
-    // it can't be auto-detected, this button covers that.)
-    el('wl-schedule').innerHTML =
-      '<div class="pending">' +
-      '<p>Finished checkout? Tap below to open your class schedule.</p>' +
-      '<button class="go" id="showsched" type="button" style="max-width:360px"><span>Show my class schedule</span><span class="arw">&rarr;</span></button>' +
-      '<small>It also appears automatically once a paid purchase is detected.</small></div>';
+    // Step 3: the single "Book your class" button (class-filtered schedule link).
+    // Booking is gated by WL (needs the trial pass on the account), so it's safe
+    // to show the link now; they buy in Step 2, then tap this to book.
     el('step3').classList.remove('hidden');
-    el('showsched').addEventListener('click', function(){ revealSchedule(); });
+    renderScheduleButton();
     setStepper(2);
 
     el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
-    startPolling();
   });
 
   // ---- Step 2: embedded store widget, deep-linked to the chosen trial ----
@@ -265,49 +257,23 @@
       'style="width:100%;border:0;height:700px;max-height:none"></iframe>';
   }
 
-  // ---- Step 3: nice button to the class-filtered schedule, shown ONLY after purchase ----
-  var scheduleShown = false;
+  // ---- Step 3: single "Book your class" button (class-filtered schedule link) ----
   function buildScheduleUrl(kclass){
     return SCHEDULE_BASE + (kclass ? ('&k_class=' + kclass) : '');
   }
   function renderScheduleButton(){
     var label = chosenInterest ? ('your ' + chosenInterest + ' class') : 'your first class';
     el('wl-schedule').innerHTML =
-      '<a class="go" href="' + buildScheduleUrl(chosenKClass) + '" target="_blank" rel="noopener">' +
+      '<a class="go" id="bookbtn" href="' + buildScheduleUrl(chosenKClass) + '" target="_blank" rel="noopener">' +
       '<span>Book ' + label + '</span><span class="arw">&rarr;</span></a>' +
-      '<p class="hint">Opens your class schedule on WellnessLiving' +
-      (chosenInterest ? (', already filtered to ' + chosenInterest) : '') +
-      '. Pick a time and book it against your new trial pass.</p>';
+      '<p class="hint">After you buy your $19.99 trial above, tap to pick your class time' +
+      (chosenInterest ? (' (already filtered to ' + chosenInterest + ')') : '') +
+      ' and book it against your new pass.</p>';
+    el('bookbtn').addEventListener('click', function(){
+      el('step2').classList.add('done'); el('step2').querySelector('.n').textContent = '✓';
+      setStepper(3);
+    });
   }
-
-  function revealSchedule(){
-    if (scheduleShown) return; scheduleShown = true;
-    el('step2').classList.add('done'); el('step2').querySelector('.n').textContent = '✓';
-    renderScheduleButton();
-    setStepper(3);
-    el('step3').scrollIntoView({ behavior:'smooth', block:'start' });
-  }
-
-  // ---- Purchase detection: poll WL sales report by phone until it lands ----
-  var pollTimer = null, polls = 0, checking = false;
-  function checkPurchase(){
-    if (!phoneDigits || scheduleShown || checking) return;
-    checking = true;
-    fetch(CHECK + '?phone=' + phoneDigits)
-      .then(function(r){ return r.json(); })
-      .then(function(d){ checking = false; if (d && d.purchased) { stopPolling(); revealSchedule(); } })
-      .catch(function(){ checking = false; });
-  }
-  function startPolling(){
-    if (pollTimer) return;
-    setTimeout(checkPurchase, 8000);                 // first check 8s after checkout opens
-    pollTimer = setInterval(function(){
-      polls++;
-      if (polls > 100) { stopPolling(); return; }    // ~20 min cap
-      checkPurchase();
-    }, 12000);
-  }
-  function stopPolling(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
   // Resize the embedded store iframe as its content grows.
   window.addEventListener('message', function(e){
