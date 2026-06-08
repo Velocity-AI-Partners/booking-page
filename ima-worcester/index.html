@@ -286,6 +286,16 @@
       if (/generate_lead|(^|[_-])lead([_-]|$)|submit/.test(name)) revealTrial();
     }
   });
+
+  // TEST BYPASS: add ?test=adult or ?test=kids to the URL to jump straight to the trial purchase +
+  // schedule, skipping the (captcha-gated) lead form. For testing the discount code + booking only.
+  (function(){
+    var m = (location.search.match(/[?&]test=(adult|kids)/i) || [])[1];
+    if (!m) return;
+    el('interest').value = (m.toLowerCase() === 'kids') ? 'Tiny Tigers (ages 5-7)' : 'Brazilian Jiu-Jitsu (BJJ)';
+    var ld = el('lead-loading'); if (ld) ld.style.display = 'none';
+    revealTrial();
+  })();
 </script>
 
 </body>
