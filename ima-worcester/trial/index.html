@@ -4,28 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMA Worcester &middot; Finish Your $19.99 Trial</title>
-<link rel="dns-prefetch" href="https://integrated-martial-arts.vap-app.com">
-<link rel="dns-prefetch" href="https://www.wellnessliving.com">
 <link rel="preconnect" href="https://widgets.wellnessliving.com" crossorigin>
+<link rel="dns-prefetch" href="https://jjckotsrhuxxftwmdlwc.supabase.co">
 <!--
   IMA WORCESTER  -  2-STEP TRIAL (WARM LEAD VERSION)
   --------------------------------------------------
-  For people who ALREADY gave us their info (via the main page / Gravity form) but
-  have not bought the trial yet. Skips the info-capture step. Two steps only:
-    Step 1  Buy the correct $19.99 trial (adult vs kids). Defaults to Adults & Teens;
-            a toggle switches to Kids. Can be preset with ?aud=adult or ?aud=kids in
-            the URL so an SMS link drops them on the right one automatically.
-    Step 2  Embedded WL schedule to book the first class.
-  This is the sibling of ../index.html (the full 3-step page). Trial links + schedule
-  schema verified 2026-06-08 against business_knowledge + imaworcester.com.
+  For people who already gave us their info. Skips lead capture.
+    Step 1  Buy the correct $19.99 trial (adult vs kids) in the embedded WL store.
+    Step 2  Embedded WL schedule, HIDDEN until we detect the purchase.
+
+  The phone is how we detect the purchase. It comes from the SMS link
+  (?phone=5551234567); if it's missing we show a phone field. After Step 1 we
+  poll check-wl-trial-purchase (reads WL's sales report for a trial purchase on
+  that phone) and reveal the schedule only when it lands.
+
+  URL params: ?phone=  ?aud=adult|kids  ?interest=<label, shown as a hint>
 -->
 <style>
   :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; color:var(--ink); background:#f6f7f9; line-height:1.45; }
   .wrap { max-width:680px; margin:0 auto; padding:0 14px 60px; }
-
-  .banner { position:sticky; top:0; z-index:50; background:#ffe9ad; color:#5a4500; border-bottom:1px solid #e7c976; font-size:13px; font-weight:700; text-align:center; padding:10px 14px; line-height:1.35; }
 
   header.hero { background:var(--dark); color:#fff; text-align:center; padding:34px 18px 30px; }
   header.hero img { height:74px; width:auto; margin-bottom:14px; }
@@ -34,6 +33,7 @@
   header.hero p { color:#aeb6c4; font-size:15px; margin-top:8px; }
 
   .step { background:#fff; border:1px solid var(--line); border-radius:16px; margin-top:18px; overflow:hidden; }
+  .step.hidden { display:none; }
   .step .bar { display:flex; align-items:center; gap:11px; padding:15px 20px; border-bottom:1px solid var(--line); }
   .step .n { width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%; background:var(--red); color:#fff; font-weight:700; font-size:14px; flex:0 0 auto; }
   .step.done .n { background:var(--green); }
@@ -46,24 +46,30 @@
   .aud button { flex:1; padding:13px 10px; border:2px solid var(--line); background:#fff; border-radius:10px; font-size:14px; font-weight:700; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s; }
   .aud button.sel { border-color:var(--red); color:var(--ink); box-shadow:0 0 0 3px rgba(179,18,43,.12); }
 
-  .go { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px 18px;
-        background:var(--red); color:#fff; font-size:15.5px; font-weight:700; text-decoration:none;
-        border:0; border-radius:11px; cursor:pointer; transition:filter .15s; }
-  .go:hover { filter:brightness(1.07); }
-  .go .arw { font-size:18px; line-height:1; }
-  .hint { font-size:12px; color:var(--muted); margin-top:9px; text-align:center; }
-  .hint a { color:var(--red); }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
+  .field input { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; }
+  .field input:focus { outline:none; border-color:var(--red); }
+  .field.invalid input { border-color:var(--red); }
+  .field .err { color:var(--red); font-size:11.5px; margin-top:4px; display:none; }
+  .field.invalid .err { display:block; }
 
-  .wl-mount { width:100%; min-height:320px; position:relative; }
-  .sched-loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:40px 20px; text-align:center; color:var(--muted); background:#fff; }
-  .sched-loading .spinner { width:38px; height:38px; border:4px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:wl-spin .9s linear infinite; }
-  .sched-loading p { font-size:13px; font-weight:600; color:var(--ink); }
+  .go { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px 18px; margin-top:2px;
+        background:var(--red); color:#fff; font-size:15.5px; font-weight:700; border:0; border-radius:11px; cursor:pointer; transition:filter .15s; }
+  .go:hover { filter:brightness(1.07); }
+  .hint { font-size:12px; color:var(--muted); margin-top:10px; text-align:center; }
+  .hint a { color:var(--red); cursor:pointer; }
+
+  .wl-mount { width:100%; min-height:300px; position:relative; }
+  .pending { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:34px 20px; text-align:center; color:var(--muted); }
+  .pending .spinner { width:36px; height:36px; border:4px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:wl-spin .9s linear infinite; }
+  .pending p { font-size:13.5px; font-weight:600; color:var(--ink); }
+  .pending small { font-size:11.5px; }
   @keyframes wl-spin { to { transform:rotate(360deg); } }
 
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:22px; }
   .trust b { color:var(--ink); }
 
-  /* 2-step progress indicator */
   .stepper { display:flex; align-items:flex-start; justify-content:center; gap:4px; margin:20px auto 2px; max-width:420px; }
   .sstep { display:flex; flex-direction:column; align-items:center; gap:7px; flex:0 0 auto; width:120px; opacity:.5; transition:opacity .3s; }
   .sstep.active, .sstep.done { opacity:1; }
@@ -86,35 +92,41 @@
 
   <div class="wrap">
 
-    <!-- 2-step progress indicator -->
     <div class="stepper" id="stepper">
       <div class="sstep active" id="ss1"><div class="sdot">1</div><div class="slabel">Purchase trial</div></div>
       <div class="sline" id="sl1"></div>
       <div class="sstep" id="ss2"><div class="sdot">2</div><div class="slabel">Pick a class time</div></div>
     </div>
 
-    <!-- STEP 1: buy the correct trial -->
+    <!-- STEP 1: buy the trial (embedded store) -->
     <div class="step" id="step1">
-      <div class="bar"><div class="n">1</div><div class="h">Get your $19.99 trial pass<small>3 classes. Secure checkout on WellnessLiving.</small></div></div>
+      <div class="bar"><div class="n">1</div><div class="h" id="step1head">Get your $19.99 trial pass<small>3 classes. Secure checkout on WellnessLiving.</small></div></div>
       <div class="body">
         <span class="aud-label">Who is this trial for?</span>
         <div class="aud" id="aud">
           <button type="button" data-aud="adult" class="sel">Adults &amp; Teens</button>
           <button type="button" data-aud="kids">Kids</button>
         </div>
-        <a id="go1" class="go" target="_blank" rel="noopener"><span>Buy my $19.99 trial</span><span class="arw">&rarr;</span></a>
-        <p class="hint">Opens WellnessLiving's secure checkout in a new tab.</p>
+        <!-- Phone is needed to detect the purchase. Hidden when supplied via ?phone=. -->
+        <div class="field" id="f-phone">
+          <label for="phone">Your cell phone</label>
+          <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555">
+          <div class="err">Enter the 10-digit phone you'll use at checkout.</div>
+        </div>
+        <div id="wl-store" class="wl-mount"></div>
       </div>
     </div>
 
-    <!-- STEP 2: embedded schedule -->
+    <!-- STEP 2: schedule, revealed only after purchase is detected -->
     <div class="step" id="step2">
       <div class="bar"><div class="n">2</div><div class="h">Pick your first class<small>Choose a time and book it on the schedule</small></div></div>
       <div class="body">
         <div id="wl-schedule" class="wl-mount">
-          <div class="sched-loading" id="sched-loading"><div class="spinner"></div><p>Loading the class schedule&hellip;</p></div>
+          <div class="pending" id="sched-pending"><div class="spinner"></div>
+            <p>Your class schedule unlocks the moment your purchase goes through.</p>
+            <small id="sched-hint">Buy your trial above first. <a id="checknow">Already done? Check now</a></small>
+          </div>
         </div>
-        <p class="hint">After you buy, book your first class on the schedule above. Our team helps you slot the other two in person. Trouble booking? <a href="https://www.wellnessliving.com/schedule/integrated_martial_arts-y0hoou" target="_blank" rel="noopener">open the full schedule</a>.</p>
       </div>
     </div>
 
@@ -122,36 +134,39 @@
   </div>
 
 <script>
-  var TRIAL = {
-    adult: 'https://integrated-martial-arts.vap-app.com/f008ab5',
-    kids:  'https://integrated-martial-arts.vap-app.com/98b94c9'
-  };
   var WL_BUSINESS = '697216';
   var WL_SCHEDULE_SCHEMA = '01991a7c-350b-72ac-a116-4600a28eb78b';
-  var scheduleLoaded = false;
+  var TRIAL_KID = { adult: '3667025', kids: '3909348' };
+  var CHECK = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/check-wl-trial-purchase';
 
   function el(id){ return document.getElementById(id); }
+  function digits(s){ return String(s||'').replace(/\D/g,'').slice(-10); }
+  var qp = new URLSearchParams(location.search);
 
-  // Audience: default adult; ?aud=kids|adult preselects (so an SMS link lands on the right trial).
-  var aud = 'adult';
-  (function(){
-    var m = (location.search.match(/[?&]aud=(adult|kids)/i) || [])[1];
-    if (m) aud = m.toLowerCase();
-    setAud(aud);
-  })();
-
+  // ----- audience (from ?aud, default adult) -----
+  var aud = (qp.get('aud') === 'kids') ? 'kids' : 'adult';
   function setAud(a){
     aud = a;
-    el('go1').href = TRIAL[aud] || TRIAL.adult;
-    [].forEach.call(el('aud').children, function(b){
-      b.classList.toggle('sel', b.getAttribute('data-aud') === aud);
-    });
+    [].forEach.call(el('aud').children, function(b){ b.classList.toggle('sel', b.getAttribute('data-aud') === aud); });
+    loadStoreWidget(aud);
   }
   [].forEach.call(el('aud').children, function(b){
     b.addEventListener('click', function(){ setAud(this.getAttribute('data-aud')); });
   });
 
-  // 2-step progress indicator.
+  // ----- phone (from ?phone, else field) -----
+  var phoneDigits = digits(qp.get('phone'));
+  if (phoneDigits.length === 10) {
+    el('f-phone').style.display = 'none';        // supplied by the link, no need to ask
+  } else {
+    el('phone').addEventListener('input', function(){
+      var d = digits(this.value);
+      el('f-phone').classList.remove('invalid');
+      if (d.length === 10) { phoneDigits = d; startPolling(); }
+    });
+  }
+
+  // ----- step indicator -----
   function setStepper(n){
     [1,2].forEach(function(i){
       var s = el('ss'+i); var dot = s.querySelector('.sdot');
@@ -161,16 +176,29 @@
     });
     el('sl1').classList.toggle('done', n > 1);
   }
+  setStepper(1);
 
-  // Buying advances the bar to step 2 (trial opens in a new tab; they return here to book).
-  el('go1').addEventListener('click', function(){
-    el('step1').classList.add('done'); el('step1').querySelector('.n').textContent = '✓';
-    setStepper(2);
-  });
+  // ----- Step 1: embedded store, deep-linked to the chosen trial -----
+  var storeWidgetId = 'wl-store-ima';
+  function loadStoreWidget(a){
+    storeWidgetId = 'wl-store-ima-' + Math.random().toString(36).slice(2, 9);
+    var kid = TRIAL_KID[a] || TRIAL_KID.adult;
+    var src = 'https://widgets.wellnessliving.com/store?k_business=' + WL_BUSINESS + '&k_location=' +
+      '&__wl-widget-id__=' + encodeURIComponent(storeWidgetId) +
+      '&__wl-parent-origin__=' + encodeURIComponent(window.location.origin) +
+      '&id_sale=1&k_id=' + kid;
+    el('wl-store').innerHTML =
+      '<iframe id="wl-store-frame" src="' + src + '" allow="clipboard-write; web-share" ' +
+      'style="width:100%;border:0;height:700px;max-height:none"></iframe>';
+  }
+  setAud(aud); // sync the toggle highlight AND load the store for the (possibly ?aud=) audience
 
-  // Embed the WL schedule. Loaded up front since this is a short, warm-lead funnel.
+  // ----- Step 2: schedule, loaded ONLY after the purchase is detected -----
+  var scheduleLoaded = false;
   function loadScheduleWidget(){
     if (scheduleLoaded) return; scheduleLoaded = true;
+    el('wl-schedule').innerHTML =
+      '<div class="pending" id="sched-loading"><div class="spinner"></div><p>Loading the class schedule&hellip;</p></div>';
     var s = document.createElement('script');
     s.type = 'module'; s.src = 'https://widgets.wellnessliving.com/schedule/widget.js';
     document.head.appendChild(s);
@@ -184,7 +212,51 @@
       if (rendered || tries > 60) { var l = el('sched-loading'); if (l) l.style.display = 'none'; clearInterval(poll); }
     }, 500);
   }
-  loadScheduleWidget();
+  function revealSchedule(){
+    if (scheduleLoaded) return;
+    el('step1').classList.add('done'); el('step1').querySelector('.n').textContent = '✓';
+    loadScheduleWidget();
+    setStepper(2);
+    el('step2').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // ----- purchase detection: poll WL sales report by phone -----
+  var pollTimer = null, polls = 0, checking = false;
+  function checkPurchase(){
+    if (!phoneDigits || phoneDigits.length !== 10 || scheduleLoaded || checking) return;
+    checking = true;
+    fetch(CHECK + '?phone=' + phoneDigits)
+      .then(function(r){ return r.json(); })
+      .then(function(d){ checking = false; if (d && d.purchased) { stopPolling(); revealSchedule(); } })
+      .catch(function(){ checking = false; });
+  }
+  function startPolling(){
+    if (pollTimer || !phoneDigits || phoneDigits.length !== 10) return;
+    checkPurchase();
+    pollTimer = setInterval(function(){
+      polls++;
+      if (polls > 100) { stopPolling(); return; }
+      checkPurchase();
+    }, 12000);
+  }
+  function stopPolling(){ if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+  el('checknow') && el('checknow').addEventListener('click', function(){
+    if (phoneDigits.length === 10) { checkPurchase(); }
+    else { el('f-phone').classList.add('invalid'); el('phone').focus(); }
+  });
+
+  // resize the embedded store iframe as it grows
+  window.addEventListener('message', function(e){
+    if (!/wellnessliving/i.test(e.origin)) return;
+    var d = e.data; if (!d || typeof d !== 'object') return;
+    if (d.source === 'wl-widget' && d.type === 'widget:height' && d.widgetId === storeWidgetId) {
+      var fr = el('wl-store-frame'); if (fr && d.height) fr.style.height = d.height + 'px';
+    }
+  });
+
+  // if the phone arrived via the link, start watching right away
+  if (phoneDigits.length === 10) startPolling();
 </script>
 
 </body>
