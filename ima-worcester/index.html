@@ -88,14 +88,15 @@
 
   <header class="hero">
     <img src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png" alt="Integrated Martial Arts Worcester">
-    <h1>Your <span class="px">3-Class Trial</span> for $19.99</h1>
-    <p>Brazilian Jiu-Jitsu &middot; Muay Thai &middot; MMA &middot; Wrestling &middot; Karate &middot; Kids classes.</p>
+    <h1 id="heroTitle">Start Training at <span class="px">IMA Worcester</span></h1>
+    <p id="heroSub">Brazilian Jiu-Jitsu &middot; Muay Thai &middot; MMA &middot; Wrestling &middot; Karate &middot; Kids classes. Tell us a bit about you to get started.</p>
     <div class="progs"><span>Adults &amp; Teens</span><span>Kids</span><span>Beginners welcome</span></div>
   </header>
 
   <div class="wrap">
 
-    <div class="stepper" id="stepper">
+    <!-- Progress bar is hidden until they submit their info, so the first screen never mentions buying. -->
+    <div class="stepper" id="stepper" style="display:none">
       <div class="sstep active" id="ss1"><div class="sdot">1</div><div class="slabel">Enter your info</div></div>
       <div class="sline" id="sl1"></div>
       <div class="sstep" id="ss2"><div class="sdot">2</div><div class="slabel">Purchase trial</div></div>
@@ -105,7 +106,7 @@
 
     <!-- STEP 1: our lead form -->
     <div class="step" id="step1">
-      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>So we can hold your spot and help you book</small></div></div>
+      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Enter your details and we'll get you set up. Takes 20 seconds.</small></div></div>
       <div class="body">
         <div class="field" id="f-name">
           <label for="name">Your name</label>
@@ -146,7 +147,7 @@
           </select>
           <div class="err">Please pick a class.</div>
         </div>
-        <button class="go" id="go1" type="button"><span>Continue to my trial</span><span class="arw">&rarr;</span></button>
+        <button class="go" id="go1" type="button"><span>Get started</span><span class="arw">&rarr;</span></button>
       </div>
     </div>
 
@@ -224,9 +225,14 @@
       }).catch(function(){});
     } catch (e) {}
 
-    // Mark step 1 done, open the trial store.
+    // Now that we have their info (captured for SMS follow-up even if they don't buy),
+    // reveal the trial + schedule steps and the progress bar, and switch the hero to the
+    // trial framing. The first screen never mentions buying.
     el('go1').disabled = true;
     el('step1').classList.add('done'); el('step1').querySelector('.n').textContent = '✓';
+    el('stepper').style.display = 'flex';
+    el('heroTitle').innerHTML = 'Your <span class="px">$19.99 3-Class Trial</span>';
+    el('heroSub').textContent = "You're in! Grab your 3-class pass below, then pick your first class.";
     el('step2head').innerHTML = 'Get your $19.99 ' + (chosenAud === 'kids' ? 'kids' : 'adult') +
       ' trial pass<small>For ' + interest + '. Secure checkout on WellnessLiving.</small>';
     loadStoreWidget(chosenAud);
