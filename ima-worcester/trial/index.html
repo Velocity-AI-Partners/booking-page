@@ -257,6 +257,10 @@
 
   // if the phone arrived via the link, start watching right away
   if (phoneDigits.length === 10) startPolling();
+
+  // TEMP preview: ?preview=1 reveals the schedule WITHOUT a purchase, so the schedule
+  // step can be inspected. Real users (no param) still must buy first. Remove when done.
+  if (qp.get('preview') === '1') revealSchedule();
 </script>
 
 </body>
