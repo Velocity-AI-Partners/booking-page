@@ -377,20 +377,30 @@
       return;
     }
 
-    // LIVE: backend creates/loads the WL client, charges the card into the studio's
-    // WellnessLiving account via the Virtual Terminal, and grants the trial pass.
-    fetch(WL_CHECKOUT, {
-      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload)
-    }).then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
-      .then(function(o){
-        setPaying(false);
-        if (o.ok && o.j && o.j.success) { onSuccess(o.j); }
-        else { showPayErr((o.j && o.j.error) || 'We could not process that card. Please try another card or call the studio at (508) 251-9469.'); }
-      })
-      .catch(function(){
-        setPaying(false);
-        showPayErr('Network error reaching checkout. Please try again, or call the studio at (508) 251-9469.');
+    // LIVE: the backend (edge fn -> Fly headless browser) creates/loads the WL client
+    // and charges the trial. It takes ~1-2 min, so we start a job and poll its status.
+    var CALL_ERR = 'We could not process that. Please try again, or call the studio at (508) 251-9469.';
+    function post(body){ return fetch(WL_CHECKOUT, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }); }
+
+    function poll(jobId, n){
+      post({ jobId: jobId }).then(function(j){
+        if (j && j.status === 'done' && j.success) { setPaying(false); onSuccess(j); return; }
+        if (j && j.status === 'error') { setPaying(false); showPayErr(j.error || CALL_ERR); return; }
+        if (n > 75) { setPaying(false); showPayErr('This is taking longer than usual. Your trial may still be completing, please call the studio at (508) 251-9469 to confirm.'); return; }
+        setTimeout(function(){ poll(jobId, n + 1); }, 4000); // running / unknown -> keep polling (~5 min cap)
+      }).catch(function(){
+        if (n > 75) { setPaying(false); showPayErr('Network error. Please call the studio at (508) 251-9469.'); return; }
+        setTimeout(function(){ poll(jobId, n + 1); }, 4000);
       });
+    }
+
+    post(payload).then(function(j){
+      if (j && j.jobId) { poll(j.jobId, 0); }
+      else if (j && j.success) { setPaying(false); onSuccess(j); }
+      else { setPaying(false); showPayErr((j && j.error) || CALL_ERR); }
+    }).catch(function(){
+      setPaying(false); showPayErr('Network error reaching checkout. Please try again, or call the studio at (508) 251-9469.');
+    });
   });
 </script>
 
