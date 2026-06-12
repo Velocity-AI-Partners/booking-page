@@ -249,7 +249,11 @@
   function qp(){ var o={}, q=location.search.replace(/^\?/,''); q.split('&').forEach(function(p){ if(!p) return; var i=p.indexOf('='); var k=decodeURIComponent(p.slice(0,i<0?p.length:i)); var v=i<0?'':decodeURIComponent(p.slice(i+1).replace(/\+/g,' ')); o[k]=v; }); return o; }
   var PARAMS = qp();
   var DEMO = PARAMS.demo === '1' || PARAMS.demo === 'true';
+  // ?test=cash hits the REAL backend (creates a real WL client) but completes the
+  // sale as Cash so no card is charged - for end-to-end testing without paying.
+  var CASHTEST = PARAMS.test === 'cash';
   if (DEMO) el('demobar').style.display = 'block';
+  if (CASHTEST) { el('demobar').textContent = 'TEST MODE · real backend, sale completed as Cash so no card is charged · remove ?test=cash to charge live'; el('demobar').style.display = 'block'; }
 
   // resolve interest -> kclass + aud (explicit params win)
   function resolveInterest(){
@@ -328,7 +332,7 @@
 
   function setPaying(on){
     el('payBtn').disabled=on;
-    el('payLabel').innerHTML = on ? 'Processing&hellip;' : 'Pay $19.99 &amp; activate';
+    el('payLabel').innerHTML = on ? 'Setting up your trial&hellip; (up to a minute)' : 'Pay $19.99 &amp; activate';
     el('payBtn').querySelector('.arw').style.display = on ? 'none' : 'inline';
     if(on){ var s=document.createElement('span'); s.className='spin'; s.id='paySpin'; el('payBtn').appendChild(s); }
     else { var x=el('paySpin'); if(x) x.remove(); }
@@ -352,7 +356,7 @@
   el('payBtn').addEventListener('click', function(){
     el('payErr').classList.remove('show');
     if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
-    if (!validCard()) return;
+    if (!CASHTEST && !validCard()) return;
     setPaying(true);
 
     var payload = {
@@ -365,6 +369,7 @@
         zip: el('cc-zip').value.replace(/\D/g,'')
       }
     };
+    if (CASHTEST) payload.test = { method: 'cash' };
 
     // DEMO: simulate the backend so the flow can be approved without a live charge.
     if (DEMO) {
