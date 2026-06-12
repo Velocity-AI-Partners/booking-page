@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMA Worcester &middot; Activate Your $19.99 3-Class Trial</title>
+<link rel="dns-prefetch" href="https://jjckotsrhuxxftwmdlwc.supabase.co">
+<!--
+  IMA WORCESTER  -  NO-RE-ENTRY TRIAL CHECKOUT  (sample for approval)
+  ===================================================================
+  This is the page the lead lands on AFTER they submit the studio's Gravity
+  form (Gravity = Step 1, lead capture). The whole point: they NEVER re-type
+  their name / phone / email. The Gravity confirmation redirects here with
+  their info in the URL, we show it back read-only, and they only add a card.
+
+  HOW THE PIECES FIT, IN ORDER
+  ----------------------------
+  Step 1 (lives on imaworcester.com)  Gravity form captures name/phone/email +
+          which class. Gravity "Confirmation" is set to redirect to:
+            .../ima-worcester/checkout/?name={Name}&phone={Phone}&email={Email}&interest={Class}
+          A Gravity webhook also POSTs the same fields to our backend
+          (gravity-trial-intake edge fn) which (a) inserts the lead into
+          lead_conversations and (b) pre-creates the WellnessLiving client so
+          the charge step is instant.
+  Step 2 (this page, section A)  Recap their details, prefilled, read-only. Zero
+          re-entry. "Not you? Edit" reopens the fields for the rare direct visit.
+  Step 3 (this page, section B)  The $19.99 / 3-class trial offer for the class
+          they picked.
+  Step 4 (this page, section C)  OUR OWN checkout. They enter only a card. On
+          submit we POST lead + card to the backend (wl-trial-checkout edge fn),
+          which creates/loads the WL client, runs the charge straight into the
+          studio's WellnessLiving account (Virtual Terminal), and grants the
+          $19.99 trial pass. Money + pass land in WL like any other sale.
+          (Card handling decision, confirmed: charge THROUGH WellnessLiving.)
+  Step 5 (this page, section D)  Instant confirmation (our backend owns the
+          charge, so detection has no lag) + the class-filtered "Book your
+          <class>" button to pick their first class against the new pass.
+  Behind the scenes  ~60s after the Gravity intake, the backend checks whether
+          that client now holds the trial pass. Converted -> stop. Not converted
+          -> drop into the AI SMS nurture sequence (~80% of leads).
+
+  STILL TO WIRE BEFORE GO-LIVE (flagged, not done here):
+    - Deploy the `wl-trial-checkout` backend (create WL client + Virtual Terminal
+      charge + grant pass). The write path is verified from a browser; it must
+      be re-verified from the server egress (www.wellnessliving.com can
+      Cloudflare-block datacenter IPs -> may need to run from n8n cloud).
+    - Card data crosses this page to our backend over TLS. Charging THROUGH WL
+      means the studio carries standard PCI responsibility for the checkout.
+    - Add `?demo=1` to click through the full flow with NO real charge (clearly
+      labeled on-screen) for UX approval before the backend is live.
+-->
+<style>
+  :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; color:var(--ink); background:#f6f7f9; line-height:1.45; }
+  .wrap { max-width:560px; margin:0 auto; padding:0 14px 60px; }
+
+  .demobar { background:#1f2a44; color:#cfe0ff; font-size:12.5px; font-weight:700; text-align:center; padding:9px 14px; letter-spacing:.3px; }
+
+  header.hero { background:var(--dark); color:#fff; text-align:center; padding:30px 18px 26px; }
+  header.hero img { height:64px; width:auto; margin-bottom:12px; }
+  header.hero h1 { font-size:25px; letter-spacing:-0.4px; }
+  header.hero h1 .px { color:#ff6b82; }
+  header.hero p { color:#aeb6c4; font-size:14px; margin-top:7px; }
+
+  .step { background:#fff; border:1px solid var(--line); border-radius:16px; margin-top:16px; overflow:hidden; }
+  .step.hidden { display:none; }
+  .step .bar { display:flex; align-items:center; gap:11px; padding:14px 18px; border-bottom:1px solid var(--line); }
+  .step .n { width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; background:var(--red); color:#fff; font-weight:700; font-size:13px; flex:0 0 auto; }
+  .step.done .n { background:var(--green); }
+  .step .h { font-size:15.5px; font-weight:700; }
+  .step .h small { display:block; font-size:11.5px; font-weight:500; color:var(--muted); margin-top:1px; }
+  .step .body { padding:16px 18px; }
+
+  /* recap */
+  .recap { list-style:none; }
+  .recap li { display:flex; justify-content:space-between; gap:14px; padding:9px 0; border-bottom:1px dashed var(--line); font-size:14px; }
+  .recap li:last-child { border-bottom:0; }
+  .recap .k { color:var(--muted); font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.3px; }
+  .recap .v { font-weight:700; text-align:right; }
+  .editlink { display:inline-block; margin-top:8px; font-size:12.5px; color:var(--red); cursor:pointer; font-weight:600; }
+
+  /* offer */
+  .offer { display:flex; align-items:center; gap:14px; }
+  .offer .price { font-size:34px; font-weight:800; color:var(--ink); line-height:1; }
+  .offer .price s { font-size:15px; color:#9aa1ad; font-weight:600; margin-left:6px; }
+  .offer .meta { font-size:13px; color:var(--muted); }
+  .offer .meta b { color:var(--ink); }
+
+  .field { margin-bottom:12px; }
+  .field.row { display:flex; gap:10px; }
+  .field.row > div { flex:1; }
+  .field label { display:block; font-size:12px; font-weight:700; color:#4a5160; margin-bottom:5px; }
+  .field input, .field select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; }
+  .field input:focus, .field select:focus { outline:none; border-color:var(--red); }
+  .field .err { color:var(--red); font-size:11.5px; margin-top:4px; display:none; }
+  .field.invalid .err { display:block; }
+  .field.invalid input, .field.invalid select { border-color:var(--red); }
+
+  .go { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:15px 18px; margin-top:4px;
+        background:var(--red); color:#fff; font-size:15.5px; font-weight:700; text-decoration:none; border:0; border-radius:11px; cursor:pointer; transition:filter .15s; }
+  .go:hover { filter:brightness(1.07); }
+  .go[disabled] { background:#c2c7d0; cursor:not-allowed; }
+  .go .arw { font-size:18px; line-height:1; }
+  .go .spin { width:17px; height:17px; border:3px solid rgba(255,255,255,.45); border-top-color:#fff; border-radius:50%; animation:wl-spin .8s linear infinite; }
+  @keyframes wl-spin { to { transform:rotate(360deg); } }
+
+  .secure { display:flex; align-items:center; justify-content:center; gap:6px; font-size:11.5px; color:var(--muted); margin-top:11px; }
+  .formerr { display:none; background:#fdecee; border:1px solid #f3c2c9; color:#8c1023; font-size:13px; font-weight:600; border-radius:9px; padding:10px 12px; margin-bottom:12px; }
+  .formerr.show { display:block; }
+
+  /* success */
+  .doneart { text-align:center; padding:6px 0 4px; }
+  .doneart .check { width:56px; height:56px; border-radius:50%; background:var(--green); color:#fff; font-size:30px; line-height:56px; margin:0 auto 12px; }
+  .doneart h2 { font-size:20px; }
+  .doneart p { color:var(--muted); font-size:13.5px; margin-top:6px; }
+  .pass { background:#f1fbf5; border:1px solid #bce9cf; border-radius:11px; padding:12px 14px; margin:14px 0; font-size:13px; }
+  .pass b { color:#13713f; }
+
+  .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:20px; }
+  .trust b { color:var(--ink); }
+  .nextnote { font-size:11.5px; color:#9aa1ad; text-align:center; margin-top:14px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+  <div class="demobar" id="demobar" style="display:none">DEMO MODE &middot; no real charge is made &middot; remove ?demo=1 to use the live checkout</div>
+
+  <header class="hero">
+    <img src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png" alt="Integrated Martial Arts Worcester">
+    <h1>Activate your <span class="px">$19.99 3-Class Trial</span></h1>
+    <p>One more step. Confirm your details and you're training this week.</p>
+  </header>
+
+  <div class="wrap">
+
+    <!-- A: prefilled recap, no re-entry -->
+    <div class="step" id="stepRecap">
+      <div class="bar"><div class="n">1</div><div class="h">Your details<small>Pulled from your form. Nothing to re-type.</small></div></div>
+      <div class="body">
+        <ul class="recap" id="recapList"></ul>
+        <span class="editlink" id="editLink">Not you? Edit details</span>
+        <!-- editable fallback (direct visitors / "edit") -->
+        <div id="editForm" style="display:none;margin-top:12px">
+          <div class="field" id="f-name"><label>Your name</label><input id="name" type="text" autocomplete="name" placeholder="First and last name"><div class="err">Enter your name.</div></div>
+          <div class="field" id="f-phone"><label>Cell phone</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555"><div class="err">Enter a valid 10-digit phone.</div></div>
+          <div class="field" id="f-email"><label>Email</label><input id="email" type="email" autocomplete="email" placeholder="you@email.com"></div>
+          <div class="field" id="f-interest"><label>Class</label>
+            <select id="interest">
+              <option value="">Select...</option>
+              <optgroup label="Adults &amp; Teens" data-aud="adult">
+                <option data-kclass="811711">Brazilian Jiu-Jitsu (BJJ)</option>
+                <option data-kclass="919492">Muay Thai Kickboxing</option>
+                <option data-kclass="811710">Mixed Martial Arts (MMA)</option>
+                <option data-kclass="919784">NoGi Grappling / Submission Wrestling</option>
+                <option data-kclass="813863">Kempo / Combat Karate</option>
+                <option data-kclass="893432">Kali: Filipino Stick &amp; Knife Fighting</option>
+                <option data-kclass="926336">Women's-Only BJJ</option>
+                <option data-kclass="836923">IMA Fit (fitness)</option>
+                <option data-kclass="">Not sure yet</option>
+              </optgroup>
+              <optgroup label="Kids" data-aud="kids">
+                <option data-kclass="919755">Tiny Tigers (ages 5-8)</option>
+                <option data-kclass="874059">Mighty Dragons (ages 8-12)</option>
+                <option data-kclass="919918">Kids Kempo Karate</option>
+                <option data-kclass="813855">Adaptive: Autism / ADHD</option>
+                <option data-kclass="967845">Parent &amp; Me</option>
+              </optgroup>
+            </select>
+          </div>
+          <button class="go" id="saveEdit" type="button" style="padding:11px"><span>Save</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- B: the trial offer -->
+    <div class="step" id="stepOffer">
+      <div class="bar"><div class="n">2</div><div class="h">Your trial pass<small id="offerSub">3 classes to try it out</small></div></div>
+      <div class="body">
+        <div class="offer">
+          <div class="price">$19.99</div>
+          <div class="meta"><b id="offerProgram">3-class trial</b><br>3 sessions &middot; valid 30 days &middot; one-time, no auto-renew</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C: our own checkout (card -> backend -> WL) -->
+    <div class="step" id="stepPay">
+      <div class="bar"><div class="n">3</div><div class="h">Payment<small>Charged to the studio's WellnessLiving account</small></div></div>
+      <div class="body">
+        <div class="formerr" id="payErr"></div>
+        <div class="field"><label>Card number</label><input id="cc-num" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234"><div class="err">Enter a valid card number.</div></div>
+        <div class="field row">
+          <div id="f-exp"><label>Expiry</label><input id="cc-exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY"><div class="err">MM/YY</div></div>
+          <div id="f-cvc"><label>CVC</label><input id="cc-cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123"><div class="err">CVC</div></div>
+          <div id="f-zip"><label>ZIP</label><input id="cc-zip" inputmode="numeric" autocomplete="postal-code" placeholder="01605"><div class="err">ZIP</div></div>
+        </div>
+        <button class="go" id="payBtn" type="button"><span id="payLabel">Pay $19.99 &amp; activate</span><span class="arw">&rarr;</span></button>
+        <div class="secure">&#128274; Secure TLS checkout &middot; charged once, no auto-renew</div>
+      </div>
+    </div>
+
+    <!-- D: success + book first class -->
+    <div class="step hidden" id="stepDone">
+      <div class="bar"><div class="n">&#10003;</div><div class="h">You're in</div></div>
+      <div class="body">
+        <div class="doneart">
+          <div class="check">&#10003;</div>
+          <h2>Trial activated</h2>
+          <p id="doneMsg">Your 3-class pass is on your account. Pick your first class below.</p>
+        </div>
+        <div class="pass" id="passBox"></div>
+        <a class="go" id="bookBtn" href="#" target="_blank" rel="noopener"><span id="bookLabel">Book your first class</span><span class="arw">&rarr;</span></a>
+        <p class="nextnote">A confirmation text and email are on the way. See you on the mats.</p>
+      </div>
+    </div>
+
+    <p class="trust">Questions? Call the studio at <b>(508) 251-9469</b> &middot; 342A West Boylston Street, West Boylston, MA</p>
+  </div>
+
+<script>
+  // ---- config ----
+  var WL_CHECKOUT = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/wl-trial-checkout'; // backend to deploy
+  var SCHEDULE_BASE = 'https://www.wellnessliving.com/rs/schedule/integrated_martial_arts-y0hoou?k_business=697216&id_class_tab=1';
+  var TRIAL_NAME = { adult: 'Worcester-Adult Trials Pass - 3 Sessions', kids: 'Worcester-Kids Trials Pass - 3 Sessions' };
+
+  // interest label -> { kclass, aud }. Mirrors the lead-form mapping so a Gravity
+  // class value resolves to the right schedule filter + adult/kids pass.
+  var INTEREST_MAP = {
+    'brazilian jiu-jitsu (bjj)':{k:'811711',a:'adult'}, 'bjj':{k:'811711',a:'adult'},
+    'muay thai kickboxing':{k:'919492',a:'adult'}, 'muay thai':{k:'919492',a:'adult'},
+    'mixed martial arts (mma)':{k:'811710',a:'adult'}, 'mma':{k:'811710',a:'adult'},
+    'nogi grappling / submission wrestling':{k:'919784',a:'adult'}, 'nogi':{k:'919784',a:'adult'}, 'wrestling':{k:'919784',a:'adult'},
+    'kempo / combat karate':{k:'813863',a:'adult'}, 'kempo':{k:'813863',a:'adult'}, 'karate':{k:'813863',a:'adult'},
+    'kali: filipino stick & knife fighting':{k:'893432',a:'adult'}, 'kali':{k:'893432',a:'adult'},
+    "women's-only bjj":{k:'926336',a:'adult'}, "women's bjj":{k:'926336',a:'adult'},
+    'ima fit (fitness)':{k:'836923',a:'adult'}, 'ima fit':{k:'836923',a:'adult'}, 'fitness':{k:'836923',a:'adult'},
+    'tiny tigers (ages 5-8)':{k:'919755',a:'kids'}, 'tiny tigers':{k:'919755',a:'kids'},
+    'mighty dragons (ages 8-12)':{k:'874059',a:'kids'}, 'mighty dragons':{k:'874059',a:'kids'},
+    'kids kempo karate':{k:'919918',a:'kids'}, 'kids kempo':{k:'919918',a:'kids'},
+    'adaptive: autism / adhd':{k:'813855',a:'kids'}, 'autism':{k:'813855',a:'kids'}, 'adhd':{k:'813855',a:'kids'},
+    'parent & me':{k:'967845',a:'kids'}, 'parent and me':{k:'967845',a:'kids'}
+  };
+
+  var lead = { name:'', phone:'', email:'', interest:'', kclass:'', aud:'adult' };
+
+  function el(id){ return document.getElementById(id); }
+  function digits(s){ return String(s||'').replace(/\D/g,'').slice(-10); }
+  function qp(){ var o={}, q=location.search.replace(/^\?/,''); q.split('&').forEach(function(p){ if(!p) return; var i=p.indexOf('='); var k=decodeURIComponent(p.slice(0,i<0?p.length:i)); var v=i<0?'':decodeURIComponent(p.slice(i+1).replace(/\+/g,' ')); o[k]=v; }); return o; }
+  var PARAMS = qp();
+  var DEMO = PARAMS.demo === '1' || PARAMS.demo === 'true';
+  if (DEMO) el('demobar').style.display = 'block';
+
+  // resolve interest -> kclass + aud (explicit params win)
+  function resolveInterest(){
+    if (PARAMS.k_class) lead.kclass = PARAMS.k_class;
+    if (PARAMS.aud === 'kids' || PARAMS.aud === 'adult') lead.aud = PARAMS.aud;
+    var key = (lead.interest||'').trim().toLowerCase();
+    if (INTEREST_MAP[key]) { if (!lead.kclass) lead.kclass = INTEREST_MAP[key].k; if (!PARAMS.aud) lead.aud = INTEREST_MAP[key].a; }
+  }
+
+  // ---- load lead from Gravity redirect params ----
+  lead.name = (PARAMS.name||'').trim();
+  lead.phone = digits(PARAMS.phone||'');
+  lead.email = (PARAMS.email||'').trim();
+  lead.interest = (PARAMS.interest||'').trim();
+  resolveInterest();
+
+  function renderRecap(){
+    var rows = [
+      ['Name', lead.name || '&mdash;'],
+      ['Phone', lead.phone ? lead.phone.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3') : '&mdash;'],
+      ['Email', lead.email || '&mdash;'],
+      ['Class', lead.interest || 'Help me choose']
+    ];
+    el('recapList').innerHTML = rows.map(function(r){ return '<li><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></li>'; }).join('');
+    el('offerProgram').textContent = (lead.interest ? lead.interest : '3-class') + ' trial';
+    el('offerSub').textContent = '3 classes of ' + (lead.interest || 'your choice') + ' to try it out';
+  }
+
+  // If the core fields are missing (someone hit the page directly), open the
+  // editable form so the page still works. This is the direct-visit path, not a
+  // silent fallback: the fields are blank and clearly need input.
+  function needInfo(){ return !(lead.name && lead.phone.length === 10); }
+
+  function openEdit(){
+    el('editForm').style.display = 'block';
+    el('name').value = lead.name; el('phone').value = lead.phone; el('email').value = lead.email;
+    if (lead.interest) { var s=el('interest'); for (var i=0;i<s.options.length;i++){ if (s.options[i].text.toLowerCase()===lead.interest.toLowerCase()){ s.selectedIndex=i; break; } } }
+  }
+  el('editLink').addEventListener('click', openEdit);
+  el('saveEdit').addEventListener('click', function(){
+    var nm=el('name').value.trim(), ph=digits(el('phone').value), ok=true;
+    el('f-name').classList.toggle('invalid', !nm); if(!nm) ok=false;
+    el('f-phone').classList.toggle('invalid', ph.length!==10); if(ph.length!==10) ok=false;
+    if(!ok) return;
+    lead.name=nm; lead.phone=ph; lead.email=el('email').value.trim();
+    var opt=el('interest').options[el('interest').selectedIndex];
+    lead.interest = el('interest').value ? opt.text : '';
+    lead.kclass = (opt && opt.getAttribute('data-kclass')) || '';
+    var grp = opt && opt.parentElement && opt.parentElement.getAttribute('data-aud');
+    lead.aud = grp==='kids' ? 'kids' : 'adult';
+    el('editForm').style.display='none';
+    renderRecap();
+  });
+
+  renderRecap();
+  if (needInfo()) openEdit();
+
+  // ---- card field UX ----
+  el('cc-num').addEventListener('input', function(e){
+    var v=e.target.value.replace(/\D/g,'').slice(0,16); e.target.value=v.replace(/(.{4})/g,'$1 ').trim();
+  });
+  el('cc-exp').addEventListener('input', function(e){
+    var v=e.target.value.replace(/\D/g,'').slice(0,4); if(v.length>=3) v=v.slice(0,2)+'/'+v.slice(2); e.target.value=v;
+  });
+  el('cc-cvc').addEventListener('input', function(e){ e.target.value=e.target.value.replace(/\D/g,'').slice(0,4); });
+
+  function validCard(){
+    var num=el('cc-num').value.replace(/\D/g,''); var exp=el('cc-exp').value; var cvc=el('cc-cvc').value.replace(/\D/g,''); var zip=el('cc-zip').value.replace(/\D/g,'');
+    var ok=true;
+    var nOk=num.length>=13 && num.length<=16; el('cc-num').parentElement.classList.toggle('invalid',!nOk); if(!nOk) ok=false;
+    var m=/^(\d{2})\/(\d{2})$/.exec(exp); var eOk=!!m && +m[1]>=1 && +m[1]<=12; el('f-exp').classList.toggle('invalid',!eOk); if(!eOk) ok=false;
+    var cOk=cvc.length>=3; el('f-cvc').classList.toggle('invalid',!cOk); if(!cOk) ok=false;
+    var zOk=zip.length>=5; el('f-zip').classList.toggle('invalid',!zOk); if(!zOk) ok=false;
+    return ok;
+  }
+
+  function setPaying(on){
+    el('payBtn').disabled=on;
+    el('payLabel').innerHTML = on ? 'Processing&hellip;' : 'Pay $19.99 &amp; activate';
+    el('payBtn').querySelector('.arw').style.display = on ? 'none' : 'inline';
+    if(on){ var s=document.createElement('span'); s.className='spin'; s.id='paySpin'; el('payBtn').appendChild(s); }
+    else { var x=el('paySpin'); if(x) x.remove(); }
+  }
+  function showPayErr(msg){ var e=el('payErr'); e.textContent=msg; e.classList.add('show'); }
+
+  function buildScheduleUrl(){ return SCHEDULE_BASE + (lead.kclass ? ('&k_class='+lead.kclass) : ''); }
+
+  function onSuccess(res){
+    el('stepPay').classList.add('done');
+    el('stepDone').classList.remove('hidden');
+    var order = res && res.k_purchase ? ('#'+res.k_purchase) : '';
+    el('passBox').innerHTML = '<b>'+ (TRIAL_NAME[lead.aud]||TRIAL_NAME.adult) +'</b> &mdash; 3 sessions, added to ' +
+      (lead.name? (lead.name.split(' ')[0]+"'s") : 'your') + ' WellnessLiving account.' + (order? ' Order '+order+'.' : '');
+    var lbl = lead.interest ? ('Book your '+lead.interest+' class') : 'Book your first class';
+    el('bookLabel').textContent = lbl;
+    el('bookBtn').href = buildScheduleUrl();
+    el('stepDone').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  el('payBtn').addEventListener('click', function(){
+    el('payErr').classList.remove('show');
+    if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
+    if (!validCard()) return;
+    setPaying(true);
+
+    var payload = {
+      name: lead.name, phone: lead.phone, email: lead.email,
+      interest: lead.interest, audience: lead.aud,
+      card: {
+        number: el('cc-num').value.replace(/\D/g,''),
+        exp: el('cc-exp').value,
+        cvc: el('cc-cvc').value.replace(/\D/g,''),
+        zip: el('cc-zip').value.replace(/\D/g,'')
+      }
+    };
+
+    // DEMO: simulate the backend so the flow can be approved without a live charge.
+    if (DEMO) {
+      setTimeout(function(){ setPaying(false); onSuccess({ k_purchase: '000DEMO'+Math.floor(1e5+9e5*0.5) }); }, 1500);
+      return;
+    }
+
+    // LIVE: backend creates/loads the WL client, charges the card into the studio's
+    // WellnessLiving account via the Virtual Terminal, and grants the trial pass.
+    fetch(WL_CHECKOUT, {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload)
+    }).then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(o){
+        setPaying(false);
+        if (o.ok && o.j && o.j.success) { onSuccess(o.j); }
+        else { showPayErr((o.j && o.j.error) || 'We could not process that card. Please try another card or call the studio at (508) 251-9469.'); }
+      })
+      .catch(function(){
+        setPaying(false);
+        showPayErr('Network error reaching checkout. Please try again, or call the studio at (508) 251-9469.');
+      });
+  });
+</script>
+
+</body>
+</html>
