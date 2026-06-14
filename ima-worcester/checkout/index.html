@@ -354,12 +354,13 @@
   // ============ PIPELINE: slots (prefetch) ============
   var slotsState = { list:null, err:null, picked:null };
   function fmtSlot(dtl){
-    var m=/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/.exec(dtl||''); if(!m) return { day:String(dtl||''), time:'', dt:null };
+    var m=/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/.exec(dtl||''); if(!m) return { day:String(dtl||''), time:'', fulldate:String(dtl||''), dt:null };
     var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var monthsFull=['January','February','March','April','May','June','July','August','September','October','November','December'];
     var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     var dt=new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5]);
     var h=+m[4], ap=h>=12?'PM':'AM', h12=h%12||12;
-    return { day: days[dt.getDay()]+', '+months[+m[2]-1]+' '+(+m[3]), time: h12+':'+m[5]+' '+ap, dt: dt };
+    return { day: days[dt.getDay()]+', '+months[+m[2]-1]+' '+(+m[3]), time: h12+':'+m[5]+' '+ap, fulldate: monthsFull[+m[2]-1]+' '+(+m[3])+', '+m[1], dt: dt };
   }
   function demoSlots(){
     var out=[], now=Date.now();
@@ -481,14 +482,33 @@
     el('schedErr').classList.remove('show');
     setBooking(true);
     if (DEMO) { setTimeout(function(){ setBooking(false); finishDone(s); }, 1100); return; }
+    function bookedOk(){ setBooking(false); recordBooking(s); finishDone(s); }
     ensureUid().then(function(uid){
       return call({ action:'book', uid: uid, k_class_period: s.k_class_period, k_class: s.k_class, dtl_date: s.dtl_date, s_title: s.s_title }).then(function(j){
-        if (j && j.jobId) { pollJob('book', j.jobId, function(){ setBooking(false); finishDone(s); }, function(e){ setBooking(false); showSchedErr(e); }); }
-        else if (j && j.success) { setBooking(false); finishDone(s); }
+        if (j && j.jobId) { pollJob('book', j.jobId, bookedOk, function(e){ setBooking(false); showSchedErr(e); }); }
+        else if (j && j.success) { bookedOk(); }
         else { setBooking(false); showSchedErr((j && j.error) || CALL_ERR); }
       });
     }).catch(function(e){ setBooking(false); showSchedErr('We could not reserve that class ('+String((e&&e.message)||e)+'). Please pick another time or call (508) 251-9469.'); });
   });
+
+  // Record the completed booking into OUR system (booking_requests + lead status) so it
+  // appears like any lead-nurture booking. Fire-and-forget: the WL reservation already
+  // succeeded, so a recording hiccup never blocks the confirmation. DEMO skips it.
+  function recordBooking(slot){
+    if (DEMO) return;
+    var f = fmtSlot(slot.dtl_date);
+    call({
+      action: 'record-booking',
+      name: lead.name, phone: lead.phone, email: lead.email,
+      location_slug: 'integrated-martial-arts-worcester',
+      class_name: (slot.s_title || lead.interest || ''),
+      requested_date: f.fulldate, requested_time: f.time, dtl_date: slot.dtl_date,
+      k_class_period: slot.k_class_period, k_class: slot.k_class,
+      k_purchase: (chargeResult && chargeResult.k_purchase) || null,
+      uid: uidState.uid || null, s_title: slot.s_title || ''
+    }).catch(function(){});
+  }
 
   function finishDone(slot){
     el('stepSched').classList.add('done');
