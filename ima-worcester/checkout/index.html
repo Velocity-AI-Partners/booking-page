@@ -189,6 +189,7 @@
           <div id="f-cvc"><label>CVC</label><input id="cc-cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123"><div class="err">CVC</div></div>
           <div id="f-zip"><label>ZIP</label><input id="cc-zip" inputmode="numeric" autocomplete="postal-code" placeholder="01605"><div class="err">ZIP</div></div>
         </div>
+        <div class="field"><label>Discount code <span style="font-weight:500;color:#9aa1ad">(optional)</span></label><input id="cc-disc" autocomplete="off" autocapitalize="characters" placeholder="Enter code"></div>
         <button class="go" id="payBtn" type="button"><span id="payLabel">Pay $19.99 &amp; activate</span><span class="arw">&rarr;</span></button>
         <div class="secure">&#128274; Secure TLS checkout &middot; charged once, no auto-renew</div>
       </div>
@@ -463,6 +464,8 @@
     var card = { number: el('cc-num').value.replace(/\D/g,''), exp: el('cc-exp').value, cvc: el('cc-cvc').value.replace(/\D/g,''), zip: el('cc-zip').value.replace(/\D/g,'') };
     ensureUid().then(function(uid){
       var body = { action:'charge', uid: uid, audience: lead.aud, email: lead.email, card: card };
+      var disc = (el('cc-disc').value || '').trim();
+      if (disc) body.discount = disc;
       if (CASHTEST) body.test = { method:'cash' };
       return call(body).then(function(j){
         if (j && j.jobId) { pollJob('charge', j.jobId, function(d){ setPaying(false); chargeResult=d; revealSchedule(); }, function(e){ setPaying(false); showPayErr(e); }); }
