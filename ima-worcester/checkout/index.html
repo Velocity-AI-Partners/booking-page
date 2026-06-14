@@ -89,6 +89,16 @@
   .formerr { display:none; background:#fdecee; border:1px solid #f3c2c9; color:#8c1023; font-size:13px; font-weight:600; border-radius:9px; padding:10px 12px; margin-bottom:12px; }
   .formerr.show { display:block; }
 
+  .discrow { display:flex; gap:8px; }
+  .discrow input { flex:1; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; font-family:inherit; background:#fff; text-transform:uppercase; }
+  .discrow input:focus { outline:none; border-color:var(--red); }
+  .discbtn { flex:0 0 auto; padding:0 18px; border:0; border-radius:9px; background:var(--ink); color:#fff; font-size:13.5px; font-weight:700; cursor:pointer; }
+  .discbtn:hover { filter:brightness(1.12); }
+  .discbtn[disabled] { background:#c2c7d0; cursor:not-allowed; }
+  .discmsg { font-size:12.5px; margin-top:6px; font-weight:600; }
+  .discmsg.ok { color:var(--green); }
+  .discmsg.bad { color:var(--red); }
+
   /* schedule */
   .slots { list-style:none; max-height:340px; overflow:auto; margin:2px 0 6px; }
   .daylabel { font-size:11.5px; font-weight:700; color:#9aa1ad; text-transform:uppercase; letter-spacing:.4px; margin:12px 2px 6px; }
@@ -183,13 +193,22 @@
       <div class="bar"><div class="n">3</div><div class="h">Payment<small>Charged to the studio's WellnessLiving account</small></div></div>
       <div class="body">
         <div class="formerr" id="payErr"></div>
-        <div class="field"><label>Card number</label><input id="cc-num" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234"><div class="err">Enter a valid card number.</div></div>
-        <div class="field row">
-          <div id="f-exp"><label>Expiry</label><input id="cc-exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY"><div class="err">MM/YY</div></div>
-          <div id="f-cvc"><label>CVC</label><input id="cc-cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123"><div class="err">CVC</div></div>
-          <div id="f-zip"><label>ZIP</label><input id="cc-zip" inputmode="numeric" autocomplete="postal-code" placeholder="01605"><div class="err">ZIP</div></div>
+        <div class="field">
+          <label>Discount code <span style="font-weight:500;color:#9aa1ad">(optional)</span></label>
+          <div class="discrow">
+            <input id="cc-disc" autocomplete="off" autocapitalize="characters" placeholder="Enter code">
+            <button class="discbtn" id="discBtn" type="button">Apply</button>
+          </div>
+          <div class="discmsg" id="discMsg"></div>
         </div>
-        <div class="field"><label>Discount code <span style="font-weight:500;color:#9aa1ad">(optional)</span></label><input id="cc-disc" autocomplete="off" autocapitalize="characters" placeholder="Enter code"></div>
+        <div id="cardFields">
+          <div class="field"><label>Card number</label><input id="cc-num" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234"><div class="err">Enter a valid card number.</div></div>
+          <div class="field row">
+            <div id="f-exp"><label>Expiry</label><input id="cc-exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY"><div class="err">MM/YY</div></div>
+            <div id="f-cvc"><label>CVC</label><input id="cc-cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123"><div class="err">CVC</div></div>
+            <div id="f-zip"><label>ZIP</label><input id="cc-zip" inputmode="numeric" autocomplete="postal-code" placeholder="01605"><div class="err">ZIP</div></div>
+          </div>
+        </div>
         <button class="go" id="payBtn" type="button"><span id="payLabel">Pay $19.99 &amp; activate</span><span class="arw">&rarr;</span></button>
         <div class="secure">&#128274; Secure TLS checkout &middot; charged once, no auto-renew</div>
       </div>
@@ -426,12 +445,48 @@
     return ok;
   }
 
+  // ---- discount code: Apply button verifies + previews the discounted total ----
+  var discountState = { code:'', price:null, isFree:false, applied:false };
+  function setDiscMsg(cls, html){ var m=el('discMsg'); m.className='discmsg'+(cls?(' '+cls):''); m.innerHTML=html; }
+  function updatePayUI(){
+    var free = discountState.applied && discountState.isFree;
+    if (free) { el('cardFields').style.display='none'; el('payLabel').innerHTML='Complete free checkout'; }
+    else if (discountState.applied && discountState.price != null) { el('cardFields').style.display=''; el('payLabel').innerHTML='Pay $'+discountState.price+' &amp; activate'; }
+    else { el('cardFields').style.display=''; el('payLabel').innerHTML='Pay $19.99 &amp; activate'; }
+  }
+  function clearDiscount(){ discountState={ code:'', price:null, isFree:false, applied:false }; setDiscMsg('', ''); updatePayUI(); }
+  el('cc-disc').addEventListener('input', function(){ if (discountState.applied) clearDiscount(); });
+  el('discBtn').addEventListener('click', function(){
+    var code=(el('cc-disc').value||'').trim(); if(!code) return;
+    setDiscMsg('', 'Checking&hellip;'); el('discBtn').disabled=true;
+    function done(d){
+      el('discBtn').disabled=false;
+      if (!d || !d.applied) { discountState={code:'',price:null,isFree:false,applied:false}; setDiscMsg('bad','That code is not valid.'); updatePayUI(); return; }
+      var free = !!d.is_free || parseFloat(d.price)===0;
+      discountState={ code:code, price:d.price, isFree:free, applied:true };
+      setDiscMsg('ok', free ? 'Code applied. Your trial is free ($0.00), no card needed.' : ('Code applied. Your total is $'+d.price+'.'));
+      updatePayUI();
+    }
+    function fail(msg){
+      el('discBtn').disabled=false; discountState={code:'',price:null,isFree:false,applied:false};
+      setDiscMsg('bad', /unconfirmed|not_applied|invalid|not valid|no_discount/i.test(String(msg)) ? 'That code is not valid.' : 'Could not check that code. Please try again or call (508) 251-9469.');
+      updatePayUI();
+    }
+    if (DEMO) { var f=/free|test|100/i.test(code); setTimeout(function(){ done({ applied:true, price: f?'0.00':'9.99', is_free:f }); }, 700); return; }
+    ensureUid().then(function(uid){
+      return call({ action:'verify-discount', uid:uid, audience:lead.aud, discount:code }).then(function(j){
+        if (j && j.jobId) { pollJob('verify-discount', j.jobId, done, fail); }
+        else if (j && (j.applied != null)) { done(j); }
+        else { fail((j && j.error) || 'unknown'); }
+      });
+    }).catch(function(e){ fail(String(e && e.message || e)); });
+  });
+
   function setPaying(on){
     el('payBtn').disabled=on;
-    el('payLabel').innerHTML = on ? 'Activating your trial&hellip;' : 'Pay $19.99 &amp; activate';
     el('payBtn').querySelector('.arw').style.display = on ? 'none' : 'inline';
-    if(on){ var s=document.createElement('span'); s.className='spin'; s.id='paySpin'; el('payBtn').appendChild(s); }
-    else { var x=el('paySpin'); if(x) x.remove(); }
+    if(on){ el('payLabel').innerHTML = 'Activating your trial&hellip;'; var s=document.createElement('span'); s.className='spin'; s.id='paySpin'; el('payBtn').appendChild(s); }
+    else { var x=el('paySpin'); if(x) x.remove(); updatePayUI(); }
   }
   function setBooking(on){
     el('bookBtn').disabled=on;
@@ -456,16 +511,18 @@
   el('payBtn').addEventListener('click', function(){
     el('payErr').classList.remove('show');
     if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
-    if (!CASHTEST && !validCard()) return;
+    var free = discountState.applied && discountState.isFree; // verified 100%-off -> no card
+    if (!CASHTEST && !free && !validCard()) return;
     setPaying(true);
 
     if (DEMO) { setTimeout(function(){ setPaying(false); chargeResult={ k_purchase:'000DEMO' }; revealSchedule(); }, 1200); return; }
 
     var card = { number: el('cc-num').value.replace(/\D/g,''), exp: el('cc-exp').value, cvc: el('cc-cvc').value.replace(/\D/g,''), zip: el('cc-zip').value.replace(/\D/g,'') };
     ensureUid().then(function(uid){
-      var body = { action:'charge', uid: uid, audience: lead.aud, email: lead.email, card: card };
-      var disc = (el('cc-disc').value || '').trim();
+      var body = { action:'charge', uid: uid, audience: lead.aud, email: lead.email };
+      var disc = (discountState.applied && discountState.code) || (el('cc-disc').value || '').trim();
       if (disc) body.discount = disc;
+      if (!free) body.card = card; // a verified 100%-off code means no card is needed
       if (CASHTEST) body.test = { method:'cash' };
       return call(body).then(function(j){
         if (j && j.jobId) { pollJob('charge', j.jobId, function(d){ setPaying(false); chargeResult=d; revealSchedule(); }, function(e){ setPaying(false); showPayErr(e); }); }
