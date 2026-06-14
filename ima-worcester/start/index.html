@@ -163,7 +163,8 @@
              '&interest=' + encodeURIComponent(interest) +
              (kclass ? '&k_class=' + encodeURIComponent(kclass) : '') +
              '&aud=' + aud +
-             (DEMO ? '&demo=1' : '');
+             (DEMO ? '&demo=1' : '') +
+             (PARAMS.test ? '&test=' + encodeURIComponent(PARAMS.test) : '');
 
     // Hand the lead to the checkout, auto-populated, plus a create-client job id (cj)
     // so the checkout can resolve the new WL client that we start building NOW.
