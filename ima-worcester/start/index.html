@@ -131,6 +131,7 @@
 
 <script>
   var CAPTURE = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/capture-trial-lead';
+  var BACKEND = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/wl-trial-checkout';
   var PARAMS = (function(){ var o={}, q=location.search.replace(/^\?/,''); q.split('&').forEach(function(p){ if(!p) return; var i=p.indexOf('='); var k=decodeURIComponent(p.slice(0,i<0?p.length:i)); var v=i<0?'':decodeURIComponent(p.slice(i+1).replace(/\+/g,' ')); o[k]=v; }); return o; })();
   var DEMO = PARAMS.demo === '1' || PARAMS.demo === 'true';
   if (DEMO) document.getElementById('demobar').style.display = 'block';
@@ -164,7 +165,9 @@
              '&aud=' + aud +
              (DEMO ? '&demo=1' : '');
 
-    function goCheckout(){ window.location.href = '../checkout/?' + qs; }
+    // Hand the lead to the checkout, auto-populated, plus a create-client job id (cj)
+    // so the checkout can resolve the new WL client that we start building NOW.
+    function goCheckout(cj){ window.location.href = '../checkout/?' + qs + (cj ? ('&cj=' + encodeURIComponent(cj)) : ''); }
 
     el('go1').disabled = true;
     el('go1label').textContent = 'Setting up your trial';
@@ -172,20 +175,28 @@
     el('go1').querySelector('.arw').style.display = 'none';
 
     // DEMO: skip the live backend write, go straight to the auto-populated checkout.
-    if (DEMO) { setTimeout(goCheckout, 700); return; }
+    if (DEMO) { setTimeout(function(){ goCheckout(''); }, 700); return; }
 
-    // LIVE: complete the lead entry on our backend (insert lead + create the CRM
-    // lead/client), then continue. We don't block the funnel if the network is
-    // slow - the checkout step will create/load the client if needed.
+    // LIVE: (1) log the lead (capture-trial-lead, fire-and-forget). (2) START the WL
+    // client create on the backend right now and grab its job id - the client is being
+    // built in WL while the customer reads the recap and types their card, so the charge
+    // step has a ready uid and never waits on create. We only need the job id (returned
+    // instantly), not the finished create, so we redirect as soon as it's in hand.
     var done = false;
-    var cont = function(){ if (done) return; done = true; goCheckout(); };
+    var cont = function(cj){ if (done) return; done = true; goCheckout(cj || ''); };
     try {
       fetch(CAPTURE, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name, phone: ph, email: email, interest: interest })
-      }).then(cont, cont);
-    } catch (e) { cont(); }
-    setTimeout(cont, 2500); // safety: never strand the lead on a hung request
+      });
+    } catch (e) { /* lead log is best-effort; never blocks the funnel */ }
+    try {
+      fetch(BACKEND, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create-client', name: name, phone: ph, email: email })
+      }).then(function(r){ return r.json(); }).then(function(j){ cont(j && j.jobId); }, function(){ cont(''); });
+    } catch (e) { cont(''); }
+    setTimeout(function(){ cont(''); }, 3000); // safety: never strand the lead on a hung request
   });
 </script>
 

@@ -6,48 +6,29 @@
 <title>IMA Worcester &middot; Activate Your $19.99 3-Class Trial</title>
 <link rel="dns-prefetch" href="https://jjckotsrhuxxftwmdlwc.supabase.co">
 <!--
-  IMA WORCESTER  -  NO-RE-ENTRY TRIAL CHECKOUT  (sample for approval)
-  ===================================================================
-  This is the page the lead lands on AFTER they submit the studio's Gravity
-  form (Gravity = Step 1, lead capture). The whole point: they NEVER re-type
-  their name / phone / email. The Gravity confirmation redirects here with
-  their info in the URL, we show it back read-only, and they only add a card.
+  IMA WORCESTER  -  NO-RE-ENTRY TRIAL CHECKOUT  (owned 3-step funnel, pipelined)
+  =============================================================================
+  The customer never re-types anything and never leaves our pages for WL. The
+  three WL writes are split so each runs in the background while the customer is
+  busy with the next form (the latency is hidden, not fought):
 
-  HOW THE PIECES FIT, IN ORDER
-  ----------------------------
-  Step 1 (lives on imaworcester.com)  Gravity form captures name/phone/email +
-          which class. Gravity "Confirmation" is set to redirect to:
-            .../ima-worcester/checkout/?name={Name}&phone={Phone}&email={Email}&interest={Class}
-          A Gravity webhook also POSTs the same fields to our backend
-          (gravity-trial-intake edge fn) which (a) inserts the lead into
-          lead_conversations and (b) pre-creates the WellnessLiving client so
-          the charge step is instant.
-  Step 2 (this page, section A)  Recap their details, prefilled, read-only. Zero
-          re-entry. "Not you? Edit" reopens the fields for the rare direct visit.
-  Step 3 (this page, section B)  The $19.99 / 3-class trial offer for the class
-          they picked.
-  Step 4 (this page, section C)  OUR OWN checkout. They enter only a card. On
-          submit we POST lead + card to the backend (wl-trial-checkout edge fn),
-          which creates/loads the WL client, runs the charge straight into the
-          studio's WellnessLiving account (Virtual Terminal), and grants the
-          $19.99 trial pass. Money + pass land in WL like any other sale.
-          (Card handling decision, confirmed: charge THROUGH WellnessLiving.)
-  Step 5 (this page, section D)  Instant confirmation (our backend owns the
-          charge, so detection has no lag) + the class-filtered "Book your
-          <class>" button to pick their first class against the new pass.
-  Behind the scenes  ~60s after the Gravity intake, the backend checks whether
-          that client now holds the trial pass. Converted -> stop. Not converted
-          -> drop into the AI SMS nurture sequence (~80% of leads).
+    Step 1 (lead form, ../start/)  On "Continue" it fires `create-client` on the
+            backend and hands this page a job id (?cj=). The WL client is being
+            BUILT while they read the recap + type their card.
+    Step 2 (this page)  Recap (prefilled, no re-entry) + the $19.99 offer.
+    Step 3 (this page)  Card. On "Pay" we resolve the create job (uid, usually
+            already done), run `charge` against it (WL Virtual Terminal), and the
+            moment that returns we reveal the schedule.
+    Step 4 (this page)  Real upcoming class times for their chosen program, read
+            live from WL (`slots`). They pick one; we `book` it server-side into
+            their new pass (WL's OAuth API can't class-book, so the backend staff
+            session does it). No WL widget, no WL login, no re-entry.
+    Step 5 (this page)  Confirmation. (A confirmation SMS hook exists but is held
+            until it's explicitly turned on.)
 
-  STILL TO WIRE BEFORE GO-LIVE (flagged, not done here):
-    - Deploy the `wl-trial-checkout` backend (create WL client + Virtual Terminal
-      charge + grant pass). The write path is verified from a browser; it must
-      be re-verified from the server egress (www.wellnessliving.com can
-      Cloudflare-block datacenter IPs -> may need to run from n8n cloud).
-    - Card data crosses this page to our backend over TLS. Charging THROUGH WL
-      means the studio carries standard PCI responsibility for the checkout.
-    - Add `?demo=1` to click through the full flow with NO real charge (clearly
-      labeled on-screen) for UX approval before the backend is live.
+  Modes: ?demo=1 clicks the whole flow with NO backend calls and NO charge.
+         ?test=cash hits the REAL backend (real WL client + real booking) but
+         completes the sale as Cash so no card is charged.
 -->
 <style>
   :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --green:#1f9d57; --dark:#0f1622; }
@@ -83,7 +64,6 @@
   /* offer */
   .offer { display:flex; align-items:center; gap:14px; }
   .offer .price { font-size:34px; font-weight:800; color:var(--ink); line-height:1; }
-  .offer .price s { font-size:15px; color:#9aa1ad; font-weight:600; margin-left:6px; }
   .offer .meta { font-size:13px; color:var(--muted); }
   .offer .meta b { color:var(--ink); }
 
@@ -109,6 +89,19 @@
   .formerr { display:none; background:#fdecee; border:1px solid #f3c2c9; color:#8c1023; font-size:13px; font-weight:600; border-radius:9px; padding:10px 12px; margin-bottom:12px; }
   .formerr.show { display:block; }
 
+  /* schedule */
+  .slots { list-style:none; max-height:340px; overflow:auto; margin:2px 0 6px; }
+  .daylabel { font-size:11.5px; font-weight:700; color:#9aa1ad; text-transform:uppercase; letter-spacing:.4px; margin:12px 2px 6px; }
+  .daylabel:first-child { margin-top:2px; }
+  .slot { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 13px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:border-color .12s, background .12s; }
+  .slot:hover { border-color:#c9ced8; }
+  .slot.sel { border-color:var(--red); background:#fff6f7; }
+  .slot .meta2 .t { font-weight:700; font-size:14.5px; }
+  .slot .meta2 .s { color:var(--muted); font-size:12.5px; margin-top:1px; }
+  .slot .pick { font-size:18px; color:#c9ced8; flex:0 0 auto; }
+  .slot.sel .pick { color:var(--red); }
+  .schmsg { font-size:13px; color:var(--muted); padding:8px 2px; }
+
   /* success */
   .doneart { text-align:center; padding:6px 0 4px; }
   .doneart .check { width:56px; height:56px; border-radius:50%; background:var(--green); color:#fff; font-size:30px; line-height:56px; margin:0 auto 12px; }
@@ -116,6 +109,8 @@
   .doneart p { color:var(--muted); font-size:13.5px; margin-top:6px; }
   .pass { background:#f1fbf5; border:1px solid #bce9cf; border-radius:11px; padding:12px 14px; margin:14px 0; font-size:13px; }
   .pass b { color:#13713f; }
+  .booked { background:#f4f8ff; border:1px solid #cfe0ff; border-radius:11px; padding:12px 14px; margin:14px 0; font-size:13.5px; }
+  .booked b { color:#1f3a86; }
 
   .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:20px; }
   .trust b { color:var(--ink); }
@@ -140,7 +135,6 @@
       <div class="body">
         <ul class="recap" id="recapList"></ul>
         <span class="editlink" id="editLink">Not you? Edit details</span>
-        <!-- editable fallback (direct visitors / "edit") -->
         <div id="editForm" style="display:none;margin-top:12px">
           <div class="field" id="f-name"><label>Your name</label><input id="name" type="text" autocomplete="name" placeholder="First and last name"><div class="err">Enter your name.</div></div>
           <div class="field" id="f-phone"><label>Cell phone</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555"><div class="err">Enter a valid 10-digit phone.</div></div>
@@ -200,18 +194,30 @@
       </div>
     </div>
 
-    <!-- D: success + book first class -->
+    <!-- D: in-page class booking -->
+    <div class="step hidden" id="stepSched">
+      <div class="bar"><div class="n">4</div><div class="h">Book your first class<small id="schedSub">Pick a time that works. We'll reserve your spot.</small></div></div>
+      <div class="body">
+        <div class="formerr" id="schedErr"></div>
+        <div class="schmsg" id="schedMsg">Loading class times&hellip;</div>
+        <ul class="slots" id="slotList"></ul>
+        <button class="go" id="bookBtn" type="button" disabled><span id="bookLabel">Select a class above</span><span class="arw" style="display:none">&rarr;</span></button>
+        <p class="nextnote">Your 3-class pass is on your account. You can book the other two classes any time.</p>
+      </div>
+    </div>
+
+    <!-- E: success -->
     <div class="step hidden" id="stepDone">
       <div class="bar"><div class="n">&#10003;</div><div class="h">You're in</div></div>
       <div class="body">
         <div class="doneart">
           <div class="check">&#10003;</div>
-          <h2>Trial activated</h2>
-          <p id="doneMsg">Your 3-class pass is on your account. Pick your first class below.</p>
+          <h2>You're booked</h2>
+          <p id="doneMsg">Your trial is active and your first class is reserved. See you on the mats.</p>
         </div>
         <div class="pass" id="passBox"></div>
-        <a class="go" id="bookBtn" href="#" target="_blank" rel="noopener"><span id="bookLabel">Book your first class</span><span class="arw">&rarr;</span></a>
-        <p class="nextnote">A confirmation text and email are on the way. See you on the mats.</p>
+        <div class="booked" id="bookedBox"></div>
+        <p class="nextnote" id="doneNote">A confirmation is on its way. Questions? Call the studio at (508) 251-9469.</p>
       </div>
     </div>
 
@@ -220,12 +226,11 @@
 
 <script>
   // ---- config ----
-  var WL_CHECKOUT = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/wl-trial-checkout'; // backend to deploy
-  var SCHEDULE_BASE = 'https://www.wellnessliving.com/rs/schedule/integrated_martial_arts-y0hoou?k_business=697216&id_class_tab=1';
+  var BACKEND = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/wl-trial-checkout';
   var TRIAL_NAME = { adult: 'Worcester-Adult Trials Pass - 3 Sessions', kids: 'Worcester-Kids Trials Pass - 3 Sessions' };
+  var CALL_ERR = 'We could not process that. Please try again, or call the studio at (508) 251-9469.';
 
-  // interest label -> { kclass, aud }. Mirrors the lead-form mapping so a Gravity
-  // class value resolves to the right schedule filter + adult/kids pass.
+  // interest label -> { kclass, aud }. Mirrors the lead-form mapping.
   var INTEREST_MAP = {
     'brazilian jiu-jitsu (bjj)':{k:'811711',a:'adult'}, 'bjj':{k:'811711',a:'adult'},
     'muay thai kickboxing':{k:'919492',a:'adult'}, 'muay thai':{k:'919492',a:'adult'},
@@ -243,17 +248,26 @@
   };
 
   var lead = { name:'', phone:'', email:'', interest:'', kclass:'', aud:'adult' };
-
   function el(id){ return document.getElementById(id); }
   function digits(s){ return String(s||'').replace(/\D/g,'').slice(-10); }
   function qp(){ var o={}, q=location.search.replace(/^\?/,''); q.split('&').forEach(function(p){ if(!p) return; var i=p.indexOf('='); var k=decodeURIComponent(p.slice(0,i<0?p.length:i)); var v=i<0?'':decodeURIComponent(p.slice(i+1).replace(/\+/g,' ')); o[k]=v; }); return o; }
   var PARAMS = qp();
   var DEMO = PARAMS.demo === '1' || PARAMS.demo === 'true';
-  // ?test=cash hits the REAL backend (creates a real WL client) but completes the
-  // sale as Cash so no card is charged - for end-to-end testing without paying.
   var CASHTEST = PARAMS.test === 'cash';
   if (DEMO) el('demobar').style.display = 'block';
-  if (CASHTEST) { el('demobar').textContent = 'TEST MODE · real backend, sale completed as Cash so no card is charged · remove ?test=cash to charge live'; el('demobar').style.display = 'block'; }
+  if (CASHTEST) { el('demobar').textContent = 'TEST MODE · real WL client + real booking, sale completed as Cash so no card is charged · remove ?test=cash to charge live'; el('demobar').style.display = 'block'; }
+
+  function call(body){ return fetch(BACKEND, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }); }
+  // poll a backend job until done/error (~5 min cap at 4s intervals)
+  function pollJob(action, jobId, onDone, onErr, n){
+    n = n || 0;
+    call({ action: action, jobId: jobId }).then(function(j){
+      if (j && j.status === 'done' && j.success) { onDone(j); return; }
+      if (j && j.status === 'error') { onErr((j && j.error) || CALL_ERR); return; }
+      if (n > 75) { onErr('This is taking longer than usual. Please call the studio at (508) 251-9469 to confirm.'); return; }
+      setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 4000);
+    }, function(){ if (n > 75) { onErr('Network error. Please call the studio at (508) 251-9469.'); return; } setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 4000); });
+  }
 
   // resolve interest -> kclass + aud (explicit params win)
   function resolveInterest(){
@@ -262,8 +276,6 @@
     var key = (lead.interest||'').trim().toLowerCase();
     if (INTEREST_MAP[key]) { if (!lead.kclass) lead.kclass = INTEREST_MAP[key].k; if (!PARAMS.aud) lead.aud = INTEREST_MAP[key].a; }
   }
-
-  // ---- load lead from Gravity redirect params ----
   lead.name = (PARAMS.name||'').trim();
   lead.phone = digits(PARAMS.phone||'');
   lead.email = (PARAMS.email||'').trim();
@@ -281,12 +293,7 @@
     el('offerProgram').textContent = (lead.interest ? lead.interest : '3-class') + ' trial';
     el('offerSub').textContent = '3 classes of ' + (lead.interest || 'your choice') + ' to try it out';
   }
-
-  // If the core fields are missing (someone hit the page directly), open the
-  // editable form so the page still works. This is the direct-visit path, not a
-  // silent fallback: the fields are blank and clearly need input.
   function needInfo(){ return !(lead.name && lead.phone.length === 10); }
-
   function openEdit(){
     el('editForm').style.display = 'block';
     el('name').value = lead.name; el('phone').value = lead.phone; el('email').value = lead.email;
@@ -305,21 +312,108 @@
     var grp = opt && opt.parentElement && opt.parentElement.getAttribute('data-aud');
     lead.aud = grp==='kids' ? 'kids' : 'adult';
     el('editForm').style.display='none';
+    // details changed -> the pre-started client create is stale; rebuild at pay time.
+    uidState = { uid:null, jobId:null, err:null };
     renderRecap();
+    loadSlots(); // re-pull slots for the (possibly) new class
   });
-
   renderRecap();
   if (needInfo()) openEdit();
 
-  // ---- card field UX ----
-  el('cc-num').addEventListener('input', function(e){
-    var v=e.target.value.replace(/\D/g,'').slice(0,16); e.target.value=v.replace(/(.{4})/g,'$1 ').trim();
-  });
-  el('cc-exp').addEventListener('input', function(e){
-    var v=e.target.value.replace(/\D/g,'').slice(0,4); if(v.length>=3) v=v.slice(0,2)+'/'+v.slice(2); e.target.value=v;
-  });
-  el('cc-cvc').addEventListener('input', function(e){ e.target.value=e.target.value.replace(/\D/g,'').slice(0,4); });
+  // ============ PIPELINE: uid (create) ============
+  // The lead form already started create-client and passed its job id as ?cj=. We poll
+  // it in the background so the uid is ready by the time they pay. If there's no job
+  // (direct visit / edited details), ensureUid() starts one on demand.
+  var uidState = { uid:null, jobId:null, err:null };
+  function startCreate(){
+    if (DEMO) { uidState.uid = 'DEMOUID'; return; }
+    if (needInfo()) { uidState.err = 'missing_info'; return; }
+    call({ action:'create-client', name:lead.name, phone:lead.phone, email:lead.email }).then(function(j){
+      if (j && j.jobId) { uidState.jobId = j.jobId; pollJob('create-client', j.jobId, function(d){ uidState.uid = d.uid; }, function(e){ uidState.err = e; }); }
+      else if (j && j.uid) { uidState.uid = j.uid; }
+      else { uidState.err = (j && j.error) || 'create_failed'; }
+    }, function(){ uidState.err = 'network'; });
+  }
+  function ensureUid(){
+    return new Promise(function(resolve, reject){
+      if (DEMO) { resolve('DEMOUID'); return; }
+      if (uidState.uid) { resolve(uidState.uid); return; }
+      if (!uidState.jobId && !uidState.uid) { uidState.err = null; startCreate(); }
+      var n = 0;
+      (function wait(){
+        if (uidState.uid) { resolve(uidState.uid); return; }
+        if (uidState.err) { reject(new Error(uidState.err)); return; }
+        if (n > 100) { reject(new Error('create_timeout')); return; }
+        n++; setTimeout(wait, 1000);
+      })();
+    });
+  }
+  // resume the create job started on the lead form
+  if (PARAMS.cj && !DEMO) { uidState.jobId = PARAMS.cj; pollJob('create-client', PARAMS.cj, function(d){ uidState.uid = d.uid; }, function(e){ uidState.err = e; }); }
 
+  // ============ PIPELINE: slots (prefetch) ============
+  var slotsState = { list:null, err:null, picked:null };
+  function fmtSlot(dtl){
+    var m=/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/.exec(dtl||''); if(!m) return { day:String(dtl||''), time:'', dt:null };
+    var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var dt=new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5]);
+    var h=+m[4], ap=h>=12?'PM':'AM', h12=h%12||12;
+    return { day: days[dt.getDay()]+', '+months[+m[2]-1]+' '+(+m[3]), time: h12+':'+m[5]+' '+ap, dt: dt };
+  }
+  function demoSlots(){
+    var out=[], now=Date.now();
+    for (var i=1;i<=5;i++){ var d=new Date(now+i*86400000); var ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+      out.push({ k_class_period:'DEMO'+i, k_class:lead.kclass||'0', s_title:(lead.interest||'Trial Class'), dtl_date:ds+' 18:00:00', dt_time:'18:00:00' }); }
+    return out;
+  }
+  function loadSlots(){
+    slotsState = { list:null, err:null, picked:null };
+    el('bookBtn').disabled = true; el('bookLabel').textContent = 'Select a class above';
+    el('schedMsg').style.display='block'; el('schedMsg').textContent='Loading class times…'; el('slotList').innerHTML='';
+    if (DEMO) { slotsState.list = demoSlots(); renderSlots(); return; }
+    call({ action:'slots', k_class: lead.kclass || '' }).then(function(j){
+      if (j && j.success) { slotsState.list = j.slots || []; } else { slotsState.err = (j && j.error) || 'slots_failed'; }
+      renderSlots();
+    }, function(){ slotsState.err = 'network'; renderSlots(); });
+  }
+  function renderSlots(){
+    var L = slotsState.list;
+    if (slotsState.err) { el('schedMsg').style.display='block'; el('schedMsg').textContent='We could not load class times. You can still pick a class by calling the studio at (508) 251-9469.'; return; }
+    if (!L) { el('schedMsg').style.display='block'; el('schedMsg').textContent='Loading class times…'; return; }
+    var now = new Date();
+    var upcoming = L.filter(function(s){ var f=fmtSlot(s.dtl_date); return f.dt && f.dt.getTime() > now.getTime() - 3600000; });
+    if (!upcoming.length) {
+      el('schedMsg').style.display='block';
+      el('schedMsg').textContent = 'No upcoming '+(lead.interest||'')+' classes are listed online right now. Your pass is active — call the studio at (508) 251-9469 to set your first class.';
+      el('bookBtn').style.display='none';
+      return;
+    }
+    el('schedMsg').style.display='none';
+    var html='', curDay='';
+    upcoming.forEach(function(s, i){
+      var f = fmtSlot(s.dtl_date);
+      if (f.day !== curDay) { curDay = f.day; html += '<div class="daylabel">'+f.day+'</div>'; }
+      html += '<li class="slot" data-i="'+i+'">'
+            + '<div class="meta2"><div class="t">'+f.time+'</div><div class="s">'+ (s.s_title||lead.interest||'Class') +'</div></div>'
+            + '<div class="pick">&#9711;</div></li>';
+    });
+    el('slotList').innerHTML = html;
+    slotsState.upcoming = upcoming;
+    [].forEach.call(el('slotList').querySelectorAll('.slot'), function(node){
+      node.addEventListener('click', function(){
+        [].forEach.call(el('slotList').querySelectorAll('.slot'), function(n){ n.classList.remove('sel'); n.querySelector('.pick').innerHTML='&#9711;'; });
+        node.classList.add('sel'); node.querySelector('.pick').innerHTML='&#9679;';
+        slotsState.picked = slotsState.upcoming[+node.getAttribute('data-i')];
+        el('bookBtn').disabled = false; el('bookLabel').textContent = 'Book this class';
+      });
+    });
+  }
+
+  // ---- card field UX ----
+  el('cc-num').addEventListener('input', function(e){ var v=e.target.value.replace(/\D/g,'').slice(0,16); e.target.value=v.replace(/(.{4})/g,'$1 ').trim(); });
+  el('cc-exp').addEventListener('input', function(e){ var v=e.target.value.replace(/\D/g,'').slice(0,4); if(v.length>=3) v=v.slice(0,2)+'/'+v.slice(2); e.target.value=v; });
+  el('cc-cvc').addEventListener('input', function(e){ e.target.value=e.target.value.replace(/\D/g,'').slice(0,4); });
   function validCard(){
     var num=el('cc-num').value.replace(/\D/g,''); var exp=el('cc-exp').value; var cvc=el('cc-cvc').value.replace(/\D/g,''); var zip=el('cc-zip').value.replace(/\D/g,'');
     var ok=true;
@@ -332,76 +426,84 @@
 
   function setPaying(on){
     el('payBtn').disabled=on;
-    el('payLabel').innerHTML = on ? 'Setting up your trial&hellip; (up to a minute)' : 'Pay $19.99 &amp; activate';
+    el('payLabel').innerHTML = on ? 'Activating your trial&hellip;' : 'Pay $19.99 &amp; activate';
     el('payBtn').querySelector('.arw').style.display = on ? 'none' : 'inline';
     if(on){ var s=document.createElement('span'); s.className='spin'; s.id='paySpin'; el('payBtn').appendChild(s); }
     else { var x=el('paySpin'); if(x) x.remove(); }
   }
+  function setBooking(on){
+    el('bookBtn').disabled=on;
+    el('bookLabel').innerHTML = on ? 'Reserving your spot&hellip;' : 'Book this class';
+    if(on){ var s=document.createElement('span'); s.className='spin'; s.id='bookSpin'; el('bookBtn').appendChild(s); }
+    else { var x=el('bookSpin'); if(x) x.remove(); }
+  }
   function showPayErr(msg){ var e=el('payErr'); e.textContent=msg; e.classList.add('show'); }
+  function showSchedErr(msg){ var e=el('schedErr'); e.textContent=msg; e.classList.add('show'); }
 
-  function buildScheduleUrl(){ return SCHEDULE_BASE + (lead.kclass ? ('&k_class='+lead.kclass) : ''); }
+  var chargeResult = null;
 
-  function onSuccess(res){
+  // reveal the schedule step once the charge succeeds
+  function revealSchedule(){
     el('stepPay').classList.add('done');
-    el('stepDone').classList.remove('hidden');
-    var order = res && res.k_purchase ? ('#'+res.k_purchase) : '';
-    el('passBox').innerHTML = '<b>'+ (TRIAL_NAME[lead.aud]||TRIAL_NAME.adult) +'</b> &mdash; 3 sessions, added to ' +
-      (lead.name? (lead.name.split(' ')[0]+"'s") : 'your') + ' WellnessLiving account.' + (order? ' Order '+order+'.' : '');
-    var lbl = lead.interest ? ('Book your '+lead.interest+' class') : 'Book your first class';
-    el('bookLabel').textContent = lbl;
-    el('bookBtn').href = buildScheduleUrl();
-    el('stepDone').scrollIntoView({ behavior:'smooth', block:'start' });
+    el('stepSched').classList.remove('hidden');
+    if (slotsState.list === null && slotsState.err === null) loadSlots();
+    el('stepSched').scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
+  // ---- STEP 3: pay ----
   el('payBtn').addEventListener('click', function(){
     el('payErr').classList.remove('show');
     if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
     if (!CASHTEST && !validCard()) return;
     setPaying(true);
 
-    var payload = {
-      name: lead.name, phone: lead.phone, email: lead.email,
-      interest: lead.interest, audience: lead.aud,
-      card: {
-        number: el('cc-num').value.replace(/\D/g,''),
-        exp: el('cc-exp').value,
-        cvc: el('cc-cvc').value.replace(/\D/g,''),
-        zip: el('cc-zip').value.replace(/\D/g,'')
-      }
-    };
-    if (CASHTEST) payload.test = { method: 'cash' };
+    if (DEMO) { setTimeout(function(){ setPaying(false); chargeResult={ k_purchase:'000DEMO' }; revealSchedule(); }, 1200); return; }
 
-    // DEMO: simulate the backend so the flow can be approved without a live charge.
-    if (DEMO) {
-      setTimeout(function(){ setPaying(false); onSuccess({ k_purchase: '000DEMO'+Math.floor(1e5+9e5*0.5) }); }, 1500);
-      return;
-    }
-
-    // LIVE: the backend (edge fn -> Fly headless browser) creates/loads the WL client
-    // and charges the trial. It takes ~1-2 min, so we start a job and poll its status.
-    var CALL_ERR = 'We could not process that. Please try again, or call the studio at (508) 251-9469.';
-    function post(body){ return fetch(WL_CHECKOUT, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }); }
-
-    function poll(jobId, n){
-      post({ jobId: jobId }).then(function(j){
-        if (j && j.status === 'done' && j.success) { setPaying(false); onSuccess(j); return; }
-        if (j && j.status === 'error') { setPaying(false); showPayErr(j.error || CALL_ERR); return; }
-        if (n > 75) { setPaying(false); showPayErr('This is taking longer than usual. Your trial may still be completing, please call the studio at (508) 251-9469 to confirm.'); return; }
-        setTimeout(function(){ poll(jobId, n + 1); }, 4000); // running / unknown -> keep polling (~5 min cap)
-      }).catch(function(){
-        if (n > 75) { setPaying(false); showPayErr('Network error. Please call the studio at (508) 251-9469.'); return; }
-        setTimeout(function(){ poll(jobId, n + 1); }, 4000);
+    var card = { number: el('cc-num').value.replace(/\D/g,''), exp: el('cc-exp').value, cvc: el('cc-cvc').value.replace(/\D/g,''), zip: el('cc-zip').value.replace(/\D/g,'') };
+    ensureUid().then(function(uid){
+      var body = { action:'charge', uid: uid, audience: lead.aud, email: lead.email, card: card };
+      if (CASHTEST) body.test = { method:'cash' };
+      return call(body).then(function(j){
+        if (j && j.jobId) { pollJob('charge', j.jobId, function(d){ setPaying(false); chargeResult=d; revealSchedule(); }, function(e){ setPaying(false); showPayErr(e); }); }
+        else if (j && j.success) { setPaying(false); chargeResult=j; revealSchedule(); }
+        else { setPaying(false); showPayErr((j && j.error) || CALL_ERR); }
       });
-    }
-
-    post(payload).then(function(j){
-      if (j && j.jobId) { poll(j.jobId, 0); }
-      else if (j && j.success) { setPaying(false); onSuccess(j); }
-      else { setPaying(false); showPayErr((j && j.error) || CALL_ERR); }
-    }).catch(function(){
-      setPaying(false); showPayErr('Network error reaching checkout. Please try again, or call the studio at (508) 251-9469.');
+    }).catch(function(e){
+      setPaying(false);
+      var m = String((e && e.message) || e);
+      showPayErr(m === 'missing_info' ? 'Please add your name and phone above first.' : ('We could not set up your account ('+m+'). Please try again, or call (508) 251-9469.'));
     });
   });
+
+  // ---- STEP 4: book ----
+  el('bookBtn').addEventListener('click', function(){
+    var s = slotsState.picked; if (!s) return;
+    el('schedErr').classList.remove('show');
+    setBooking(true);
+    if (DEMO) { setTimeout(function(){ setBooking(false); finishDone(s); }, 1100); return; }
+    ensureUid().then(function(uid){
+      return call({ action:'book', uid: uid, k_class_period: s.k_class_period, k_class: s.k_class, dtl_date: s.dtl_date, s_title: s.s_title }).then(function(j){
+        if (j && j.jobId) { pollJob('book', j.jobId, function(){ setBooking(false); finishDone(s); }, function(e){ setBooking(false); showSchedErr(e); }); }
+        else if (j && j.success) { setBooking(false); finishDone(s); }
+        else { setBooking(false); showSchedErr((j && j.error) || CALL_ERR); }
+      });
+    }).catch(function(e){ setBooking(false); showSchedErr('We could not reserve that class ('+String((e&&e.message)||e)+'). Please pick another time or call (508) 251-9469.'); });
+  });
+
+  function finishDone(slot){
+    el('stepSched').classList.add('done');
+    el('stepDone').classList.remove('hidden');
+    var order = chargeResult && chargeResult.k_purchase ? (' Order #'+chargeResult.k_purchase+'.') : '';
+    el('passBox').innerHTML = '<b>'+ (TRIAL_NAME[lead.aud]||TRIAL_NAME.adult) +'</b> &mdash; 3 sessions, on ' + (lead.name? (lead.name.split(' ')[0]+"'s") : 'your') + ' WellnessLiving account.' + order;
+    var f = fmtSlot(slot.dtl_date);
+    el('bookedBox').innerHTML = '<b>First class booked:</b> ' + (slot.s_title||lead.interest||'Class') + '<br>' + f.day + ' at ' + f.time;
+    el('stepDone').scrollIntoView({ behavior:'smooth', block:'start' });
+    // CONFIRMATION SMS HOOK (held until explicitly enabled). When turned on, this is
+    // where we'd POST { action:'notify', phone, name, slot } to send the confirmation.
+  }
+
+  // prefetch class times so the schedule is instant when the charge completes
+  if (!needInfo()) loadSlots();
 </script>
 
 </body>
