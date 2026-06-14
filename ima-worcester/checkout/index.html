@@ -458,9 +458,10 @@
   el('cc-disc').addEventListener('input', function(){ if (discountState.applied) clearDiscount(); });
   el('discBtn').addEventListener('click', function(){
     var code=(el('cc-disc').value||'').trim(); if(!code) return;
-    setDiscMsg('', 'Checking&hellip;'); el('discBtn').disabled=true;
+    el('discBtn').textContent='Checking…'; el('discBtn').disabled=true;
+    setDiscMsg('', 'Checking your code&hellip;');
     function done(d){
-      el('discBtn').disabled=false;
+      el('discBtn').textContent='Apply'; el('discBtn').disabled=false;
       if (!d || !d.applied) { discountState={code:'',price:null,isFree:false,applied:false}; setDiscMsg('bad','That code is not valid.'); updatePayUI(); return; }
       var free = !!d.is_free || parseFloat(d.price)===0;
       discountState={ code:code, price:d.price, isFree:free, applied:true };
@@ -468,17 +469,15 @@
       updatePayUI();
     }
     function fail(msg){
-      el('discBtn').disabled=false; discountState={code:'',price:null,isFree:false,applied:false};
+      el('discBtn').textContent='Apply'; el('discBtn').disabled=false; discountState={code:'',price:null,isFree:false,applied:false};
       setDiscMsg('bad', /unconfirmed|not_applied|invalid|not valid|no_discount/i.test(String(msg)) ? 'That code is not valid.' : 'Could not check that code. Please try again or call (508) 251-9469.');
       updatePayUI();
     }
-    if (DEMO) { var f=/free|test|100/i.test(code); setTimeout(function(){ done({ applied:true, price: f?'0.00':'9.99', is_free:f }); }, 700); return; }
-    ensureUid().then(function(uid){
-      return call({ action:'verify-discount', uid:uid, audience:lead.aud, discount:code }).then(function(j){
-        if (j && j.jobId) { pollJob('verify-discount', j.jobId, done, fail); }
-        else if (j && (j.applied != null)) { done(j); }
-        else { fail((j && j.error) || 'unknown'); }
-      });
+    if (DEMO) { var f=/free|test|100/i.test(code); setTimeout(function(){ done({ applied:true, price: f?'0.00':'9.99', is_free:f }); }, 400); return; }
+    // instant: the code table lives in our edge function, no WL round-trip
+    call({ action:'verify-discount', discount:code }).then(function(j){
+      if (j && (j.applied != null)) { done(j); }
+      else { fail((j && j.error) || 'unknown'); }
     }).catch(function(e){ fail(String(e && e.message || e)); });
   });
 
