@@ -3,23 +3,118 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IMA Worcester &middot; 3-Class Trial for $19.99</title>
+<title>IMA Worcester &middot; Start Your $19.99 3-Class Trial</title>
 <!--
-  This was the old single-page funnel (embedded WL store widget + Report-739
-  detection). It is superseded by the owned no-re-entry funnel:
-    /ima-worcester/start/    -> lead form (Step 1)
-    /ima-worcester/checkout/ -> custom checkout -> wl-trial-checkout backend
-  This file now just forwards to /start/, preserving any query params so ad
-  links and Gravity redirects pointed at /ima-worcester/ land on the new flow.
+  IMA WORCESTER TRIAL FUNNEL  -  SIMPLE 3-STEP VERSION
+  ====================================================
+  Step 1: the EXISTING Gravity lead form (placeholder below; on the live page this
+          is the real Gravity form on imaworcester.com).
+  Step 2: a button linking to the existing WellnessLiving trial purchase page.
+  Step 3: a button linking to the existing WellnessLiving schedule page.
+
+  The only code you add to the Gravity page is the "STEP 2 + 3" block further down.
+  It is self-contained (inline styles), so it works pasted anywhere. Just set the
+  two URLs at the top of that block to your correct pages.
 -->
-<script>
-  try { location.replace('./start/' + (location.search || '')); } catch (e) { location.href = './start/'; }
-</script>
-<meta http-equiv="refresh" content="0; url=./start/">
-<style>body{font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif;background:#0f1622;color:#fff;text-align:center;padding:60px 18px}a{color:#ff6b82}</style>
+<style>
+  :root { --ink:#15181f; --muted:#6b7280; --line:#e7e9ee; --red:#b3122b; --dark:#0f1622; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:"Segoe UI",-apple-system,Helvetica,Arial,sans-serif; color:var(--ink); background:#f6f7f9; line-height:1.45; }
+  .wrap { max-width:560px; margin:0 auto; padding:0 14px 60px; }
+  header.hero { background:var(--dark); color:#fff; text-align:center; padding:32px 18px 28px; }
+  header.hero img { height:64px; width:auto; margin-bottom:12px; }
+  header.hero h1 { font-size:26px; letter-spacing:-0.4px; }
+  header.hero h1 .px { color:#ff6b82; }
+  header.hero p { color:#aeb6c4; font-size:14px; margin-top:8px; }
+
+  .step { background:#fff; border:1px solid var(--line); border-radius:16px; margin-top:18px; overflow:hidden; }
+  .step .bar { display:flex; align-items:center; gap:11px; padding:15px 18px; border-bottom:1px solid var(--line); }
+  .step .n { width:27px; height:27px; line-height:27px; text-align:center; border-radius:50%; background:var(--red); color:#fff; font-weight:700; font-size:13px; flex:0 0 auto; }
+  .step .h { font-size:15.5px; font-weight:700; }
+  .step .h small { display:block; font-size:11.5px; font-weight:500; color:var(--muted); margin-top:1px; }
+  .step .body { padding:16px 18px; }
+
+  /* lead-form placeholder (the real Gravity form replaces this) */
+  .ph { border:2px dashed #c7ccd6; border-radius:11px; padding:16px; background:#fbfcfe; }
+  .ph .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#8a93a3; background:#eef1f6; border-radius:20px; padding:3px 10px; margin-bottom:12px; }
+  .ph label { display:block; font-size:12px; font-weight:700; color:#9aa1ad; margin:10px 0 5px; }
+  .ph input, .ph select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; background:#fff; color:#aeb4bf; pointer-events:none; }
+  .trust { text-align:center; color:var(--muted); font-size:12px; margin-top:20px; }
+  .trust b { color:var(--ink); }
+</style>
 </head>
 <body>
-  Taking you to the IMA Worcester trial sign-up&hellip;
-  <p><a href="./start/">Continue</a></p>
+
+  <header class="hero">
+    <img src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png" alt="Integrated Martial Arts Worcester">
+    <h1>Start your <span class="px">$19.99 3-Class Trial</span></h1>
+    <p>Three steps: tell us about you, get your trial pass, book your first class.</p>
+  </header>
+
+  <div class="wrap">
+
+    <!-- ============================================================ -->
+    <!-- STEP 1  -  EXISTING GRAVITY LEAD FORM (placeholder shown here) -->
+    <!-- ============================================================ -->
+    <div class="step">
+      <div class="bar"><div class="n">1</div><div class="h">Tell us about you<small>Your existing Gravity lead form</small></div></div>
+      <div class="body">
+        <div class="ph">
+          <span class="tag">Gravity form placeholder</span>
+          <label>Name</label><input value="(your Gravity form goes here)" disabled>
+          <label>Cell phone</label><input value="" disabled>
+          <label>Email</label><input value="" disabled>
+          <label>Which class?</label><input value="" disabled>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ===  STEP 2 + STEP 3  -  COPY THIS BLOCK INTO THE GRAVITY PAGE  === -->
+    <!-- ===  (self-contained inline styles; just set the two URLs)      === -->
+    <!-- ================================================================= -->
+
+    <!-- 1) Set these two URLs to your correct existing pages: -->
+    <!--    TRIAL PURCHASE (adult): https://www.wellnessliving.com/rs/catalog-view.html?k_business=697216&id_sale=1&k_id=3667025 -->
+    <!--    (kids trial pass: swap k_id to 3909348) -->
+    <!--    SCHEDULE: https://www.wellnessliving.com/rs/schedule/integrated_martial_arts-y0hoou?k_business=697216&id_class_tab=1 -->
+
+    <div style="max-width:560px;margin:18px auto 0;font-family:'Segoe UI',-apple-system,Helvetica,Arial,sans-serif;">
+
+      <!-- STEP 2: buy the trial -->
+      <div style="background:#fff;border:1px solid #e7e9ee;border-radius:16px;margin-top:16px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid #e7e9ee;">
+          <div style="width:27px;height:27px;line-height:27px;text-align:center;border-radius:50%;background:#b3122b;color:#fff;font-weight:700;font-size:13px;flex:0 0 auto;">2</div>
+          <div style="font-size:15.5px;font-weight:700;color:#15181f;">Get your trial pass<span style="display:block;font-size:11.5px;font-weight:500;color:#6b7280;margin-top:1px;">$19.99 for 3 classes &middot; one-time, no auto-renew</span></div>
+        </div>
+        <div style="padding:16px 18px;">
+          <a href="https://www.wellnessliving.com/rs/catalog-view.html?k_business=697216&id_sale=1&k_id=3667025" target="_blank" rel="noopener"
+             style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px 18px;background:#b3122b;color:#fff;font-size:15.5px;font-weight:700;text-decoration:none;border-radius:11px;">
+            Purchase your $19.99 3-class trial &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- STEP 3: book a class -->
+      <div style="background:#fff;border:1px solid #e7e9ee;border-radius:16px;margin-top:16px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid #e7e9ee;">
+          <div style="width:27px;height:27px;line-height:27px;text-align:center;border-radius:50%;background:#b3122b;color:#fff;font-weight:700;font-size:13px;flex:0 0 auto;">3</div>
+          <div style="font-size:15.5px;font-weight:700;color:#15181f;">Book your first class<span style="display:block;font-size:11.5px;font-weight:500;color:#6b7280;margin-top:1px;">Pick a time on the class schedule</span></div>
+        </div>
+        <div style="padding:16px 18px;">
+          <a href="https://www.wellnessliving.com/rs/schedule/integrated_martial_arts-y0hoou?k_business=697216&id_class_tab=1" target="_blank" rel="noopener"
+             style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px 18px;background:#0f1622;color:#fff;font-size:15.5px;font-weight:700;text-decoration:none;border-radius:11px;">
+            Book a class on the schedule &rarr;
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===  END COPY BLOCK  === -->
+
+    <p class="trust">Questions? Call the studio at <b>(508) 251-9469</b> &middot; 342A West Boylston Street, West Boylston, MA</p>
+  </div>
+
 </body>
 </html>
