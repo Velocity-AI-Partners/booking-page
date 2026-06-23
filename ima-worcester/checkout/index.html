@@ -611,9 +611,14 @@
     slotsState = { list:null, err:null, picked:null };
     el('pickedNote').style.display='none';
     refreshPayBtn();
-    el('schedMsg').style.display='block'; el('schedMsg').textContent='Loading class times…'; el('slotList').innerHTML='';
+    el('slotList').innerHTML='';
+    el('schedMsg').style.display='block';
+    // If we know the class (from the lead info), auto-load its times. Only when the class is
+    // unknown do we ask them to pick one first (instead of dumping every program's times).
+    if (!lead.kclass) { el('schedMsg').textContent = 'Choose your class above to see available times.'; return; }
+    el('schedMsg').textContent='Loading class times…';
     if (DEMO) { slotsState.list = demoSlots(); renderSlots(); return; }
-    call({ action:'slots', k_class: lead.kclass || '' }).then(function(j){
+    call({ action:'slots', k_class: lead.kclass }).then(function(j){
       if (j && j.success) { slotsState.list = j.slots || []; } else { slotsState.err = (j && j.error) || 'slots_failed'; }
       renderSlots();
     }, function(){ slotsState.err = 'network'; renderSlots(); });
@@ -771,8 +776,8 @@
   // charge actually resolves (whether that's 3s in DEMO or 25s live). The label moves through
   // three timed phases and then HOLDS on "Confirming Payment..." until the charge settles.
   var payProgress = (function(){
-    var CAP = 92;          // visual cap; never reaches 100% until the real result arrives
-    var SWEEP_MS = 20000;  // visual pacing toward the cap (NOT a wait; charge can finish sooner)
+    var CAP = 90;          // visual cap; never reaches 100% until the real result arrives
+    var SWEEP_MS = 55000;  // STEADY (linear) pacing toward the cap; the WL charge runs ~40-60s
     var labelTimer = null; // timer for the phased label
     var active = false;
     function fill(){ return el('payBarFill'); }
@@ -788,8 +793,8 @@
         labelTimer = setTimeout(function(){
           setText('Confirming Payment&hellip;'); // holds here until complete()/reset()
           labelTimer = null;
-        }, 7000);
-      }, 7000);
+        }, 22000);
+      }, 18000);
     }
     function start(){
       active = true;
@@ -802,7 +807,7 @@
       f.style.width = '0%';
       // force reflow so the 0% start is committed before we arm the long transition
       void f.offsetWidth;
-      f.style.transition = 'width ' + SWEEP_MS + 'ms cubic-bezier(.22,.61,.36,1)';
+      f.style.transition = 'width ' + SWEEP_MS + 'ms linear';
       f.style.width = CAP + '%';
       schedulePhases();
     }
@@ -883,7 +888,7 @@
       chargeState = { status:'fail', kp:null, err: err || CALL_ERR };
       payProgress.reset();     // stop the animation + hide/reset the bar (no leaks)
       setPaying(false);
-      setPayNote('fail', "Your payment didn't go through &mdash; please re-enter your card.");
+      el('payNote').style.display = 'none';   // single error only (no duplicate note + form error)
       showPayErr("Your payment didn't go through &mdash; please re-enter your card and tap Pay again.");
     }
 
