@@ -205,10 +205,23 @@
       </div>
     </div>
 
-    <!-- C: our own checkout (card -> backend -> WL) -->
-    <div class="step" id="stepPay">
-      <div class="bar"><div class="n">3</div><div class="h">Payment<small>Charged to the studio's WellnessLiving account</small></div></div>
+    <!-- C: pick your first class (selection only - not booked until payment succeeds) -->
+    <div class="step" id="stepSched">
+      <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small id="schedSub">Choose a time that works. You'll be booked the moment your payment goes through.</small></div></div>
       <div class="body">
+        <div class="formerr" id="schedErr"></div>
+        <div class="schmsg" id="schedMsg">Loading class times&hellip;</div>
+        <ul class="slots" id="slotList"></ul>
+        <div class="paynote ok" id="pickedNote" style="display:none"></div>
+        <p class="nextnote">Your 3-class pass covers this plus two more. You can book the other two any time.</p>
+      </div>
+    </div>
+
+    <!-- D: our own checkout (card -> backend -> WL), then auto-book the picked class -->
+    <div class="step" id="stepPay">
+      <div class="bar"><div class="n">4</div><div class="h">Payment<small>Charged to the studio's WellnessLiving account</small></div></div>
+      <div class="body">
+        <div class="paynote" id="payNote" style="display:none"></div>
         <div class="formerr" id="payErr"></div>
         <div class="field">
           <label>Discount code <span style="font-weight:500;color:#9aa1ad">(optional)</span></label>
@@ -226,21 +239,9 @@
             <div id="f-zip"><label>ZIP</label><input id="cc-zip" inputmode="numeric" autocomplete="postal-code" placeholder="01605"><div class="err">ZIP</div></div>
           </div>
         </div>
-        <button class="go" id="payBtn" type="button"><span id="payLabel">Pay $19.99 &amp; activate</span><span class="arw">&rarr;</span></button>
+        <button class="go" id="payBtn" type="button" disabled><span id="payLabel">Select a class above</span><span class="arw" style="display:none">&rarr;</span></button>
+        <button class="go" id="retryBookBtn" type="button" style="display:none;margin-top:8px;background:var(--green)"><span id="retryBookLabel">Retry booking your class</span><span class="arw">&rarr;</span></button>
         <div class="secure">&#128274; Secure TLS checkout &middot; charged once, no auto-renew</div>
-      </div>
-    </div>
-
-    <!-- D: in-page class booking -->
-    <div class="step hidden" id="stepSched">
-      <div class="bar"><div class="n">4</div><div class="h">Book your first class<small id="schedSub">Pick a time that works. We'll reserve your spot.</small></div></div>
-      <div class="body">
-        <div class="paynote" id="payNote" style="display:none"></div>
-        <div class="formerr" id="schedErr"></div>
-        <div class="schmsg" id="schedMsg">Loading class times&hellip;</div>
-        <ul class="slots" id="slotList"></ul>
-        <button class="go" id="bookBtn" type="button" disabled><span id="bookLabel">Select a class above</span><span class="arw" style="display:none">&rarr;</span></button>
-        <p class="nextnote">Your 3-class pass is on your account. You can book the other two classes any time.</p>
       </div>
     </div>
 
@@ -383,7 +384,7 @@
   }
 
   // run the SAME post-prefill path the normal flow uses once we have the lead's details.
-  function revealSteps(){ ['stepRecap','stepOffer','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.remove('hidden'); }); }
+  function revealSteps(){ ['stepRecap','stepOffer','stepSched','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.remove('hidden'); }); }
   function continuePrefilled(){
     el('stepClaim').classList.add('hidden');
     revealSteps();
@@ -444,9 +445,9 @@
 
   renderRecap();
   if (FB_ARRIVAL) {
-    // FB arrival: show ONLY the phone-claim panel; hide details/pass/payment until they
-    // enter their phone and we look up their info. No slots/create yet.
-    ['stepRecap','stepOffer','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.add('hidden'); });
+    // FB arrival: show ONLY the phone-claim panel; hide details/offer/schedule/payment until
+    // they enter their phone and we look up their info. No slots/create yet.
+    ['stepRecap','stepOffer','stepSched','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.add('hidden'); });
     el('stepClaim').classList.remove('hidden');
   } else if (needInfo()) {
     openEdit();
@@ -523,7 +524,8 @@
   }
   function loadSlots(){
     slotsState = { list:null, err:null, picked:null };
-    el('bookBtn').disabled = true; el('bookLabel').textContent = 'Select a class above';
+    el('pickedNote').style.display='none';
+    refreshPayBtn();
     el('schedMsg').style.display='block'; el('schedMsg').textContent='Loading class times…'; el('slotList').innerHTML='';
     if (DEMO) { slotsState.list = demoSlots(); renderSlots(); return; }
     call({ action:'slots', k_class: lead.kclass || '' }).then(function(j){
@@ -539,10 +541,13 @@
     var upcoming = L.filter(function(s){ var f=fmtSlot(s.dtl_date); return f.dt && f.dt.getTime() > now.getTime() - 3600000; });
     if (!upcoming.length) {
       el('schedMsg').style.display='block';
-      el('schedMsg').textContent = 'No upcoming '+(lead.interest||'')+' classes are listed online right now. Your pass is active — call the studio at (508) 251-9469 to set your first class.';
-      el('bookBtn').style.display='none';
+      el('schedMsg').textContent = 'No upcoming '+(lead.interest||'')+' classes are listed online right now. You can still complete your trial below and the studio will set your first class. Call (508) 251-9469.';
+      // no online times: allow paying without a pick (studio books manually)
+      slotsState.noOnline = true;
+      refreshPayBtn();
       return;
     }
+    slotsState.noOnline = false;
     el('schedMsg').style.display='none';
     var html='', curDay='';
     upcoming.forEach(function(s, i){
@@ -556,12 +561,27 @@
     slotsState.upcoming = upcoming;
     [].forEach.call(el('slotList').querySelectorAll('.slot'), function(node){
       node.addEventListener('click', function(){
+        // selection only - we do NOT book here. The booking happens after payment succeeds.
         [].forEach.call(el('slotList').querySelectorAll('.slot'), function(n){ n.classList.remove('sel'); n.querySelector('.pick').innerHTML='&#9711;'; });
         node.classList.add('sel'); node.querySelector('.pick').innerHTML='&#9679;';
         slotsState.picked = slotsState.upcoming[+node.getAttribute('data-i')];
-        el('bookBtn').disabled = false; el('bookLabel').textContent = 'Book this class';
+        var f = fmtSlot(slotsState.picked.dtl_date);
+        el('pickedNote').innerHTML = '<span>Selected: <b>'+(slotsState.picked.s_title||lead.interest||'Class')+'</b> &middot; '+f.day+' at '+f.time+'</span>';
+        el('pickedNote').style.display='';
+        refreshPayBtn();
       });
     });
+  }
+
+  // The Pay button is enabled only when info is present AND a class is selected (or no online
+  // times exist, in which case the studio books manually). Label reflects the gate.
+  function refreshPayBtn(){
+    if (chargeState && (chargeState.status === 'pending' || chargeState.status === 'ok')) return; // mid-flight: leave as-is
+    var ready = !needInfo() && (!!slotsState.picked || slotsState.noOnline);
+    el('payBtn').disabled = !ready;
+    el('payBtn').querySelector('.arw').style.display = ready ? 'inline' : 'none';
+    if (!ready) { el('payLabel').textContent = needInfo() ? 'Add your details above' : 'Select a class above'; }
+    else { updatePayUI(); }
   }
 
   // ---- card field UX ----
@@ -583,9 +603,14 @@
   function setDiscMsg(cls, html){ var m=el('discMsg'); m.className='discmsg'+(cls?(' '+cls):''); m.innerHTML=html; }
   function updatePayUI(){
     var free = discountState.applied && discountState.isFree;
-    if (free) { el('cardFields').style.display='none'; el('payLabel').innerHTML='Complete free checkout'; }
-    else if (discountState.applied && discountState.price != null) { el('cardFields').style.display=''; el('payLabel').innerHTML='Pay $'+discountState.price+' &amp; activate'; }
-    else { el('cardFields').style.display=''; el('payLabel').innerHTML='Pay $19.99 &amp; activate'; }
+    // card fields visibility always reflects the discount state
+    el('cardFields').style.display = free ? 'none' : '';
+    // only set the "ready" labels when the pay button is enabled; otherwise the gate label
+    // ("Select a class above" / "Add your details above") set by refreshPayBtn wins.
+    if (el('payBtn').disabled) return;
+    if (free) { el('payLabel').innerHTML='Complete free checkout &amp; book'; }
+    else if (discountState.applied && discountState.price != null) { el('payLabel').innerHTML='Pay $'+discountState.price+' &amp; book'; }
+    else { el('payLabel').innerHTML='Pay $19.99 &amp; book'; }
   }
   function clearDiscount(){ discountState={ code:'', price:null, isFree:false, applied:false }; setDiscMsg('', ''); updatePayUI(); }
   el('cc-disc').addEventListener('input', function(){ if (discountState.applied) clearDiscount(); });
@@ -614,46 +639,35 @@
     }).catch(function(e){ fail(String(e && e.message || e)); });
   });
 
+  // pay button busy state. One label carries the whole "charge then book" sequence so the
+  // customer sees a single continuous action ("Securing your trial and booking your class").
   function setPaying(on){
     el('payBtn').disabled=on;
     el('payBtn').querySelector('.arw').style.display = on ? 'none' : 'inline';
-    if(on){ el('payLabel').innerHTML = 'Activating your trial&hellip;'; var s=document.createElement('span'); s.className='spin'; s.id='paySpin'; el('payBtn').appendChild(s); }
-    else { var x=el('paySpin'); if(x) x.remove(); updatePayUI(); }
+    if(on){
+      el('payLabel').innerHTML = 'Securing your trial and booking your class&hellip;';
+      if (!el('paySpin')) { var s=document.createElement('span'); s.className='spin'; s.id='paySpin'; el('payBtn').appendChild(s); }
+    } else {
+      var x=el('paySpin'); if(x) x.remove();
+      refreshPayBtn();
+    }
   }
-  function setBooking(on){
-    el('bookBtn').disabled=on;
-    el('bookLabel').innerHTML = on ? 'Reserving your spot&hellip;' : 'Book this class';
-    if(on){ var s=document.createElement('span'); s.className='spin'; s.id='bookSpin'; el('bookBtn').appendChild(s); }
-    else { var x=el('bookSpin'); if(x) x.remove(); }
-  }
-  function showPayErr(msg){ var e=el('payErr'); e.textContent=msg; e.classList.add('show'); }
-  function showSchedErr(msg){ var e=el('schedErr'); e.textContent=msg; e.classList.add('show'); }
+  function showPayErr(msg){ var e=el('payErr'); e.innerHTML=msg; e.classList.add('show'); }
+  function showSchedErr(msg){ var e=el('schedErr'); e.innerHTML=msg; e.classList.add('show'); }
 
   var chargeResult = null;
 
-  // ---- background charge state (optimistic UX) ----
-  // The WL Virtual Terminal charge takes ~12-20s. Instead of blocking on it, we reveal the
-  // schedule the instant they tap Pay and run the charge in the background. status:
+  // ---- charge state ----
+  // The WL Virtual Terminal charge takes ~12-20s. Schedule-first order means the class is
+  // already PICKED before we charge; on Pay we charge, and the instant the charge succeeds we
+  // book the picked class. status:
   //   'idle'    nothing started
   //   'pending' charge in flight
   //   'ok'      charge succeeded (chargeState.kp = k_purchase, chargeResult also set)
-  //   'fail'    charge failed (chargeState.err = message); card form re-enabled to retry
+  //   'fail'    charge failed (chargeState.err = message); card re-enabled to retry
   var chargeState = { status:'idle', kp:null, err:null };
-  // anyone awaiting the charge to settle (e.g. book tapped while still pending) gets these
-  // resolved/rejected; we keep a fresh promise per pending charge so retries re-arm it.
-  var chargeWaiters = [];
-  function settleCharge(ok){
-    var w = chargeWaiters; chargeWaiters = [];
-    w.forEach(function(fn){ try { fn(ok); } catch(e){} });
-  }
-  // returns a promise that resolves true when charge becomes 'ok', false when it becomes 'fail'
-  function awaitCharge(){
-    if (chargeState.status === 'ok') return Promise.resolve(true);
-    if (chargeState.status === 'fail') return Promise.resolve(false);
-    return new Promise(function(resolve){ chargeWaiters.push(resolve); });
-  }
 
-  // the small non-blocking note shown in the schedule area while the charge runs
+  // the progress note shown in the payment area while the sequence runs
   function setPayNote(kind, html){
     var n = el('payNote');
     if (!kind) { n.style.display = 'none'; n.className = 'paynote'; n.innerHTML = ''; return; }
@@ -661,45 +675,55 @@
     n.innerHTML = (kind === 'pending' ? '<span class="spin2"></span>' : '') + '<span>' + html + '</span>';
     n.style.display = '';
   }
-  // clear note display state to 'pending' look while in flight
-  function chargePending(){
-    chargeState = { status:'pending', kp:null, err:null };
-    setPayNote('pending', 'Finalizing your payment&hellip;');
-  }
-  function chargeOk(d){
-    chargeResult = d;
-    chargeState = { status:'ok', kp:(d && d.k_purchase) || null, err:null };
-    setPaying(false);
-    setPayNote('ok', 'Payment confirmed &#10003;');
-    settleCharge(true);
-  }
-  // failed charge: clear the spinner/note, surface a clear warning near the pay form, and
-  // re-enable the card so they can fix it and tap Pay again (which restarts the charge).
-  function chargeFail(err){
-    chargeState = { status:'fail', kp:null, err: err || CALL_ERR };
-    setPaying(false);
-    setPayNote('fail', "Your payment didn't go through &mdash; please re-enter your card.");
-    showPayErr("Your payment didn't go through &mdash; please re-enter your card and tap Pay again.");
-    settleCharge(false);
-  }
 
-  // reveal the schedule step (and load slots). Called immediately on Pay so the customer can
-  // browse/pick a class while the charge runs in the background.
-  function revealSchedule(){
-    el('stepPay').classList.add('done');
-    el('stepSched').classList.remove('hidden');
-    if (slotsState.list === null && slotsState.err === null) loadSlots();
-    el('stepSched').scrollIntoView({ behavior:'smooth', block:'start' });
-  }
-
-  // kick off the charge in the background (NOT awaited by the caller). Guards against
-  // double-charging: never starts a second charge while one is pending or already ok.
-  function startCharge(){
-    if (chargeState.status === 'pending' || chargeState.status === 'ok') return;
+  // ---- STEP: pay -> charge -> auto-book the picked class ----
+  // Validate info + card, require a picked class (or no-online-times fallback), then charge.
+  // On charge SUCCESS -> immediately book the already-picked class -> confirmation.
+  // On charge FAIL -> re-enable the card to retry (guarded against double-charge).
+  el('payBtn').addEventListener('click', function(){
     el('payErr').classList.remove('show');
-    chargePending();
+    if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
+    // a class must be selected first (unless there are no online times, where the studio books)
+    if (!slotsState.picked && !slotsState.noOnline) {
+      showPayErr('Please pick a class time above first.');
+      el('stepSched').scrollIntoView({ behavior:'smooth', block:'start' });
+      return;
+    }
+    var free = discountState.applied && discountState.isFree; // verified 100%-off -> no card
+    if (!CASHTEST && !free && !validCard()) return;
+    // guard double-charge: never start a second charge while one is in flight or already ok
+    if (chargeState.status === 'pending') return;
+    if (chargeState.status === 'ok') {
+      // charge already went through previously; the only thing left is the book. Don't recharge.
+      if (slotsState.picked) bookAfterCharge(slotsState.picked); else finishDone(null);
+      return;
+    }
+    setPaying(true);
+    setPayNote('pending', 'Securing your payment&hellip;');
+    runCharge();
+  });
 
-    if (DEMO) { setTimeout(function(){ chargeOk({ k_purchase:'000DEMO' }); }, 600); return; }
+  // run the WL charge. On success, chain straight into booking the picked class.
+  function runCharge(){
+    chargeState = { status:'pending', kp:null, err:null };
+    el('payErr').classList.remove('show');
+
+    function onChargeOk(d){
+      chargeResult = d;
+      chargeState = { status:'ok', kp:(d && d.k_purchase) || null, err:null };
+      setPayNote('ok', 'Payment confirmed &#10003; booking your class&hellip;');
+      // immediately book the class the customer already picked
+      if (slotsState.picked) { bookAfterCharge(slotsState.picked); }
+      else { setPaying(false); setPayNote('ok', 'Payment confirmed &#10003;'); finishDone(null); }
+    }
+    function onChargeFail(err){
+      chargeState = { status:'fail', kp:null, err: err || CALL_ERR };
+      setPaying(false);
+      setPayNote('fail', "Your payment didn't go through &mdash; please re-enter your card.");
+      showPayErr("Your payment didn't go through &mdash; please re-enter your card and tap Pay again.");
+    }
+
+    if (DEMO) { setTimeout(function(){ onChargeOk({ k_purchase:'000DEMO' }); }, 600); return; }
 
     var free = discountState.applied && discountState.isFree; // verified 100%-off -> no card
     var card = { number: el('cc-num').value.replace(/\D/g,''), exp: el('cc-exp').value, cvc: el('cc-cvc').value.replace(/\D/g,''), zip: el('cc-zip').value.replace(/\D/g,'') };
@@ -711,74 +735,48 @@
       if (CASHTEST) body.test = { method:'cash' };
       else if (CARDTEST) body.test = { method:'card' };
       return call(body).then(function(j){
-        if (j && j.jobId) { pollJob('charge', j.jobId, function(d){ chargeOk(d); }, function(e){ chargeFail(e); }); }
-        else if (j && j.success) { chargeOk(j); }
-        else { chargeFail((j && j.error) || CALL_ERR); }
+        if (j && j.jobId) { pollJob('charge', j.jobId, onChargeOk, onChargeFail); }
+        else if (j && j.success) { onChargeOk(j); }
+        else { onChargeFail((j && j.error) || CALL_ERR); }
       });
     }).catch(function(e){
       var m = String((e && e.message) || e);
-      chargeFail(m === 'missing_info' ? 'Please add your name and phone above first.' : ('We could not set up your account ('+m+'). Please try again, or call (508) 251-9469.'));
+      onChargeFail(m === 'missing_info' ? 'Please add your name and phone above first.' : ('We could not set up your account ('+m+'). Please try again, or call (508) 251-9469.'));
     });
   }
 
-  // ---- STEP 3: pay (optimistic) ----
-  // Validate, then start the charge in the BACKGROUND and reveal the schedule immediately so
-  // the customer browses/picks a class while the ~12-20s charge runs. We never tell them
-  // they're booked until BOTH the charge is ok AND the real book returns (see bookBtn).
-  el('payBtn').addEventListener('click', function(){
+  // book the picked class. ONLY called after the charge is 'ok'. If the book fails the charge
+  // has ALREADY gone through, so we must NOT recharge: we surface a payment-went-through error
+  // and offer a book-only retry (retryBookBtn) instead of re-running Pay.
+  function bookAfterCharge(s){
     el('payErr').classList.remove('show');
-    if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
-    var free = discountState.applied && discountState.isFree; // verified 100%-off -> no card
-    if (!CASHTEST && !free && !validCard()) return;
-    // guard double-charge: if one is already in flight or done, just reveal the schedule again
-    if (chargeState.status === 'pending' || chargeState.status === 'ok') { revealSchedule(); return; }
+    el('retryBookBtn').style.display = 'none';
     setPaying(true);
-    startCharge();      // background; does NOT block the reveal below
-    revealSchedule();   // schedule appears at once
-  });
-
-  // book the selected slot once we know the charge succeeded. Confirmation only shows after
-  // the real book returns (step 4 of the spec: never claim booked before charge ok + book ok).
-  function doBook(s){
-    setBooking(true);
-    if (DEMO) { setTimeout(function(){ setBooking(false); finishDone(s); }, 1100); return; }
-    function bookedOk(){ setBooking(false); recordBooking(s); finishDone(s); }
+    setPayNote('ok', 'Payment confirmed &#10003; booking your class&hellip;');
+    function bookedOk(){ setPaying(false); setPayNote('ok', 'Payment confirmed &#10003; class booked &#10003;'); recordBooking(s); finishDone(s); }
+    function bookFailed(e){
+      setPaying(false);
+      // charge already succeeded: do NOT recharge. Offer a book-only retry.
+      setPayNote('fail', 'Your payment went through, but booking your class failed.');
+      showPayErr('Good news: your payment went through and your trial pass is active. We could not reserve your class time'+(e?(' ('+e+')'):'')+'. Tap below to retry just the booking &mdash; you will not be charged again, or call (508) 251-9469.');
+      el('retryBookBtn').style.display = '';
+    }
+    if (DEMO) { setTimeout(bookedOk, 1100); return; }
     ensureUid().then(function(uid){
       return call({ action:'book', uid: uid, k_class_period: s.k_class_period, k_class: s.k_class, dtl_date: s.dtl_date, s_title: s.s_title }).then(function(j){
-        if (j && j.jobId) { pollJob('book', j.jobId, bookedOk, function(e){ setBooking(false); showSchedErr(e); }); }
+        if (j && j.jobId) { pollJob('book', j.jobId, bookedOk, function(e){ bookFailed(e); }); }
         else if (j && j.success) { bookedOk(); }
-        else { setBooking(false); showSchedErr((j && j.error) || CALL_ERR); }
+        else { bookFailed((j && j.error) || ''); }
       });
-    }).catch(function(e){ setBooking(false); showSchedErr('We could not reserve that class ('+String((e&&e.message)||e)+'). Please pick another time or call (508) 251-9469.'); });
-  }
-  // send the customer back to the card to fix a failed payment
-  function backToCard(){
-    setPayNote('fail', "Your payment didn't go through &mdash; please re-enter your card.");
-    showPayErr("Your payment didn't go through &mdash; please re-enter your card and tap Pay again.");
-    el('stepPay').scrollIntoView({ behavior:'smooth', block:'start' });
+    }).catch(function(e){ bookFailed(String((e&&e.message)||e)); });
   }
 
-  // ---- STEP 4: book (gated on the background charge) ----
-  // The booking REQUIRES the paid pass, so we gate on chargeState:
-  //   'ok'      -> book now
-  //   'pending' -> note + disable, await the charge to settle, then book (or warn on fail)
-  //   'fail'    -> warn + scroll back to card; do not book
-  el('bookBtn').addEventListener('click', function(){
+  // book-only retry after a charge-ok / book-fail. Reuses bookAfterCharge (no recharge).
+  el('retryBookBtn').addEventListener('click', function(){
     var s = slotsState.picked; if (!s) return;
-    el('schedErr').classList.remove('show');
-
-    if (chargeState.status === 'fail') { backToCard(); return; }
-    if (chargeState.status === 'ok')   { doBook(s); return; }
-
-    // pending (or somehow idle): hold the book and wait for the charge to settle
-    showSchedErr('Just a sec &mdash; finalizing your payment&hellip;');
-    el('bookBtn').disabled = true;
-    awaitCharge().then(function(ok){
-      el('schedErr').classList.remove('show');
-      el('bookBtn').disabled = false;
-      if (ok) { doBook(s); }
-      else { backToCard(); }
-    });
+    if (chargeState.status !== 'ok') return; // safety: only retry book when payment is confirmed
+    el('retryBookBtn').style.display = 'none';
+    bookAfterCharge(s);
   });
 
   // Record the completed booking into OUR system (booking_requests + lead status) so it
@@ -799,13 +797,23 @@
     }).catch(function(){});
   }
 
+  // confirmation. Only ever reached after a real charge-ok AND (for online times) a real
+  // book-ok. slot is null only in the no-online-times path where the studio books manually.
   function finishDone(slot){
     el('stepSched').classList.add('done');
+    el('stepPay').classList.add('done');
     el('stepDone').classList.remove('hidden');
     var order = chargeResult && chargeResult.k_purchase ? (' Order #'+chargeResult.k_purchase+'.') : '';
     el('passBox').innerHTML = '<b>'+ (TRIAL_NAME[lead.aud]||TRIAL_NAME.adult) +'</b> &mdash; 3 sessions, on ' + (lead.name? (lead.name.split(' ')[0]+"'s") : 'your') + ' WellnessLiving account.' + order;
-    var f = fmtSlot(slot.dtl_date);
-    el('bookedBox').innerHTML = '<b>First class booked:</b> ' + (slot.s_title||lead.interest||'Class') + '<br>' + f.day + ' at ' + f.time;
+    if (slot) {
+      var f = fmtSlot(slot.dtl_date);
+      el('bookedBox').innerHTML = '<b>First class booked:</b> ' + (slot.s_title||lead.interest||'Class') + '<br>' + f.day + ' at ' + f.time;
+      el('bookedBox').style.display = '';
+      el('doneMsg').textContent = 'Your trial is active and your first class is reserved. See you on the mats.';
+    } else {
+      el('bookedBox').style.display = 'none';
+      el('doneMsg').textContent = 'Your trial is active. The studio will set your first class time and reach out shortly.';
+    }
     el('stepDone').scrollIntoView({ behavior:'smooth', block:'start' });
     // CONFIRMATION SMS HOOK (held until explicitly enabled). When turned on, this is
     // where we'd POST { action:'notify', phone, name, slot } to send the confirmation.
