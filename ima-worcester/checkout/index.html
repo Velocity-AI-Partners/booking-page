@@ -119,6 +119,15 @@
   .paynote.fail { background:#fdecee; border:1px solid #f3c2c9; color:#8c1023; }
   .paynote .spin2 { width:14px; height:14px; border:2px solid rgba(39,70,144,.35); border-top-color:#274690; border-radius:50%; animation:wl-spin .8s linear infinite; flex:0 0 auto; }
 
+  /* pay progress bar (shown the moment the charge starts so it never looks frozen) */
+  .paybar { margin-bottom:12px; }
+  .paybar .track { height:9px; border-radius:999px; background:#f0e3e6; overflow:hidden; }
+  .paybar .fill { height:100%; width:0%; border-radius:999px; background:var(--red); transition:width .35s cubic-bezier(.22,.61,.36,1); }
+  .paybar .lab { display:flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:#274690; margin-top:9px; }
+  .paybar .lab .spin2 { width:14px; height:14px; border:2px solid rgba(39,70,144,.35); border-top-color:#274690; border-radius:50%; animation:wl-spin .8s linear infinite; flex:0 0 auto; }
+  .paybar.ok .fill { background:var(--green); transition:width .4s ease-out; }
+  .paybar.ok .lab { color:#13713f; }
+
   /* success */
   .doneart { text-align:center; padding:6px 0 4px; }
   .doneart .check { width:56px; height:56px; border-radius:50%; background:var(--green); color:#fff; font-size:30px; line-height:56px; margin:0 auto 12px; }
@@ -222,6 +231,10 @@
       <div class="bar"><div class="n">4</div><div class="h">Payment<small>Charged to the studio's WellnessLiving account</small></div></div>
       <div class="body">
         <div class="paynote" id="payNote" style="display:none"></div>
+        <div class="paybar" id="payBar" style="display:none">
+          <div class="track"><div class="fill" id="payBarFill"></div></div>
+          <div class="lab" id="payBarLab"><span class="spin2"></span><span id="payBarText">Securing your trial&hellip;</span></div>
+        </div>
         <div class="formerr" id="payErr"></div>
         <div class="field">
           <label>Discount code <span style="font-weight:500;color:#9aa1ad">(optional)</span></label>
@@ -676,6 +689,79 @@
     n.style.display = '';
   }
 
+  // ---- pay progress bar ----
+  // A bar that animates 0% -> 92% over 20s (visual pacing only) and CAPS at 92% so it can
+  // never claim "done" before the real charge clears. The fill jumps to 100% the instant the
+  // charge actually resolves (whether that's 3s in DEMO or 25s live). The label moves through
+  // three timed phases and then HOLDS on "Confirming Payment..." until the charge settles.
+  var payProgress = (function(){
+    var CAP = 92;          // visual cap; never reaches 100% until the real result arrives
+    var SWEEP_MS = 20000;  // visual pacing toward the cap (NOT a wait; charge can finish sooner)
+    var labelTimer = null; // timer for the phased label
+    var active = false;
+    function fill(){ return el('payBarFill'); }
+    function bar(){ return el('payBar'); }
+    function setText(t){ var e = el('payBarText'); if (e) e.innerHTML = t; }
+    function clearTimers(){ if (labelTimer) { clearTimeout(labelTimer); labelTimer = null; } }
+    // phased labels: 0-7s "Securing your trial...", 7-14s "Processing payment...",
+    // 14s onward "Confirming Payment..." (held there until the charge resolves).
+    function schedulePhases(){
+      setText('Securing your trial&hellip;');
+      labelTimer = setTimeout(function(){
+        setText('Processing payment&hellip;');
+        labelTimer = setTimeout(function(){
+          setText('Confirming Payment&hellip;'); // holds here until complete()/reset()
+          labelTimer = null;
+        }, 7000);
+      }, 7000);
+    }
+    function start(){
+      active = true;
+      clearTimers();
+      var b = bar(), f = fill();
+      b.className = 'paybar';
+      b.style.display = '';
+      // reset to 0 instantly, then sweep to the cap over SWEEP_MS with an ease-out curve
+      f.style.transition = 'none';
+      f.style.width = '0%';
+      // force reflow so the 0% start is committed before we arm the long transition
+      void f.offsetWidth;
+      f.style.transition = 'width ' + SWEEP_MS + 'ms cubic-bezier(.22,.61,.36,1)';
+      f.style.width = CAP + '%';
+      schedulePhases();
+    }
+    // charge cleared: snap to 100% quickly and show the confirmed label, then hold for the
+    // booking step. Caller then proceeds into book/confirmation as usual.
+    function complete(){
+      if (!active) return;
+      active = false;
+      clearTimers();
+      var b = bar(), f = fill();
+      b.className = 'paybar ok';
+      f.style.transition = 'width .4s ease-out';
+      f.style.width = '100%';
+      var lab = el('payBarLab');
+      if (lab) { var sp = lab.querySelector('.spin2'); if (sp) sp.remove(); }
+      setText('Payment confirmed &#10003;');
+    }
+    // booking step label after the bar is full (optional, non-blocking)
+    function setBooking(){ if (el('payBar').style.display !== 'none') setText('Booking your class&hellip;'); }
+    // charge failed (or we abort): stop everything and hide/reset the bar with no leaks.
+    function reset(){
+      active = false;
+      clearTimers();
+      var b = bar(), f = fill();
+      b.style.display = 'none';
+      b.className = 'paybar';
+      f.style.transition = 'none';
+      f.style.width = '0%';
+      // restore the spinner for the next attempt
+      var lab = el('payBarLab');
+      if (lab && !lab.querySelector('.spin2')) { var s = document.createElement('span'); s.className = 'spin2'; lab.insertBefore(s, lab.firstChild); }
+    }
+    return { start:start, complete:complete, setBooking:setBooking, reset:reset };
+  })();
+
   // ---- STEP: pay -> charge -> auto-book the picked class ----
   // Validate info + card, require a picked class (or no-online-times fallback), then charge.
   // On charge SUCCESS -> immediately book the already-picked class -> confirmation.
@@ -699,7 +785,8 @@
       return;
     }
     setPaying(true);
-    setPayNote('pending', 'Securing your payment&hellip;');
+    setPayNote(null);          // the progress bar replaces the old pending note while charging
+    payProgress.start();       // 0% -> 92% over 20s, capped until the charge actually clears
     runCharge();
   });
 
@@ -711,13 +798,14 @@
     function onChargeOk(d){
       chargeResult = d;
       chargeState = { status:'ok', kp:(d && d.k_purchase) || null, err:null };
-      setPayNote('ok', 'Payment confirmed &#10003; booking your class&hellip;');
+      payProgress.complete();  // snap the bar to 100% + "Payment confirmed" the instant it clears
       // immediately book the class the customer already picked
       if (slotsState.picked) { bookAfterCharge(slotsState.picked); }
-      else { setPaying(false); setPayNote('ok', 'Payment confirmed &#10003;'); finishDone(null); }
+      else { setPaying(false); finishDone(null); }
     }
     function onChargeFail(err){
       chargeState = { status:'fail', kp:null, err: err || CALL_ERR };
+      payProgress.reset();     // stop the animation + hide/reset the bar (no leaks)
       setPaying(false);
       setPayNote('fail', "Your payment didn't go through &mdash; please re-enter your card.");
       showPayErr("Your payment didn't go through &mdash; please re-enter your card and tap Pay again.");
@@ -752,10 +840,11 @@
     el('payErr').classList.remove('show');
     el('retryBookBtn').style.display = 'none';
     setPaying(true);
-    setPayNote('ok', 'Payment confirmed &#10003; booking your class&hellip;');
-    function bookedOk(){ setPaying(false); setPayNote('ok', 'Payment confirmed &#10003; class booked &#10003;'); recordBooking(s); finishDone(s); }
+    payProgress.setBooking(); // bar stays full at 100%, label flips to "Booking your class..."
+    function bookedOk(){ setPaying(false); payProgress.reset(); recordBooking(s); finishDone(s); }
     function bookFailed(e){
       setPaying(false);
+      payProgress.reset();   // charge ok, book failed: clear the bar; the warning note carries it
       // charge already succeeded: do NOT recharge. Offer a book-only retry.
       setPayNote('fail', 'Your payment went through, but booking your class failed.');
       showPayErr('Good news: your payment went through and your trial pass is active. We could not reserve your class time'+(e?(' ('+e+')'):'')+'. Tap below to retry just the booking &mdash; you will not be charged again, or call (508) 251-9469.');
