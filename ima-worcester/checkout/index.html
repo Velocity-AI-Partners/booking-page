@@ -285,8 +285,10 @@
   var PARAMS = qp();
   var DEMO = PARAMS.demo === '1' || PARAMS.demo === 'true';
   var CASHTEST = PARAMS.test === 'cash';
+  var CARDTEST = PARAMS.test === 'card' || PARAMS.test === 'cent';
   if (DEMO) el('demobar').style.display = 'block';
   if (CASHTEST) { el('demobar').textContent = 'TEST MODE · real WL client + real booking, sale completed as Cash so no card is charged · remove ?test=cash to charge live'; el('demobar').style.display = 'block'; }
+  if (CARDTEST) { el('demobar').textContent = 'TEST MODE · real card charged $0.01 (not $19.99) · enter a real card · remove ?test=card to charge live'; el('demobar').style.display = 'block'; }
 
   function call(body){ return fetch(BACKEND, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }); }
   // poll a backend job until done/error (~5 min cap at 4s intervals)
@@ -618,6 +620,7 @@
       if (disc) body.discount = disc;
       if (!free) body.card = card; // a verified 100%-off code means no card is needed
       if (CASHTEST) body.test = { method:'cash' };
+      else if (CARDTEST) body.test = { method:'card' };
       return call(body).then(function(j){
         if (j && j.jobId) { pollJob('charge', j.jobId, function(d){ setPaying(false); chargeResult=d; revealSchedule(); }, function(e){ setPaying(false); showPayErr(e); }); }
         else if (j && j.success) { setPaying(false); chargeResult=j; revealSchedule(); }
