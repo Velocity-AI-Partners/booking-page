@@ -139,6 +139,16 @@
 
   <div class="wrap">
 
+    <!-- 0: phone-claim (Facebook arrivals with no URL prefill) -->
+    <div class="step hidden" id="stepClaim">
+      <div class="bar"><div class="n">1</div><div class="h">Claim your $19.99 trial<small>Enter your phone to pull up your details. No re-typing.</small></div></div>
+      <div class="body">
+        <div class="formerr" id="claimErr"></div>
+        <div class="field" id="f-claimphone"><label>Enter your phone number</label><input id="claimPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555"><div class="err">Enter a valid 10-digit phone.</div></div>
+        <button class="go" id="claimBtn" type="button"><span id="claimLabel">Find my trial</span><span class="arw">&rarr;</span></button>
+      </div>
+    </div>
+
     <!-- A: prefilled recap, no re-entry -->
     <div class="step" id="stepRecap">
       <div class="bar"><div class="n">1</div><div class="h">Your details<small>Pulled from your form. Nothing to re-type.</small></div></div>
@@ -247,6 +257,7 @@
 <script>
   // ---- config ----
   var BACKEND = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/wl-trial-checkout';
+  var LOOKUP = 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/lookup-trial-lead';
   var TRIAL_NAME = { adult: 'Worcester-Adult Trials Pass - 3 Sessions', kids: 'Worcester-Kids Trials Pass - 3 Sessions' };
   var CALL_ERR = 'We could not process that. Please try again, or call the studio at (508) 251-9469.';
 
@@ -337,8 +348,92 @@
     renderRecap();
     loadSlots(); // re-pull slots for the (possibly) new class
   });
+  // ============ FB-ARRIVAL: phone-claim step ============
+  // Facebook's static thank-you button links here with NO usable URL params (FB can't
+  // pass lead info). Detect that case (no phone AND no name prefilled) and, instead of
+  // the normal manual edit form, show a panel where the customer types ONLY their phone.
+  // We look up the FB lead-form data and continue the exact same pipeline, no re-entry.
+  var FB_ARRIVAL = !PARAMS.phone && !PARAMS.name;
+
+  // map a free-text interest onto the <select id="interest"> option (by visible text) and
+  // pull kclass/aud off that option + its parent optgroup, mirroring the edit-form handler.
+  function applyInterestSelect(){
+    if (!lead.interest) return;
+    var s = el('interest');
+    for (var i=0;i<s.options.length;i++){
+      if (s.options[i].text.toLowerCase() === lead.interest.toLowerCase()){
+        s.selectedIndex = i;
+        var opt = s.options[i];
+        lead.kclass = opt.getAttribute('data-kclass') || lead.kclass;
+        var grp = opt.parentElement && opt.parentElement.getAttribute('data-aud');
+        if (grp === 'kids' || grp === 'adult') lead.aud = grp;
+        break;
+      }
+    }
+  }
+
+  // run the SAME post-prefill path the normal flow uses once we have the lead's details.
+  function continuePrefilled(){
+    el('stepClaim').classList.add('hidden');
+    renderRecap();
+    loadSlots();
+    if (typeof startCreate === 'function') startCreate();
+  }
+
+  function runClaim(){
+    var ph = digits(el('claimPhone').value);
+    el('f-claimphone').classList.toggle('invalid', ph.length !== 10);
+    if (ph.length !== 10) return;
+    el('claimErr').classList.remove('show');
+    el('claimBtn').disabled = true; el('claimLabel').textContent = 'Finding your trial…';
+    function reset(){ el('claimBtn').disabled = false; el('claimLabel').textContent = 'Find my trial'; }
+    function fallback(note){
+      // lead not captured yet, or a different number, or a network hiccup: fall back to the
+      // existing manual flow, prefilled with the phone they typed.
+      lead.phone = ph;
+      el('stepClaim').classList.add('hidden');
+      renderRecap();
+      openEdit();
+      el('editForm').insertAdjacentHTML('afterbegin', '<p class="nextnote" style="text-align:left;margin:0 0 10px">'+(note||'Enter your details to start your trial')+'</p>');
+    }
+    if (DEMO) {
+      setTimeout(function(){
+        lead.name='Demo Lead'; lead.email='demo@example.com'; lead.interest='Brazilian Jiu-Jitsu (BJJ)'; lead.phone=ph;
+        applyInterestSelect(); resolveInterest(); continuePrefilled();
+      }, 500);
+      return;
+    }
+    fetch(LOOKUP + '?phone=' + encodeURIComponent(ph), { method:'GET' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        reset();
+        if (j && j.found) {
+          lead.name = (j.name||'').trim();
+          lead.email = (j.email||'').trim();
+          lead.interest = (j.interest||'').trim();
+          lead.phone = ph;
+          applyInterestSelect();
+          resolveInterest();
+          continuePrefilled();
+        } else {
+          fallback();
+        }
+      }, function(){
+        reset();
+        fallback('We could not look that up. Enter your details to start your trial.');
+      });
+  }
+  el('claimBtn').addEventListener('click', runClaim);
+  el('claimPhone').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); runClaim(); } });
+
   renderRecap();
-  if (needInfo()) openEdit();
+  if (FB_ARRIVAL) {
+    // FB arrival: show the phone-claim panel instead of the normal edit form. Do NOT
+    // prefetch slots / start create yet (we have no details until they claim).
+    el('stepClaim').classList.remove('hidden');
+  } else if (needInfo()) {
+    openEdit();
+  }
 
   // ============ PIPELINE: uid (create) ============
   // The lead form already started create-client and passed its job id as ?cj=. We poll
