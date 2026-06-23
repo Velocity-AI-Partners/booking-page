@@ -417,6 +417,9 @@
           lead.email = (j.email||'').trim();
           lead.interest = (j.interest||'').trim();
           lead.phone = ph;
+          // reuse the account our backend pre-created at lead-intake (cj = create-client job id;
+          // uid = already-resolved client id). Avoids the ~8s create at pay time.
+          if (j.uid) { uidState.uid = j.uid; } else { resumeCj(j.cj); }
           applyInterestSelect();
           resolveInterest();
           continuePrefilled();
@@ -447,6 +450,7 @@
   // (direct visit / edited details), ensureUid() starts one on demand.
   var uidState = { uid:null, jobId:null, err:null };
   function startCreate(){
+    if (uidState.uid || uidState.jobId) return; // already have / are resolving an account; don't recreate
     if (DEMO) { uidState.uid = 'DEMOUID'; return; }
     if (needInfo()) { uidState.err = 'missing_info'; return; }
     call({ action:'create-client', name:lead.name, phone:lead.phone, email:lead.email }).then(function(j){
@@ -469,8 +473,28 @@
       })();
     });
   }
-  // resume the create job started on the lead form
-  if (PARAMS.cj && !DEMO) { uidState.jobId = PARAMS.cj; pollJob('create-client', PARAMS.cj, function(d){ uidState.uid = d.uid; }, function(e){ uidState.err = e; }); }
+  // resume a create-client job that our backend already started (pre-create at lead-intake)
+  // instead of starting a fresh ~8s create at pay time. cj is the pre-create job id.
+  function resumeCj(cj){
+    if (!cj || DEMO) return;
+    if (uidState.uid || uidState.jobId) return; // already resolving/resolved
+    uidState.jobId = cj;
+    pollJob('create-client', cj, function(d){ uidState.uid = d.uid; }, function(e){ uidState.err = e; });
+  }
+  // resume the create job started on the lead form (passed as ?cj=)
+  if (PARAMS.cj && !DEMO) { resumeCj(PARAMS.cj); }
+
+  // Gravity/prefilled arrival (has ?phone, NOT FB, and no ?cj to resume): look the lead up by
+  // phone so we can resume the account our backend pre-created at lead-intake. Non-blocking:
+  // we never gate the page on this; if it fails or finds nothing, startCreate() at pay time
+  // remains the fallback (and create-client is idempotent).
+  if (!FB_ARRIVAL && !DEMO && PARAMS.phone && !PARAMS.cj) {
+    fetch(LOOKUP + '?phone=' + encodeURIComponent(digits(PARAMS.phone)), { method:'GET' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.found) { if (j.uid) { uidState.uid = j.uid; } else { resumeCj(j.cj); } }
+      }, function(){ /* non-fatal: startCreate() at pay time is the fallback */ });
+  }
 
   // ============ PIPELINE: slots (prefetch) ============
   var slotsState = { list:null, err:null, picked:null };
