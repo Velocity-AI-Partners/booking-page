@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMA Worcester &middot; Activate Your $19.99 3-Class Trial</title>
 <link rel="dns-prefetch" href="https://jjckotsrhuxxftwmdlwc.supabase.co">
+<link rel="icon" type="image/png" href="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png">
 <!--
   IMA WORCESTER  -  NO-RE-ENTRY TRIAL CHECKOUT  (owned 3-step funnel, pipelined)
   =============================================================================
@@ -52,6 +53,11 @@
   .step .h { font-size:15.5px; font-weight:700; }
   .step .h small { display:block; font-size:11.5px; font-weight:500; color:var(--muted); margin-top:1px; }
   .step .body { padding:16px 18px; }
+  /* step accordion: collapsed steps show only their header bar */
+  .step.collapsed .body { display:none; }
+  .step.done .bar { cursor:pointer; }
+  .step.upcoming { opacity:.5; }
+  .step.upcoming .bar { cursor:default; }
 
   /* recap */
   .recap { list-style:none; }
@@ -200,6 +206,7 @@
           </div>
           <button class="go" id="saveEdit" type="button" style="padding:11px"><span>Save</span></button>
         </div>
+        <button class="go" id="recapContinue" type="button" style="margin-top:12px"><span>Looks good, continue</span><span class="arw">&rarr;</span></button>
       </div>
     </div>
 
@@ -211,6 +218,7 @@
           <div class="price">$19.99</div>
           <div class="meta"><b id="offerProgram">3-class trial</b><br>3 sessions &middot; valid 30 days &middot; one-time, no auto-renew</div>
         </div>
+        <button class="go" id="offerContinue" type="button" style="margin-top:14px"><span>Continue</span><span class="arw">&rarr;</span></button>
       </div>
     </div>
 
@@ -223,6 +231,7 @@
         <div class="schmsg" id="schedMsg">Loading class times&hellip;</div>
         <ul class="slots" id="slotList"></ul>
         <div class="paynote ok" id="pickedNote" style="display:none"></div>
+        <button class="go" id="schedContinue" type="button" disabled style="margin-top:4px"><span id="schedContinueLabel">Pick a class above</span><span class="arw" style="display:none">&rarr;</span></button>
         <p class="nextnote">Your 3-class pass covers this plus two more. You can book the other two any time.</p>
       </div>
     </div>
@@ -399,10 +408,48 @@
 
   // run the SAME post-prefill path the normal flow uses once we have the lead's details.
   function revealSteps(){ ['stepRecap','stepOffer','stepSched','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.remove('hidden'); }); }
+
+  // ---- step accordion ----
+  // All steps render on load. The current step is expanded; completed steps collapse to a
+  // tappable header (tap to reopen), upcoming steps show only a dimmed header until reached.
+  var WIZARD = ['stepRecap','stepOffer','stepSched','stepPay'];
+  var wizIdx = 0;
+  function setStep(i, skipScroll){
+    wizIdx = i;
+    for (var k=0;k<WIZARD.length;k++){
+      var e = el(WIZARD[k]); if(!e) continue;
+      e.classList.remove('collapsed','upcoming','done','current');
+      if (k < i) e.classList.add('collapsed','done');
+      else if (k > i) e.classList.add('collapsed','upcoming');
+      else e.classList.add('current');
+    }
+    var cur = el(WIZARD[i]);
+    if (cur && !skipScroll) cur.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  function nextStep(){ if (wizIdx < WIZARD.length - 1) setStep(wizIdx + 1); }
+  // tap a completed step's header to reopen it (edit details / change class)
+  WIZARD.forEach(function(id){
+    var e = el(id); if(!e) return;
+    var bar = e.querySelector('.bar'); if(!bar) return;
+    bar.addEventListener('click', function(){ if (e.classList.contains('done')) setStep(WIZARD.indexOf(id)); });
+  });
+  el('recapContinue').addEventListener('click', function(){
+    if (needInfo()) { openEdit(); el('f-name').classList.toggle('invalid', !lead.name); el('f-phone').classList.toggle('invalid', lead.phone.length!==10); return; }
+    startCreate();   // warm the WL account create while they move on
+    nextStep();
+  });
+  el('offerContinue').addEventListener('click', function(){ nextStep(); });
+  el('schedContinue').addEventListener('click', function(){ if (!el('schedContinue').disabled) nextStep(); });
+  function enableSchedContinue(){
+    el('schedContinue').disabled = false;
+    el('schedContinueLabel').textContent = 'Continue to payment';
+    el('schedContinue').querySelector('.arw').style.display = 'inline';
+  }
   function continuePrefilled(){
     el('stepClaim').classList.add('hidden');
     revealSteps();
     renderRecap();
+    setStep(0, true);   // start the accordion at "Your details"
     loadSlots();
     if (typeof startCreate === 'function') startCreate();
   }
@@ -422,6 +469,7 @@
       revealSteps();
       renderRecap();
       openEdit();
+      setStep(0, true);
       el('editForm').insertAdjacentHTML('afterbegin', '<p class="nextnote" style="text-align:left;margin:0 0 10px">'+(note||'Enter your details to start your trial')+'</p>');
     }
     if (DEMO) {
@@ -466,6 +514,7 @@
   } else if (needInfo()) {
     openEdit();
   }
+  if (!FB_ARRIVAL) setStep(0, true);   // prefilled/direct: collapse steps 2-4 until reached
 
   // ============ PIPELINE: uid (create) ============
   // The lead form already started create-client and passed its job id as ?cj=. We poll
@@ -577,6 +626,9 @@
       el('schedMsg').textContent = 'No upcoming '+(lead.interest||'')+' classes are listed online right now. You can still complete your trial below and the studio will set your first class. Call (508) 251-9469.';
       // no online times: allow paying without a pick (studio books manually)
       slotsState.noOnline = true;
+      el('schedContinueLabel').textContent = 'Continue to payment';
+      el('schedContinue').disabled = false;
+      el('schedContinue').querySelector('.arw').style.display = 'inline';
       refreshPayBtn();
       return;
     }
@@ -601,6 +653,7 @@
         var f = fmtSlot(slotsState.picked.dtl_date);
         el('pickedNote').innerHTML = '<span>Selected: <b>'+(slotsState.picked.s_title||lead.interest||'Class')+'</b> &middot; '+f.day+' at '+f.time+'</span>';
         el('pickedNote').style.display='';
+        enableSchedContinue();
         refreshPayBtn();
       });
     });
