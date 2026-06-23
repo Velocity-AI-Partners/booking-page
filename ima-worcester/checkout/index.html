@@ -219,6 +219,7 @@
       <div class="bar"><div class="n">3</div><div class="h">Pick your first class<small id="schedSub">Choose a time that works. You'll be booked the moment your payment goes through.</small></div></div>
       <div class="body">
         <div class="formerr" id="schedErr"></div>
+        <div class="field" id="f-schedClass" style="margin-bottom:10px"><label>Class (switch to see other programs)</label><select id="schedClass"></select></div>
         <div class="schmsg" id="schedMsg">Loading class times&hellip;</div>
         <ul class="slots" id="slotList"></ul>
         <div class="paynote ok" id="pickedNote" style="display:none"></div>
@@ -228,7 +229,7 @@
 
     <!-- D: our own checkout (card -> backend -> WL), then auto-book the picked class -->
     <div class="step" id="stepPay">
-      <div class="bar"><div class="n">4</div><div class="h">Payment<small>Charged to the studio's WellnessLiving account</small></div></div>
+      <div class="bar"><div class="n">4</div><div class="h">Payment<small>Charged securely to Integrated Martial Arts</small></div></div>
       <div class="body">
         <div class="paynote" id="payNote" style="display:none"></div>
         <div class="paybar" id="payBar" style="display:none">
@@ -309,7 +310,7 @@
   var CASHTEST = PARAMS.test === 'cash';
   var CARDTEST = PARAMS.test === 'card' || PARAMS.test === 'cent';
   if (DEMO) el('demobar').style.display = 'block';
-  if (CASHTEST) { el('demobar').textContent = 'TEST MODE · real WL client + real booking, sale completed as Cash so no card is charged · remove ?test=cash to charge live'; el('demobar').style.display = 'block'; }
+  if (CASHTEST) { el('demobar').textContent = 'TEST MODE · real account + real booking, sale completed as Cash so no card is charged · remove ?test=cash to charge live'; el('demobar').style.display = 'block'; }
   if (CARDTEST) { el('demobar').textContent = 'TEST MODE · real card charged $0.01 (not $19.99) · enter a real card · remove ?test=card to charge live'; el('demobar').style.display = 'block'; }
 
   function call(body){ return fetch(BACKEND, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }); }
@@ -535,7 +536,26 @@
       out.push({ k_class_period:'DEMO'+i, k_class:lead.kclass||'0', s_title:(lead.interest||'Trial Class'), dtl_date:ds+' 18:00:00', dt_time:'18:00:00' }); }
     return out;
   }
+  // class switcher above the schedule: lets them browse/book a different program.
+  // Idempotent: clones the full class list from #interest once, binds change, then keeps the
+  // selection in sync with whatever program the slots are currently showing.
+  var schedClassInit = false;
+  function initSchedClass(){
+    var sc = el('schedClass'); if (!sc) return;
+    if (!schedClassInit){
+      sc.innerHTML = el('interest').innerHTML; // same options (optgroups + data-kclass)
+      sc.addEventListener('change', function(){
+        var opt = sc.options[sc.selectedIndex];
+        lead.interest = sc.value ? opt.text : '';
+        lead.kclass = (opt && opt.getAttribute('data-kclass')) || '';
+        loadSlots();
+      });
+      schedClassInit = true;
+    }
+    if (lead.interest){ for (var i=0;i<sc.options.length;i++){ if (sc.options[i].text.toLowerCase()===lead.interest.toLowerCase()){ sc.selectedIndex=i; break; } } }
+  }
   function loadSlots(){
+    initSchedClass();
     slotsState = { list:null, err:null, picked:null };
     el('pickedNote').style.display='none';
     refreshPayBtn();
@@ -893,7 +913,7 @@
     el('stepPay').classList.add('done');
     el('stepDone').classList.remove('hidden');
     var order = chargeResult && chargeResult.k_purchase ? (' Order #'+chargeResult.k_purchase+'.') : '';
-    el('passBox').innerHTML = '<b>'+ (TRIAL_NAME[lead.aud]||TRIAL_NAME.adult) +'</b> &mdash; 3 sessions, on ' + (lead.name? (lead.name.split(' ')[0]+"'s") : 'your') + ' WellnessLiving account.' + order;
+    el('passBox').innerHTML = '<b>'+ (TRIAL_NAME[lead.aud]||TRIAL_NAME.adult) +'</b> &mdash; 3 sessions, on ' + (lead.name? (lead.name.split(' ')[0]+"'s") : 'your') + ' Integrated Martial Arts account.' + order;
     if (slot) {
       var f = fmtSlot(slot.dtl_date);
       el('bookedBox').innerHTML = '<b>First class booked:</b> ' + (slot.s_title||lead.interest||'Class') + '<br>' + f.day + ' at ' + f.time;
