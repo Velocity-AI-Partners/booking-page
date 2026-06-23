@@ -554,14 +554,16 @@
     uidState.jobId = cj;
     pollJob('create-client', cj, function(d){ uidState.uid = d.uid; }, function(e){ uidState.err = e; });
   }
-  // resume the create job started on the lead form (passed as ?cj=)
-  if (PARAMS.cj && !DEMO) { resumeCj(PARAMS.cj); }
-
-  // Gravity/prefilled arrival (has ?phone, NOT FB, and no ?cj to resume): look the lead up by
-  // phone so we can resume the account our backend pre-created at lead-intake. Non-blocking:
-  // we never gate the page on this; if it fails or finds nothing, startCreate() at pay time
-  // remains the fallback (and create-client is idempotent).
-  if (!FB_ARRIVAL && !DEMO && PARAMS.phone && !PARAMS.cj) {
+  // Google/Gravity (prefilled) arrival: kick off the WL account create the moment they land,
+  // not when they advance past the recap. We already have name + phone from the URL, so the
+  // ~30s WL create runs while they read the recap, pick a class, and type their card, and is
+  // done before payment. create-client is idempotent so this never duplicates an account.
+  if (PARAMS.cj && !DEMO) {
+    resumeCj(PARAMS.cj);                 // lead form already started a create -> resume it
+  } else if (!FB_ARRIVAL && !needInfo()) {
+    startCreate();                       // full info in the URL -> create now (no-ops in DEMO's call)
+  } else if (!FB_ARRIVAL && !DEMO && PARAMS.phone) {
+    // only a phone was passed (no name): look the lead up to fill details + resume/create
     fetch(LOOKUP + '?phone=' + encodeURIComponent(digits(PARAMS.phone)), { method:'GET' })
       .then(function(r){ return r.json(); })
       .then(function(j){
