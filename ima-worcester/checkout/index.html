@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMA Worcester &middot; Activate Your $19.99 3-Class Trial</title>
 <link rel="dns-prefetch" href="https://jjckotsrhuxxftwmdlwc.supabase.co">
-<link rel="icon" type="image/png" href="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/integrated-martial-arts-worcester-1771600412395.png">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <!--
   IMA WORCESTER  -  NO-RE-ENTRY TRIAL CHECKOUT  (owned 3-step funnel, pipelined)
   =============================================================================
@@ -412,7 +412,10 @@
   // ---- step accordion ----
   // All steps render on load. The current step is expanded; completed steps collapse to a
   // tappable header (tap to reopen), upcoming steps show only a dimmed header until reached.
-  var WIZARD = ['stepRecap','stepOffer','stepSched','stepPay'];
+  // FB arrivals get the phone-claim as step 1 so the full step structure shows from load,
+  // same as the prefilled (Gravity) entry. Badges are renumbered 1..N in wizard order.
+  var WIZARD = FB_ARRIVAL ? ['stepClaim','stepRecap','stepOffer','stepSched','stepPay'] : ['stepRecap','stepOffer','stepSched','stepPay'];
+  WIZARD.forEach(function(id, k){ var e=el(id); if(e){ var b=e.querySelector('.n'); if(b) b.textContent=String(k+1); } });
   var wizIdx = 0;
   function setStep(i, skipScroll){
     wizIdx = i;
@@ -446,10 +449,9 @@
     el('schedContinue').querySelector('.arw').style.display = 'inline';
   }
   function continuePrefilled(){
-    el('stepClaim').classList.add('hidden');
     revealSteps();
     renderRecap();
-    setStep(0, true);   // start the accordion at "Your details"
+    setStep(WIZARD.indexOf('stepRecap'));   // mark claim done, expand "Your details"
     loadSlots();
     if (typeof startCreate === 'function') startCreate();
   }
@@ -465,11 +467,10 @@
       // lead not captured yet, or a different number, or a network hiccup: fall back to the
       // existing manual flow, prefilled with the phone they typed.
       lead.phone = ph;
-      el('stepClaim').classList.add('hidden');
       revealSteps();
       renderRecap();
       openEdit();
-      setStep(0, true);
+      setStep(WIZARD.indexOf('stepRecap'));   // mark claim done, expand "Your details" (manual)
       el('editForm').insertAdjacentHTML('afterbegin', '<p class="nextnote" style="text-align:left;margin:0 0 10px">'+(note||'Enter your details to start your trial')+'</p>');
     }
     if (DEMO) {
@@ -507,14 +508,14 @@
 
   renderRecap();
   if (FB_ARRIVAL) {
-    // FB arrival: show ONLY the phone-claim panel; hide details/offer/schedule/payment until
-    // they enter their phone and we look up their info. No slots/create yet.
-    ['stepRecap','stepOffer','stepSched','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.add('hidden'); });
+    // FB arrival: show the whole step structure from the start with the phone-claim as the
+    // active step 1; the rest sit collapsed below until they enter their phone. No slots/create yet.
     el('stepClaim').classList.remove('hidden');
+    revealSteps();
   } else if (needInfo()) {
     openEdit();
   }
-  if (!FB_ARRIVAL) setStep(0, true);   // prefilled/direct: collapse steps 2-4 until reached
+  setStep(0, true);   // step 1 active (claim for FB, details otherwise); later steps collapsed
 
   // ============ PIPELINE: uid (create) ============
   // The lead form already started create-client and passed its job id as ?cj=. We poll
