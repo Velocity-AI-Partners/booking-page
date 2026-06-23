@@ -355,7 +355,7 @@
   // pass lead info). Detect that case (no phone AND no name prefilled) and, instead of
   // the normal manual edit form, show a panel where the customer types ONLY their phone.
   // We look up the FB lead-form data and continue the exact same pipeline, no re-entry.
-  var FB_ARRIVAL = !PARAMS.phone && !PARAMS.name;
+  var FB_ARRIVAL = (PARAMS.src === 'fb') || (!PARAMS.phone && !PARAMS.name);
 
   // map a free-text interest onto the <select id="interest"> option (by visible text) and
   // pull kclass/aud off that option + its parent optgroup, mirroring the edit-form handler.
@@ -375,8 +375,10 @@
   }
 
   // run the SAME post-prefill path the normal flow uses once we have the lead's details.
+  function revealSteps(){ ['stepRecap','stepOffer','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.remove('hidden'); }); }
   function continuePrefilled(){
     el('stepClaim').classList.add('hidden');
+    revealSteps();
     renderRecap();
     loadSlots();
     if (typeof startCreate === 'function') startCreate();
@@ -394,6 +396,7 @@
       // existing manual flow, prefilled with the phone they typed.
       lead.phone = ph;
       el('stepClaim').classList.add('hidden');
+      revealSteps();
       renderRecap();
       openEdit();
       el('editForm').insertAdjacentHTML('afterbegin', '<p class="nextnote" style="text-align:left;margin:0 0 10px">'+(note||'Enter your details to start your trial')+'</p>');
@@ -430,8 +433,9 @@
 
   renderRecap();
   if (FB_ARRIVAL) {
-    // FB arrival: show the phone-claim panel instead of the normal edit form. Do NOT
-    // prefetch slots / start create yet (we have no details until they claim).
+    // FB arrival: show ONLY the phone-claim panel; hide details/pass/payment until they
+    // enter their phone and we look up their info. No slots/create yet.
+    ['stepRecap','stepOffer','stepPay'].forEach(function(id){ var e=el(id); if(e) e.classList.add('hidden'); });
     el('stepClaim').classList.remove('hidden');
   } else if (needInfo()) {
     openEdit();
