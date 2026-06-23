@@ -112,6 +112,13 @@
   .slot.sel .pick { color:var(--red); }
   .schmsg { font-size:13px; color:var(--muted); padding:8px 2px; }
 
+  /* background-charge status note in the schedule area */
+  .paynote { font-size:13px; font-weight:600; border-radius:9px; padding:10px 12px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .paynote.pending { background:#f4f8ff; border:1px solid #cfe0ff; color:#274690; }
+  .paynote.ok { background:#f1fbf5; border:1px solid #bce9cf; color:#13713f; }
+  .paynote.fail { background:#fdecee; border:1px solid #f3c2c9; color:#8c1023; }
+  .paynote .spin2 { width:14px; height:14px; border:2px solid rgba(39,70,144,.35); border-top-color:#274690; border-radius:50%; animation:wl-spin .8s linear infinite; flex:0 0 auto; }
+
   /* success */
   .doneart { text-align:center; padding:6px 0 4px; }
   .doneart .check { width:56px; height:56px; border-radius:50%; background:var(--green); color:#fff; font-size:30px; line-height:56px; margin:0 auto 12px; }
@@ -228,6 +235,7 @@
     <div class="step hidden" id="stepSched">
       <div class="bar"><div class="n">4</div><div class="h">Book your first class<small id="schedSub">Pick a time that works. We'll reserve your spot.</small></div></div>
       <div class="body">
+        <div class="paynote" id="payNote" style="display:none"></div>
         <div class="formerr" id="schedErr"></div>
         <div class="schmsg" id="schedMsg">Loading class times&hellip;</div>
         <ul class="slots" id="slotList"></ul>
@@ -623,7 +631,60 @@
 
   var chargeResult = null;
 
-  // reveal the schedule step once the charge succeeds
+  // ---- background charge state (optimistic UX) ----
+  // The WL Virtual Terminal charge takes ~12-20s. Instead of blocking on it, we reveal the
+  // schedule the instant they tap Pay and run the charge in the background. status:
+  //   'idle'    nothing started
+  //   'pending' charge in flight
+  //   'ok'      charge succeeded (chargeState.kp = k_purchase, chargeResult also set)
+  //   'fail'    charge failed (chargeState.err = message); card form re-enabled to retry
+  var chargeState = { status:'idle', kp:null, err:null };
+  // anyone awaiting the charge to settle (e.g. book tapped while still pending) gets these
+  // resolved/rejected; we keep a fresh promise per pending charge so retries re-arm it.
+  var chargeWaiters = [];
+  function settleCharge(ok){
+    var w = chargeWaiters; chargeWaiters = [];
+    w.forEach(function(fn){ try { fn(ok); } catch(e){} });
+  }
+  // returns a promise that resolves true when charge becomes 'ok', false when it becomes 'fail'
+  function awaitCharge(){
+    if (chargeState.status === 'ok') return Promise.resolve(true);
+    if (chargeState.status === 'fail') return Promise.resolve(false);
+    return new Promise(function(resolve){ chargeWaiters.push(resolve); });
+  }
+
+  // the small non-blocking note shown in the schedule area while the charge runs
+  function setPayNote(kind, html){
+    var n = el('payNote');
+    if (!kind) { n.style.display = 'none'; n.className = 'paynote'; n.innerHTML = ''; return; }
+    n.className = 'paynote ' + kind;
+    n.innerHTML = (kind === 'pending' ? '<span class="spin2"></span>' : '') + '<span>' + html + '</span>';
+    n.style.display = '';
+  }
+  // clear note display state to 'pending' look while in flight
+  function chargePending(){
+    chargeState = { status:'pending', kp:null, err:null };
+    setPayNote('pending', 'Finalizing your payment&hellip;');
+  }
+  function chargeOk(d){
+    chargeResult = d;
+    chargeState = { status:'ok', kp:(d && d.k_purchase) || null, err:null };
+    setPaying(false);
+    setPayNote('ok', 'Payment confirmed &#10003;');
+    settleCharge(true);
+  }
+  // failed charge: clear the spinner/note, surface a clear warning near the pay form, and
+  // re-enable the card so they can fix it and tap Pay again (which restarts the charge).
+  function chargeFail(err){
+    chargeState = { status:'fail', kp:null, err: err || CALL_ERR };
+    setPaying(false);
+    setPayNote('fail', "Your payment didn't go through &mdash; please re-enter your card.");
+    showPayErr("Your payment didn't go through &mdash; please re-enter your card and tap Pay again.");
+    settleCharge(false);
+  }
+
+  // reveal the schedule step (and load slots). Called immediately on Pay so the customer can
+  // browse/pick a class while the charge runs in the background.
   function revealSchedule(){
     el('stepPay').classList.add('done');
     el('stepSched').classList.remove('hidden');
@@ -631,16 +692,16 @@
     el('stepSched').scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
-  // ---- STEP 3: pay ----
-  el('payBtn').addEventListener('click', function(){
+  // kick off the charge in the background (NOT awaited by the caller). Guards against
+  // double-charging: never starts a second charge while one is pending or already ok.
+  function startCharge(){
+    if (chargeState.status === 'pending' || chargeState.status === 'ok') return;
     el('payErr').classList.remove('show');
-    if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
+    chargePending();
+
+    if (DEMO) { setTimeout(function(){ chargeOk({ k_purchase:'000DEMO' }); }, 600); return; }
+
     var free = discountState.applied && discountState.isFree; // verified 100%-off -> no card
-    if (!CASHTEST && !free && !validCard()) return;
-    setPaying(true);
-
-    if (DEMO) { setTimeout(function(){ setPaying(false); chargeResult={ k_purchase:'000DEMO' }; revealSchedule(); }, 1200); return; }
-
     var card = { number: el('cc-num').value.replace(/\D/g,''), exp: el('cc-exp').value, cvc: el('cc-cvc').value.replace(/\D/g,''), zip: el('cc-zip').value.replace(/\D/g,'') };
     ensureUid().then(function(uid){
       var body = { action:'charge', uid: uid, audience: lead.aud, email: lead.email };
@@ -650,21 +711,35 @@
       if (CASHTEST) body.test = { method:'cash' };
       else if (CARDTEST) body.test = { method:'card' };
       return call(body).then(function(j){
-        if (j && j.jobId) { pollJob('charge', j.jobId, function(d){ setPaying(false); chargeResult=d; revealSchedule(); }, function(e){ setPaying(false); showPayErr(e); }); }
-        else if (j && j.success) { setPaying(false); chargeResult=j; revealSchedule(); }
-        else { setPaying(false); showPayErr((j && j.error) || CALL_ERR); }
+        if (j && j.jobId) { pollJob('charge', j.jobId, function(d){ chargeOk(d); }, function(e){ chargeFail(e); }); }
+        else if (j && j.success) { chargeOk(j); }
+        else { chargeFail((j && j.error) || CALL_ERR); }
       });
     }).catch(function(e){
-      setPaying(false);
       var m = String((e && e.message) || e);
-      showPayErr(m === 'missing_info' ? 'Please add your name and phone above first.' : ('We could not set up your account ('+m+'). Please try again, or call (508) 251-9469.'));
+      chargeFail(m === 'missing_info' ? 'Please add your name and phone above first.' : ('We could not set up your account ('+m+'). Please try again, or call (508) 251-9469.'));
     });
+  }
+
+  // ---- STEP 3: pay (optimistic) ----
+  // Validate, then start the charge in the BACKGROUND and reveal the schedule immediately so
+  // the customer browses/picks a class while the ~12-20s charge runs. We never tell them
+  // they're booked until BOTH the charge is ok AND the real book returns (see bookBtn).
+  el('payBtn').addEventListener('click', function(){
+    el('payErr').classList.remove('show');
+    if (needInfo()) { showPayErr('Please add your name and phone above first.'); openEdit(); return; }
+    var free = discountState.applied && discountState.isFree; // verified 100%-off -> no card
+    if (!CASHTEST && !free && !validCard()) return;
+    // guard double-charge: if one is already in flight or done, just reveal the schedule again
+    if (chargeState.status === 'pending' || chargeState.status === 'ok') { revealSchedule(); return; }
+    setPaying(true);
+    startCharge();      // background; does NOT block the reveal below
+    revealSchedule();   // schedule appears at once
   });
 
-  // ---- STEP 4: book ----
-  el('bookBtn').addEventListener('click', function(){
-    var s = slotsState.picked; if (!s) return;
-    el('schedErr').classList.remove('show');
+  // book the selected slot once we know the charge succeeded. Confirmation only shows after
+  // the real book returns (step 4 of the spec: never claim booked before charge ok + book ok).
+  function doBook(s){
     setBooking(true);
     if (DEMO) { setTimeout(function(){ setBooking(false); finishDone(s); }, 1100); return; }
     function bookedOk(){ setBooking(false); recordBooking(s); finishDone(s); }
@@ -675,6 +750,35 @@
         else { setBooking(false); showSchedErr((j && j.error) || CALL_ERR); }
       });
     }).catch(function(e){ setBooking(false); showSchedErr('We could not reserve that class ('+String((e&&e.message)||e)+'). Please pick another time or call (508) 251-9469.'); });
+  }
+  // send the customer back to the card to fix a failed payment
+  function backToCard(){
+    setPayNote('fail', "Your payment didn't go through &mdash; please re-enter your card.");
+    showPayErr("Your payment didn't go through &mdash; please re-enter your card and tap Pay again.");
+    el('stepPay').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  // ---- STEP 4: book (gated on the background charge) ----
+  // The booking REQUIRES the paid pass, so we gate on chargeState:
+  //   'ok'      -> book now
+  //   'pending' -> note + disable, await the charge to settle, then book (or warn on fail)
+  //   'fail'    -> warn + scroll back to card; do not book
+  el('bookBtn').addEventListener('click', function(){
+    var s = slotsState.picked; if (!s) return;
+    el('schedErr').classList.remove('show');
+
+    if (chargeState.status === 'fail') { backToCard(); return; }
+    if (chargeState.status === 'ok')   { doBook(s); return; }
+
+    // pending (or somehow idle): hold the book and wait for the charge to settle
+    showSchedErr('Just a sec &mdash; finalizing your payment&hellip;');
+    el('bookBtn').disabled = true;
+    awaitCharge().then(function(ok){
+      el('schedErr').classList.remove('show');
+      el('bookBtn').disabled = false;
+      if (ok) { doBook(s); }
+      else { backToCard(); }
+    });
   });
 
   // Record the completed booking into OUR system (booking_requests + lead status) so it
