@@ -935,6 +935,9 @@
     payProgress.setBooking(); // bar stays full at 100%, label flips to "Booking your class..."
     function bookedOk(){ setPaying(false); payProgress.reset(); recordBooking(s); finishDone(s); }
     function bookFailed(e){
+      // "You have reserved this class visit already" means the booking ACTUALLY exists in WL
+      // (the commit succeeded, a duplicate confirm was rejected). That is success, not failure.
+      if (e && /reserved this class visit already|already\s+(been\s+)?(booked|reserved)/i.test(String(e))) { bookedOk(); return; }
       setPaying(false);
       payProgress.reset();   // charge ok, book failed: clear the bar; the warning note carries it
       // charge already succeeded: do NOT recharge. Offer a book-only retry.
