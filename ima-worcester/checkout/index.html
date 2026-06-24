@@ -167,13 +167,13 @@
       <div class="body">
         <div class="formerr" id="claimErr"></div>
         <div class="field" id="f-claimphone"><label>Enter your phone number</label><input id="claimPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555"><div class="err">Enter a valid 10-digit phone.</div></div>
-        <button class="go" id="claimBtn" type="button"><span id="claimLabel">Find my trial</span><span class="arw">&rarr;</span></button>
+        <button class="go" id="claimBtn" type="button"><span id="claimLabel">Get started</span><span class="arw">&rarr;</span></button>
       </div>
     </div>
 
     <!-- A: prefilled recap, no re-entry -->
     <div class="step" id="stepRecap">
-      <div class="bar"><div class="n">1</div><div class="h">Your details<small>Pulled from your form. Nothing to re-type.</small></div></div>
+      <div class="bar"><div class="n">1</div><div class="h">Your details</div></div>
       <div class="body">
         <ul class="recap" id="recapList"></ul>
         <span class="editlink" id="editLink">Not you? Edit details</span>
@@ -467,7 +467,7 @@
     if (ph.length !== 10) return;
     el('claimErr').classList.remove('show');
     el('claimBtn').disabled = true; el('claimLabel').textContent = 'Finding your trial…';
-    function reset(){ el('claimBtn').disabled = false; el('claimLabel').textContent = 'Find my trial'; }
+    function reset(){ el('claimBtn').disabled = false; el('claimLabel').textContent = 'Get started'; }
     function fallback(note){
       // lead not captured yet, or a different number, or a network hiccup: fall back to the
       // existing manual flow, prefilled with the phone they typed.
