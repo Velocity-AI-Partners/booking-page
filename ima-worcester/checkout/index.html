@@ -332,9 +332,9 @@
     call({ action: action, jobId: jobId }).then(function(j){
       if (j && j.status === 'done' && j.success) { onDone(j); return; }
       if (j && j.status === 'error') { onErr((j && j.error) || CALL_ERR); return; }
-      if (n > 75) { onErr('This is taking longer than usual. Please call the studio at (508) 251-9469 to confirm.'); return; }
-      setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 4000);
-    }, function(){ if (n > 75) { onErr('Network error. Please call the studio at (508) 251-9469.'); return; } setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 4000); });
+      if (n > 120) { onErr('This is taking longer than usual. Please call the studio at (508) 251-9469 to confirm.'); return; }
+      setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 1500);
+    }, function(){ if (n > 120) { onErr('Network error. Please call the studio at (508) 251-9469.'); return; } setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 1500); });
   }
 
   // resolve interest -> kclass + aud (explicit params win)
@@ -780,23 +780,23 @@
   }
 
   // ---- pay progress bar ----
-  // A bar that animates 0% -> 90% over ~11s (visual pacing only) and CAPS at 90% so it can
+  // A bar that animates 0% -> 90% over ~15s (visual pacing only) and CAPS at 90% so it can
   // never claim "done" before the real charge clears. The fill jumps to 100% the instant the
   // charge actually resolves. ~11s matches the real measured charge time (~10s) so the bar
   // paces evenly with the work instead of crawling for 55s then jumping. The label moves
   // through three timed phases and then HOLDS on "Confirming Payment..." until it settles.
   var payProgress = (function(){
     var CAP = 90;          // visual cap; never reaches 100% until the real result arrives
-    var SWEEP_MS = 11000;  // STEADY (linear) pacing; matches the real ~10s charge time
+    var SWEEP_MS = 15000;  // STEADY (linear) pacing; matches the real ~15s charge time
     var labelTimer = null; // timer for the phased label
     var active = false;
     function fill(){ return el('payBarFill'); }
     function bar(){ return el('payBar'); }
     function setText(t){ var e = el('payBarText'); if (e) e.innerHTML = t; }
     function clearTimers(){ if (labelTimer) { clearTimeout(labelTimer); labelTimer = null; } }
-    // phased labels: 0-4s "Securing your trial...", 4-8s "Processing payment...",
-    // 8s onward "Confirming Payment..." (held there until the charge resolves). Timed to
-    // fit the ~10s charge window so each label actually shows before completion.
+    // phased labels: 0-5s "Securing your trial...", 5-10s "Processing payment...",
+    // 10s onward "Confirming Payment..." (held there until the charge resolves). Timed to
+    // fit the ~15s charge window so each label actually shows before completion.
     function schedulePhases(){
       setText('Securing your trial&hellip;');
       labelTimer = setTimeout(function(){
@@ -804,8 +804,8 @@
         labelTimer = setTimeout(function(){
           setText('Confirming Payment&hellip;'); // holds here until complete()/reset()
           labelTimer = null;
-        }, 4000);
-      }, 4000);
+        }, 5000);
+      }, 5000);
     }
     function start(){
       active = true;
@@ -878,7 +878,7 @@
     }
     setPaying(true);
     setPayNote(null);          // the progress bar replaces the old pending note while charging
-    payProgress.start();       // 0% -> 90% over ~11s, capped until the charge actually clears
+    payProgress.start();       // 0% -> 90% over ~15s, capped until the charge actually clears
     runCharge();
   });
 
