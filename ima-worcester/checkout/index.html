@@ -526,22 +526,28 @@
   // The lead form already started create-client and passed its job id as ?cj=. We poll
   // it in the background so the uid is ready by the time they pay. If there's no job
   // (direct visit / edited details), ensureUid() starts one on demand.
-  var uidState = { uid:null, jobId:null, err:null };
+  var uidState = { uid:null, jobId:null, err:null, creating:false };
   function startCreate(){
-    if (uidState.uid || uidState.jobId) return; // already have / are resolving an account; don't recreate
+    // Guard against double-firing. uidState.jobId is only set AFTER the request returns, leaving a
+    // race window where two near-simultaneous callers both POST create-client; two creates then
+    // collide on the backend's single shared browser session and hang/255. uidState.creating is a
+    // SYNCHRONOUS lock set before the call so only one create is ever in flight.
+    if (uidState.uid || uidState.jobId || uidState.creating) return;
     if (DEMO) { uidState.uid = 'DEMOUID'; return; }
     if (needInfo()) { uidState.err = 'missing_info'; return; }
+    uidState.creating = true;
     call({ action:'create-client', name:lead.name, phone:lead.phone, email:lead.email }).then(function(j){
+      uidState.creating = false;
       if (j && j.jobId) { uidState.jobId = j.jobId; pollJob('create-client', j.jobId, function(d){ uidState.uid = d.uid; }, function(e){ uidState.err = e; }); }
       else if (j && j.uid) { uidState.uid = j.uid; }
       else { uidState.err = (j && j.error) || 'create_failed'; }
-    }, function(){ uidState.err = 'network'; });
+    }, function(){ uidState.creating = false; uidState.err = 'network'; });
   }
   function ensureUid(){
     return new Promise(function(resolve, reject){
       if (DEMO) { resolve('DEMOUID'); return; }
       if (uidState.uid) { resolve(uidState.uid); return; }
-      if (!uidState.jobId && !uidState.uid) { uidState.err = null; startCreate(); }
+      if (!uidState.jobId && !uidState.uid && !uidState.creating) { uidState.err = null; startCreate(); }
       var n = 0;
       (function wait(){
         if (uidState.uid) { resolve(uidState.uid); return; }
