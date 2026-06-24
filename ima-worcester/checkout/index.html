@@ -255,12 +255,15 @@
           <div class="discmsg" id="discMsg"></div>
         </div>
         <div id="cardFields">
+          <div class="field"><label>Name on card</label><input id="cc-name" autocomplete="cc-name" placeholder="Full name"><div class="err">Enter the name on the card.</div></div>
           <div class="field"><label>Card number</label><input id="cc-num" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234"><div class="err">Enter a valid card number.</div></div>
           <div class="field row">
             <div id="f-exp"><label>Expiry</label><input id="cc-exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY"><div class="err">MM/YY</div></div>
             <div id="f-cvc"><label>CVC</label><input id="cc-cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123"><div class="err">CVC</div></div>
             <div id="f-zip"><label>ZIP</label><input id="cc-zip" inputmode="numeric" autocomplete="postal-code" placeholder="01605"><div class="err">ZIP</div></div>
           </div>
+          <div class="field"><label>Billing street address</label><input id="cc-street" autocomplete="address-line1" placeholder="123 Main St"><div class="err">Enter your billing street address.</div></div>
+          <div class="field"><label>City</label><input id="cc-city" autocomplete="address-level2" placeholder="City"><div class="err">Enter your city.</div></div>
         </div>
         <button class="go" id="payBtn" type="button" disabled><span id="payLabel">Select a class above</span><span class="arw" style="display:none">&rarr;</span></button>
         <button class="go" id="retryBookBtn" type="button" style="display:none;margin-top:8px;background:var(--green)"><span id="retryBookLabel">Retry booking your class</span><span class="arw">&rarr;</span></button>
@@ -357,6 +360,8 @@
     el('recapList').innerHTML = rows.map(function(r){ return '<li><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></li>'; }).join('');
     el('offerProgram').textContent = (lead.interest ? lead.interest : '3-class') + ' trial';
     el('offerSub').textContent = '3 classes of ' + (lead.interest || 'your choice') + ' to try it out';
+    // prefill the card name with the customer's name (cardholder usually matches; they can edit)
+    if (el('cc-name') && !el('cc-name').value && lead.name) el('cc-name').value = lead.name;
   }
   function needInfo(){ return !(lead.name && lead.phone.length === 10); }
   function openEdit(){
@@ -689,6 +694,10 @@
     var m=/^(\d{2})\/(\d{2})$/.exec(exp); var eOk=!!m && +m[1]>=1 && +m[1]<=12; el('f-exp').classList.toggle('invalid',!eOk); if(!eOk) ok=false;
     var cOk=cvc.length>=3; el('f-cvc').classList.toggle('invalid',!cOk); if(!cOk) ok=false;
     var zOk=zip.length>=5; el('f-zip').classList.toggle('invalid',!zOk); if(!zOk) ok=false;
+    // WL's Virtual Terminal requires cardholder name + billing street + city (street+zip drive AVS)
+    var nmOk=(el('cc-name').value||'').trim().length>0; el('cc-name').parentElement.classList.toggle('invalid',!nmOk); if(!nmOk) ok=false;
+    var stOk=(el('cc-street').value||'').trim().length>0; el('cc-street').parentElement.classList.toggle('invalid',!stOk); if(!stOk) ok=false;
+    var ctOk=(el('cc-city').value||'').trim().length>0; el('cc-city').parentElement.classList.toggle('invalid',!ctOk); if(!ctOk) ok=false;
     return ok;
   }
 
@@ -895,7 +904,7 @@
     if (DEMO) { setTimeout(function(){ onChargeOk({ k_purchase:'000DEMO' }); }, 600); return; }
 
     var free = discountState.applied && discountState.isFree; // verified 100%-off -> no card
-    var card = { number: el('cc-num').value.replace(/\D/g,''), exp: el('cc-exp').value, cvc: el('cc-cvc').value.replace(/\D/g,''), zip: el('cc-zip').value.replace(/\D/g,'') };
+    var card = { number: el('cc-num').value.replace(/\D/g,''), exp: el('cc-exp').value, cvc: el('cc-cvc').value.replace(/\D/g,''), zip: el('cc-zip').value.replace(/\D/g,''), name: (el('cc-name').value||lead.name||'').trim(), street: (el('cc-street').value||'').trim(), city: (el('cc-city').value||'').trim() };
     ensureUid().then(function(uid){
       var body = { action:'charge', uid: uid, audience: lead.aud, email: lead.email };
       var disc = (discountState.applied && discountState.code) || (el('cc-disc').value || '').trim();
