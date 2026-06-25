@@ -332,9 +332,9 @@
     call({ action: action, jobId: jobId }).then(function(j){
       if (j && j.status === 'done' && j.success) { onDone(j); return; }
       if (j && j.status === 'error') { onErr((j && j.error) || CALL_ERR); return; }
-      if (n > 120) { onErr('This is taking longer than usual. Please call the studio at (508) 251-9469 to confirm.'); return; }
+      if (n > 175) { onErr('This is taking longer than usual. Please call the studio at (508) 251-9469 to confirm.'); return; }
       setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 1500);
-    }, function(){ if (n > 120) { onErr('Network error. Please call the studio at (508) 251-9469.'); return; } setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 1500); });
+    }, function(){ if (n > 175) { onErr('Network error. Please call the studio at (508) 251-9469.'); return; } setTimeout(function(){ pollJob(action, jobId, onDone, onErr, n + 1); }, 1500); });
   }
 
   // resolve interest -> kclass + aud (explicit params win)
