@@ -26,7 +26,7 @@
     position:fixed;top:14px;right:14px;background:#fff;border:1px solid var(--line);border-radius:999px;
     padding:7px 14px;font-size:12px;font-weight:600;color:var(--muted);box-shadow:var(--shadow);z-index:50;
   }
-  .demo-badge b{color:var(--brand)}
+  .demo-badge b{color:var(--ok)}
   .card{
     width:100%;max-width:920px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
     overflow:hidden;display:grid;grid-template-columns:320px 1fr;min-height:560px;
@@ -63,6 +63,7 @@
   .day.avail:hover{background:#d6e9ff}
   .day.disabled{color:#cdd2db;cursor:not-allowed;background:none}
   .day.sel{background:var(--brand);color:#fff}
+  .cal-loading{color:var(--muted);font-size:13px;padding:30px 0;text-align:center}
   /* slots */
   .slots-wrap{display:flex;flex-direction:column;min-height:0;flex:1}
   .slot-day{font-weight:700;font-size:14px;margin:2px 0 12px;color:#344054}
@@ -92,6 +93,7 @@
   .check{width:64px;height:64px;border-radius:50%;background:#e7f8ef;color:var(--ok);display:flex;align-items:center;justify-content:center}
   .confirm h2{margin:0;font-size:22px}
   .confirm p{margin:0;color:var(--muted);max-width:380px;line-height:1.55}
+  .note{font-size:12.5px;color:#b54708;background:#fffaeb;border:1px solid #fedf89;border-radius:10px;padding:9px 12px;max-width:380px;line-height:1.5}
   .summary{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:16px 18px;width:100%;max-width:380px;
     text-align:left;display:flex;flex-direction:column;gap:9px;font-size:14px}
   .summary .k{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
@@ -101,7 +103,7 @@
 </style>
 </head>
 <body>
-<div class="demo-badge">DEMO MODE <b>&bull;</b> sample availability</div>
+<div class="demo-badge">LIVE AVAILABILITY <b>&bull;</b> SynergyFx calendar</div>
 
 <div class="card">
   <!-- LEFT: service info (sourced from the real HighLevel calendar config) -->
@@ -126,95 +128,52 @@
 
 <script>
 /* =========================================================================
-   SynergyFx "Consultation" booking demo
+   SynergyFx "Consultation" booking page
    Mirrors the live HighLevel (Zen Planner Engage) calendar widget at
    eng.zenplanner.com/widget/booking/bhSEctECzfO7DQ95Vs1u
 
-   Calendar config below was read live from that widget's HighLevel calendar:
+   AVAILABILITY IS REAL. The calendar's free slots are fetched live from the
+   same public HighLevel endpoint the prospect's own widget uses:
+     GET https://services.leadconnectorhq.com/calendars/<id>/free-slots
+   It is public (no token) and CORS-open (access-control-allow-origin: *), so
+   the browser reads it directly. No backend, no token in the page, and the
+   times shown always match SynergyFx's real calendar.
+
+   The service info below (name, duration, address, timezone, copy) is the real
+   calendar config read live from that widget.
    ------------------------------------------------------------------------- */
 const CALENDAR = {
   id: "bhSEctECzfO7DQ95Vs1u",
   locationId: "0tJ6VWJysq81q29EWbVS",
   name: "Consultation",
   slotDurationMin: 45,
-  slotIntervalMin: 30,
   timezone: "America/New_York",
   business: "SynergyFx",
   thankYou: "Thank you for scheduling your appointment. We look forward to meeting you!",
-  consentLabel: "I confirm that I want to receive content from this company using any contact information I provide.",
-  bookableLeadHours: 24            // allow_booking_after = 24 hours
+  consentLabel: "I confirm that I want to receive content from this company using any contact information I provide."
 };
+const SLOTS_ENDPOINT = `https://services.leadconnectorhq.com/calendars/${CALENDAR.id}/free-slots`;
 
-/* =========================================================================
-   DEMO MODE vs LIVE MODE
-   -------------------------------------------------------------------------
-   DEMO_MODE = true  -> availability + booking are simulated in-browser so the
-                        page can be presented with no backend and no token.
-   DEMO_MODE = false -> the two functions below call your backend, which uses
-                        the vai_integrations HighLevel adapter. The pit token
-                        MUST live on the backend, never in this page.
+/* Booking write: creating the appointment writes to SynergyFx's live CRM and
+   emails the assigned coach. That is left OFF here so this shared page cannot
+   spam the prospect with test bookings. When LIVE_BOOKING is turned on, the
+   submit posts through the backend's /book route (HighLevel adapter, token
+   server-side). Until then the final step captures the request and says so
+   plainly rather than pretending it was booked. */
+const LIVE_BOOKING = false;
+const BOOK_ENDPOINT = "/api/highlevel/book";
 
-   Backend contract the new backend should expose (see README.md):
-     GET  {API_BASE}/slots?calendarId=<id>&date=YYYY-MM-DD
-          -> { "slots": ["2026-06-28T08:30:00-04:00", ...] }
-          impl: HighLevelIntegration.list_booking_availabilities(
-                    calendar_id=<id>, from_date=date, to_date=date)
-     POST {API_BASE}/book
-          body { calendarId, startTime, firstName, lastName, email, phone, notes }
-          -> { "bookingId": "...", "startTime": "...", "status": "booked" }
-          impl: c = HighLevelIntegration.upsert_contact(email, phone, firstName, lastName)
-                HighLevelIntegration.create_booking(c.external_id, startTime, calendarId)
-   ========================================================================= */
-const DEMO_MODE = true;
-const API_BASE = "/api/highlevel";
-
-async function fetchSlots(dateStr){
-  if(!DEMO_MODE){
-    const r = await fetch(`${API_BASE}/slots?calendarId=${CALENDAR.id}&date=${dateStr}`);
-    if(!r.ok) throw new Error("slots request failed");
-    return (await r.json()).slots || [];
-  }
-  return demoSlots(dateStr);
-}
-
-async function submitBooking(payload){
-  if(!DEMO_MODE){
-    const r = await fetch(`${API_BASE}/book`, {
-      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)
-    });
-    if(!r.ok) throw new Error("booking request failed");
-    return await r.json();
-  }
-  await new Promise(res=>setTimeout(res,650)); // simulate network
-  return { bookingId:"demo-"+Math.random().toString(36).slice(2,10), startTime:payload.startTime, status:"booked" };
-}
-
-/* ---- demo availability generator (deterministic per date, looks realistic) ---- */
-function demoSlots(dateStr){
-  const d = new Date(dateStr+"T12:00:00");
-  const dow = d.getDay();
-  if(dow===0) return [];                          // closed Sundays
-  // seed gaps from the date so a given day is stable across re-renders
-  let seed = 0; for(const ch of dateStr) seed = (seed*31 + ch.charCodeAt(0)) % 997;
-  const startMin = (dow===6) ? 8*60 : 8*60+30;    // Sat opens 8:00, weekdays 8:30
-  const endMin   = (dow===6) ? 13*60 : 17*60;     // Sat closes 13:00, weekdays 17:00
-  const offset = tzOffsetString(d);
-  const out = [];
-  let i = 0;
-  for(let m=startMin; m+CALENDAR.slotDurationMin<=endMin; m+=CALENDAR.slotIntervalMin, i++){
-    if(((seed + i*7) % 5) === 0) continue;        // ~1 in 5 already booked
-    const hh = String(Math.floor(m/60)).padStart(2,"0");
-    const mm = String(m%60).padStart(2,"0");
-    const iso = `${dateStr}T${hh}:${mm}:00${offset}`;
-    if(new Date(iso).getTime() < Date.now() + CALENDAR.bookableLeadHours*3600*1000) continue; // respect 24h lead
-    out.push(iso);
+/* Fetch real free slots for a date range. Returns { "YYYY-MM-DD": [iso,...] }. */
+async function fetchAvailability(startMs, endMs){
+  const url = `${SLOTS_ENDPOINT}?startDate=${startMs}&endDate=${endMs}&timezone=${encodeURIComponent(CALENDAR.timezone)}`;
+  const r = await fetch(url, { headers:{ "Accept":"application/json" } });
+  if(!r.ok) throw new Error("availability request failed");
+  const data = await r.json();
+  const out = {};
+  for(const [k,v] of Object.entries(data)){
+    if(v && Array.isArray(v.slots) && v.slots.length) out[k] = v.slots;
   }
   return out;
-}
-function tzOffsetString(d){
-  // ET offset: -04:00 during DST (Mar-Nov), -05:00 otherwise. Good enough for a demo.
-  const m = d.getMonth(); // 0=Jan
-  return (m>=2 && m<=10) ? "-04:00" : "-05:00";
 }
 
 /* ========================= UI / state machine ============================ */
@@ -224,15 +183,11 @@ const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MON = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 let view = new Date(); view.setDate(1);
 let state = { date:null, slot:null };
+let availability = {};   // cache for the month currently in view: { "YYYY-MM-DD": [iso,...] }
 
 function fmtDay(dStr){ const d=new Date(dStr+"T12:00:00"); return `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; }
 function fmtTime(iso){ const d=new Date(iso); let h=d.getHours(), m=d.getMinutes(); const ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; }
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
-function dateHasAvailability(d){
-  const today=new Date(); today.setHours(0,0,0,0);
-  if(d < today) return false;
-  return demoSlots(ymd(d)).length > 0;   // in live mode the calendar can stay clickable and slots load on click
-}
 
 function updatePill(){
   if(state.date && state.slot){
@@ -244,54 +199,63 @@ function updatePill(){
   } else { pill.classList.remove("show"); }
 }
 
-/* ---- step 1: calendar ---- */
-function renderCalendar(){
+/* ---- step 1: calendar (real availability for the visible month) ---- */
+async function renderCalendar(){
   updatePill();
-  const first = new Date(view.getFullYear(), view.getMonth(), 1);
-  const startDow = first.getDay();
-  const daysInMonth = new Date(view.getFullYear(), view.getMonth()+1, 0).getDate();
+  const y = view.getFullYear(), m = view.getMonth();
   const thisMonth = new Date(); thisMonth.setDate(1); thisMonth.setHours(0,0,0,0);
-  const prevDisabled = (view.getFullYear()===thisMonth.getFullYear() && view.getMonth()===thisMonth.getMonth());
+  const prevDisabled = (y===thisMonth.getFullYear() && m===thisMonth.getMonth());
 
-  let cells = "";
-  for(let i=0;i<startDow;i++) cells += `<button class="day empty"></button>`;
-  for(let day=1; day<=daysInMonth; day++){
-    const d = new Date(view.getFullYear(), view.getMonth(), day);
-    const dStr = ymd(d);
-    const avail = dateHasAvailability(d);
-    const sel = state.date===dStr;
-    const cls = sel ? "day sel" : avail ? "day avail" : "day disabled";
-    cells += `<button class="${cls}" ${avail?`data-date="${dStr}"`:"disabled"}>${day}</button>`;
-  }
+  // shell with a loading state while the month's real slots load
   panel.innerHTML = `
     <h2>Select a date &amp; time</h2>
     <div class="cal-head">
-      <div class="mname">${MON[view.getMonth()]} ${view.getFullYear()}</div>
+      <div class="mname">${MON[m]} ${y}</div>
       <div class="nav">
         <button id="prev" ${prevDisabled?"disabled":""}>&#8249;</button>
         <button id="next">&#8250;</button>
       </div>
     </div>
     <div class="dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}</div>
-    <div class="grid">${cells}</div>
-    <p class="desc" style="margin-top:14px">Highlighted days have openings. All times shown in Eastern Time.</p>
-  `;
-  panel.querySelector("#prev").onclick = ()=>{ if(!prevDisabled){ view.setMonth(view.getMonth()-1); renderCalendar(); } };
-  panel.querySelector("#next").onclick = ()=>{ view.setMonth(view.getMonth()+1); renderCalendar(); };
-  panel.querySelectorAll("[data-date]").forEach(b=> b.onclick = ()=>{ state.date=b.dataset.date; state.slot=null; renderSlots(); });
+    <div class="grid" id="grid"><div class="cal-loading" style="grid-column:1/8">Loading real availability&hellip;</div></div>
+    <p class="desc" style="margin-top:14px">Highlighted days have real openings on SynergyFx's calendar. All times in Eastern Time.</p>`;
+  panel.querySelector("#prev").onclick = ()=>{ if(!prevDisabled){ view.setMonth(m-1); renderCalendar(); } };
+  panel.querySelector("#next").onclick = ()=>{ view.setMonth(m+1); renderCalendar(); };
+
+  // fetch the whole month in one call (server returns only bookable future slots)
+  const startMs = Date.UTC(y, m, 1);
+  const endMs = Date.UTC(y, m+1, 1) - 1;
+  try { availability = await fetchAvailability(startMs, endMs); }
+  catch(e){
+    panel.querySelector("#grid").innerHTML = `<div class="cal-loading" style="grid-column:1/8;color:#f04438">Could not load availability. Please refresh.</div>`;
+    return;
+  }
+
+  const startDow = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  let cells = "";
+  for(let i=0;i<startDow;i++) cells += `<button class="day empty"></button>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const dStr = ymd(new Date(y, m, day));
+    const avail = (availability[dStr] || []).length > 0;
+    const sel = state.date===dStr;
+    const cls = sel ? "day sel" : avail ? "day avail" : "day disabled";
+    cells += `<button class="${cls}" ${avail?`data-date="${dStr}"`:"disabled"}>${day}</button>`;
+  }
+  const grid = panel.querySelector("#grid");
+  grid.innerHTML = cells;
+  grid.querySelectorAll("[data-date]").forEach(b=> b.onclick = ()=>{ state.date=b.dataset.date; state.slot=null; renderSlots(); });
 }
 
-/* ---- step 2: time slots ---- */
-async function renderSlots(){
+/* ---- step 2: time slots (from the real month cache) ---- */
+function renderSlots(){
   updatePill();
+  const slots = availability[state.date] || [];
   panel.innerHTML = `
     <button class="back" id="back">&#8249; Back to calendar</button>
     <h2>${fmtDay(state.date)}</h2>
-    <div class="slots-wrap"><div class="none">Loading times&hellip;</div></div>`;
+    <div class="slots-wrap"></div>`;
   panel.querySelector("#back").onclick = renderCalendar;
-  let slots = [];
-  try { slots = await fetchSlots(state.date); }
-  catch(e){ panel.querySelector(".slots-wrap").innerHTML = `<div class="none">Could not load times. Please try again.</div>`; return; }
   const wrap = panel.querySelector(".slots-wrap");
   if(!slots.length){ wrap.innerHTML = `<div class="none">No open times on this day. Please pick another date.</div>`; return; }
   wrap.innerHTML = `<div class="slots">${slots.map(s=>`<button class="slot" data-iso="${s}">${fmtTime(s)}</button>`).join("")}</div>`;
@@ -356,20 +320,33 @@ function onSubmit(e){
     .catch(()=>{ btn.disabled=false; btn.textContent="Schedule Meeting"; alert("Something went wrong. Please try again."); });
 }
 
+async function submitBooking(payload){
+  if(LIVE_BOOKING){
+    const r = await fetch(BOOK_ENDPOINT, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
+    if(!r.ok) throw new Error("booking request failed");
+    return await r.json();
+  }
+  // booking writes are off on this shared page (see LIVE_BOOKING). Capture only.
+  await new Promise(res=>setTimeout(res,450));
+  return { written:false, requestId:"req-"+Math.random().toString(36).slice(2,10), startTime:payload.startTime };
+}
+
 /* ---- confirmation ---- */
 function renderConfirmation(f, res){
   pill.classList.remove("show");
+  const wrote = res.written !== false;
   panel.innerHTML = `
     <div class="confirm">
       <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
-      <h2>You're booked!</h2>
-      <p>${CALENDAR.thankYou}</p>
+      <h2>${wrote ? "You're booked!" : "Request captured"}</h2>
+      <p>${wrote ? CALENDAR.thankYou : "Thanks, " + f.firstName + ". Your requested time is saved below."}</p>
+      ${wrote ? "" : `<div class="note">Preview: live booking is turned off on this shared page, so this was <b>not</b> written to SynergyFx's calendar yet. Turn on live booking to write it for real.</div>`}
       <div class="summary">
         <div><div class="k">Service</div><div class="v">${CALENDAR.business} &bull; ${CALENDAR.name} (${CALENDAR.slotDurationMin} min)</div></div>
         <div><div class="k">When</div><div class="v">${fmtDay(state.date)} at ${fmtTime(state.slot)} ET</div></div>
         <div><div class="k">Who</div><div class="v">${f.firstName} ${f.lastName}</div></div>
         <div><div class="k">Contact</div><div class="v">${f.email} &bull; ${f.phone}</div></div>
-        <div><div class="k">Confirmation</div><div class="v">${res.bookingId}</div></div>
+        <div><div class="k">${wrote ? "Confirmation" : "Reference"}</div><div class="v">${res.bookingId || res.requestId}</div></div>
       </div>
       <button class="linkbtn" id="again">Book another time</button>
     </div>`;
