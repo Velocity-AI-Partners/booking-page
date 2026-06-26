@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SynergyFx | Book a Consultation</title>
+<style>
+  :root{
+    --brand:#178af6;
+    --brand-dark:#0f6fd6;
+    --brand-tint:#e9f3ff;
+    --ink:#101828;
+    --muted:#667085;
+    --line:#e4e7ec;
+    --ok:#12b76a;
+    --bg:#f3f5f9;
+    --radius:14px;
+    --shadow:0 10px 40px rgba(16,24,40,.12);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px;
+  }
+  .demo-badge{
+    position:fixed;top:14px;right:14px;background:#fff;border:1px solid var(--line);border-radius:999px;
+    padding:7px 14px;font-size:12px;font-weight:600;color:var(--muted);box-shadow:var(--shadow);z-index:50;
+  }
+  .demo-badge b{color:var(--brand)}
+  .card{
+    width:100%;max-width:920px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    overflow:hidden;display:grid;grid-template-columns:320px 1fr;min-height:560px;
+  }
+  /* left info panel */
+  .info{padding:30px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+  .brandmark{width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,var(--brand),#5db0ff);
+    color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+  .biz{font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  .svc{font-size:24px;font-weight:700;margin:2px 0 0}
+  .meta{display:flex;flex-direction:column;gap:11px;margin-top:4px}
+  .meta .row{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#344054}
+  .meta svg{flex:0 0 18px;margin-top:1px;color:var(--muted)}
+  .desc{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:2px}
+  .selected-pill{margin-top:auto;background:var(--brand-tint);border:1px solid #cfe4ff;border-radius:12px;
+    padding:13px 14px;font-size:13.5px;color:var(--brand-dark);font-weight:600;display:none}
+  .selected-pill.show{display:block}
+  /* right panel */
+  .panel{padding:28px 30px;display:flex;flex-direction:column}
+  .panel h2{margin:0 0 16px;font-size:18px}
+  .back{background:none;border:none;color:var(--brand);font-weight:600;cursor:pointer;font-size:14px;padding:0;margin-bottom:10px;display:inline-flex;align-items:center;gap:5px}
+  /* calendar */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cal-head .mname{font-weight:700;font-size:15px}
+  .nav{display:flex;gap:6px}
+  .nav button{width:32px;height:32px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:15px;color:var(--ink)}
+  .nav button:disabled{opacity:.35;cursor:not-allowed}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+  .dow span{text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .day{aspect-ratio:1;border:none;background:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);position:relative}
+  .day.empty{visibility:hidden}
+  .day.avail{background:var(--brand-tint);color:var(--brand-dark)}
+  .day.avail:hover{background:#d6e9ff}
+  .day.disabled{color:#cdd2db;cursor:not-allowed;background:none}
+  .day.sel{background:var(--brand);color:#fff}
+  /* slots */
+  .slots-wrap{display:flex;flex-direction:column;min-height:0;flex:1}
+  .slot-day{font-weight:700;font-size:14px;margin:2px 0 12px;color:#344054}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;overflow:auto;padding-right:4px;align-content:start}
+  .slot{padding:11px 8px;border:1px solid #cfe0f5;background:#fff;color:var(--brand-dark);font-weight:600;
+    border-radius:10px;cursor:pointer;font-size:14px;text-align:center}
+  .slot:hover{border-color:var(--brand);background:var(--brand-tint)}
+  .none{color:var(--muted);font-size:14px;padding:20px 0}
+  /* form */
+  form{display:flex;flex-direction:column;gap:13px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  label{font-size:13px;font-weight:600;color:#344054;display:flex;flex-direction:column;gap:6px}
+  input,textarea{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;outline:none;width:100%}
+  input:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(23,138,246,.15)}
+  textarea{resize:vertical;min-height:64px}
+  .err{border-color:#f04438 !important}
+  .err-msg{color:#f04438;font-size:12px;font-weight:600;display:none}
+  .err-msg.show{display:block}
+  .consent{font-size:12px;color:var(--muted);line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+  .consent input{width:auto;margin-top:2px}
+  .cta{margin-top:4px;background:var(--brand);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;
+    font-weight:700;cursor:pointer}
+  .cta:hover{background:var(--brand-dark)}
+  .cta:disabled{opacity:.6;cursor:progress}
+  /* confirmation */
+  .confirm{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex:1;gap:14px;padding:10px}
+  .check{width:64px;height:64px;border-radius:50%;background:#e7f8ef;color:var(--ok);display:flex;align-items:center;justify-content:center}
+  .confirm h2{margin:0;font-size:22px}
+  .confirm p{margin:0;color:var(--muted);max-width:380px;line-height:1.55}
+  .summary{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:16px 18px;width:100%;max-width:380px;
+    text-align:left;display:flex;flex-direction:column;gap:9px;font-size:14px}
+  .summary .k{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .summary .v{font-weight:600;color:var(--ink)}
+  .linkbtn{background:none;border:none;color:var(--brand);font-weight:700;cursor:pointer;font-size:14px}
+  @media (max-width:760px){.card{grid-template-columns:1fr}.info{border-right:none;border-bottom:1px solid var(--line)}.selected-pill{margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="demo-badge">DEMO MODE <b>&bull;</b> sample availability</div>
+
+<div class="card">
+  <!-- LEFT: service info (sourced from the real HighLevel calendar config) -->
+  <aside class="info">
+    <div class="brandmark">Sx</div>
+    <div>
+      <div class="biz">SynergyFx</div>
+      <h1 class="svc">Consultation</h1>
+    </div>
+    <div class="meta">
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>45 minutes</span></div>
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>8815 Columbia 100 Parkway, Suite 2,<br/>Columbia, MD 21045</span></div>
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span>America/New_York (ET)</span></div>
+    </div>
+    <p class="desc">Meet with a SynergyFx coach to map out your goals and find the right program. Pick a day and time that works for you.</p>
+    <div class="selected-pill" id="selectedPill"></div>
+  </aside>
+
+  <!-- RIGHT: booking flow -->
+  <section class="panel" id="panel"></section>
+</div>
+
+<script>
+/* =========================================================================
+   SynergyFx "Consultation" booking demo
+   Mirrors the live HighLevel (Zen Planner Engage) calendar widget at
+   eng.zenplanner.com/widget/booking/bhSEctECzfO7DQ95Vs1u
+
+   Calendar config below was read live from that widget's HighLevel calendar:
+   ------------------------------------------------------------------------- */
+const CALENDAR = {
+  id: "bhSEctECzfO7DQ95Vs1u",
+  locationId: "0tJ6VWJysq81q29EWbVS",
+  name: "Consultation",
+  slotDurationMin: 45,
+  slotIntervalMin: 30,
+  timezone: "America/New_York",
+  business: "SynergyFx",
+  thankYou: "Thank you for scheduling your appointment. We look forward to meeting you!",
+  consentLabel: "I confirm that I want to receive content from this company using any contact information I provide.",
+  bookableLeadHours: 24            // allow_booking_after = 24 hours
+};
+
+/* =========================================================================
+   DEMO MODE vs LIVE MODE
+   -------------------------------------------------------------------------
+   DEMO_MODE = true  -> availability + booking are simulated in-browser so the
+                        page can be presented with no backend and no token.
+   DEMO_MODE = false -> the two functions below call your backend, which uses
+                        the vai_integrations HighLevel adapter. The pit token
+                        MUST live on the backend, never in this page.
+
+   Backend contract the new backend should expose (see README.md):
+     GET  {API_BASE}/slots?calendarId=<id>&date=YYYY-MM-DD
+          -> { "slots": ["2026-06-28T08:30:00-04:00", ...] }
+          impl: HighLevelIntegration.list_booking_availabilities(
+                    calendar_id=<id>, from_date=date, to_date=date)
+     POST {API_BASE}/book
+          body { calendarId, startTime, firstName, lastName, email, phone, notes }
+          -> { "bookingId": "...", "startTime": "...", "status": "booked" }
+          impl: c = HighLevelIntegration.upsert_contact(email, phone, firstName, lastName)
+                HighLevelIntegration.create_booking(c.external_id, startTime, calendarId)
+   ========================================================================= */
+const DEMO_MODE = true;
+const API_BASE = "/api/highlevel";
+
+async function fetchSlots(dateStr){
+  if(!DEMO_MODE){
+    const r = await fetch(`${API_BASE}/slots?calendarId=${CALENDAR.id}&date=${dateStr}`);
+    if(!r.ok) throw new Error("slots request failed");
+    return (await r.json()).slots || [];
+  }
+  return demoSlots(dateStr);
+}
+
+async function submitBooking(payload){
+  if(!DEMO_MODE){
+    const r = await fetch(`${API_BASE}/book`, {
+      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)
+    });
+    if(!r.ok) throw new Error("booking request failed");
+    return await r.json();
+  }
+  await new Promise(res=>setTimeout(res,650)); // simulate network
+  return { bookingId:"demo-"+Math.random().toString(36).slice(2,10), startTime:payload.startTime, status:"booked" };
+}
+
+/* ---- demo availability generator (deterministic per date, looks realistic) ---- */
+function demoSlots(dateStr){
+  const d = new Date(dateStr+"T12:00:00");
+  const dow = d.getDay();
+  if(dow===0) return [];                          // closed Sundays
+  // seed gaps from the date so a given day is stable across re-renders
+  let seed = 0; for(const ch of dateStr) seed = (seed*31 + ch.charCodeAt(0)) % 997;
+  const startMin = (dow===6) ? 8*60 : 8*60+30;    // Sat opens 8:00, weekdays 8:30
+  const endMin   = (dow===6) ? 13*60 : 17*60;     // Sat closes 13:00, weekdays 17:00
+  const offset = tzOffsetString(d);
+  const out = [];
+  let i = 0;
+  for(let m=startMin; m+CALENDAR.slotDurationMin<=endMin; m+=CALENDAR.slotIntervalMin, i++){
+    if(((seed + i*7) % 5) === 0) continue;        // ~1 in 5 already booked
+    const hh = String(Math.floor(m/60)).padStart(2,"0");
+    const mm = String(m%60).padStart(2,"0");
+    const iso = `${dateStr}T${hh}:${mm}:00${offset}`;
+    if(new Date(iso).getTime() < Date.now() + CALENDAR.bookableLeadHours*3600*1000) continue; // respect 24h lead
+    out.push(iso);
+  }
+  return out;
+}
+function tzOffsetString(d){
+  // ET offset: -04:00 during DST (Mar-Nov), -05:00 otherwise. Good enough for a demo.
+  const m = d.getMonth(); // 0=Jan
+  return (m>=2 && m<=10) ? "-04:00" : "-05:00";
+}
+
+/* ========================= UI / state machine ============================ */
+const panel = document.getElementById("panel");
+const pill  = document.getElementById("selectedPill");
+const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MON = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+let view = new Date(); view.setDate(1);
+let state = { date:null, slot:null };
+
+function fmtDay(dStr){ const d=new Date(dStr+"T12:00:00"); return `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; }
+function fmtTime(iso){ const d=new Date(iso); let h=d.getHours(), m=d.getMinutes(); const ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`; }
+function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function dateHasAvailability(d){
+  const today=new Date(); today.setHours(0,0,0,0);
+  if(d < today) return false;
+  return demoSlots(ymd(d)).length > 0;   // in live mode the calendar can stay clickable and slots load on click
+}
+
+function updatePill(){
+  if(state.date && state.slot){
+    pill.classList.add("show");
+    pill.innerHTML = `&#128197; ${fmtDay(state.date)}<br/>&#128336; ${fmtTime(state.slot)} ET`;
+  } else if(state.date){
+    pill.classList.add("show");
+    pill.innerHTML = `&#128197; ${fmtDay(state.date)}`;
+  } else { pill.classList.remove("show"); }
+}
+
+/* ---- step 1: calendar ---- */
+function renderCalendar(){
+  updatePill();
+  const first = new Date(view.getFullYear(), view.getMonth(), 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(view.getFullYear(), view.getMonth()+1, 0).getDate();
+  const thisMonth = new Date(); thisMonth.setDate(1); thisMonth.setHours(0,0,0,0);
+  const prevDisabled = (view.getFullYear()===thisMonth.getFullYear() && view.getMonth()===thisMonth.getMonth());
+
+  let cells = "";
+  for(let i=0;i<startDow;i++) cells += `<button class="day empty"></button>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const d = new Date(view.getFullYear(), view.getMonth(), day);
+    const dStr = ymd(d);
+    const avail = dateHasAvailability(d);
+    const sel = state.date===dStr;
+    const cls = sel ? "day sel" : avail ? "day avail" : "day disabled";
+    cells += `<button class="${cls}" ${avail?`data-date="${dStr}"`:"disabled"}>${day}</button>`;
+  }
+  panel.innerHTML = `
+    <h2>Select a date &amp; time</h2>
+    <div class="cal-head">
+      <div class="mname">${MON[view.getMonth()]} ${view.getFullYear()}</div>
+      <div class="nav">
+        <button id="prev" ${prevDisabled?"disabled":""}>&#8249;</button>
+        <button id="next">&#8250;</button>
+      </div>
+    </div>
+    <div class="dow">${DOW.map(d=>`<span>${d[0]}</span>`).join("")}</div>
+    <div class="grid">${cells}</div>
+    <p class="desc" style="margin-top:14px">Highlighted days have openings. All times shown in Eastern Time.</p>
+  `;
+  panel.querySelector("#prev").onclick = ()=>{ if(!prevDisabled){ view.setMonth(view.getMonth()-1); renderCalendar(); } };
+  panel.querySelector("#next").onclick = ()=>{ view.setMonth(view.getMonth()+1); renderCalendar(); };
+  panel.querySelectorAll("[data-date]").forEach(b=> b.onclick = ()=>{ state.date=b.dataset.date; state.slot=null; renderSlots(); });
+}
+
+/* ---- step 2: time slots ---- */
+async function renderSlots(){
+  updatePill();
+  panel.innerHTML = `
+    <button class="back" id="back">&#8249; Back to calendar</button>
+    <h2>${fmtDay(state.date)}</h2>
+    <div class="slots-wrap"><div class="none">Loading times&hellip;</div></div>`;
+  panel.querySelector("#back").onclick = renderCalendar;
+  let slots = [];
+  try { slots = await fetchSlots(state.date); }
+  catch(e){ panel.querySelector(".slots-wrap").innerHTML = `<div class="none">Could not load times. Please try again.</div>`; return; }
+  const wrap = panel.querySelector(".slots-wrap");
+  if(!slots.length){ wrap.innerHTML = `<div class="none">No open times on this day. Please pick another date.</div>`; return; }
+  wrap.innerHTML = `<div class="slots">${slots.map(s=>`<button class="slot" data-iso="${s}">${fmtTime(s)}</button>`).join("")}</div>`;
+  wrap.querySelectorAll(".slot").forEach(b=> b.onclick = ()=>{ state.slot=b.dataset.iso; renderForm(); });
+}
+
+/* ---- step 3: contact form ---- */
+function renderForm(){
+  updatePill();
+  panel.innerHTML = `
+    <button class="back" id="back">&#8249; Change time</button>
+    <h2>Enter your details</h2>
+    <form id="bookForm" novalidate>
+      <div class="two">
+        <label>First name
+          <input name="firstName" autocomplete="given-name" />
+          <span class="err-msg">Required</span>
+        </label>
+        <label>Last name
+          <input name="lastName" autocomplete="family-name" />
+          <span class="err-msg">Required</span>
+        </label>
+      </div>
+      <label>Email
+        <input name="email" type="email" autocomplete="email" />
+        <span class="err-msg">Enter a valid email</span>
+      </label>
+      <label>Phone
+        <input name="phone" type="tel" autocomplete="tel" placeholder="(555) 123-4567" />
+        <span class="err-msg">Enter a valid phone</span>
+      </label>
+      <label>Anything we should know? (optional)
+        <textarea name="notes" placeholder="Goals, questions, scheduling notes..."></textarea>
+      </label>
+      <div class="consent"><input type="checkbox" id="consent" checked /><label for="consent" style="font-weight:400">${CALENDAR.consentLabel}</label></div>
+      <button class="cta" type="submit">Schedule Meeting</button>
+    </form>`;
+  panel.querySelector("#back").onclick = renderSlots;
+  panel.querySelector("#bookForm").onsubmit = onSubmit;
+}
+
+function onSubmit(e){
+  e.preventDefault();
+  const form = e.target;
+  const f = Object.fromEntries(new FormData(form).entries());
+  const fields = form.querySelectorAll("input, textarea");
+  fields.forEach(i=>{ i.classList.remove("err"); const m=i.parentElement.querySelector(".err-msg"); if(m)m.classList.remove("show"); });
+  let ok = true;
+  const fail = (name)=>{ const el=form.querySelector(`[name="${name}"]`); el.classList.add("err"); const m=el.parentElement.querySelector(".err-msg"); if(m)m.classList.add("show"); ok=false; };
+  if(!f.firstName||!f.firstName.trim()) fail("firstName");
+  if(!f.lastName||!f.lastName.trim()) fail("lastName");
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email||"")) fail("email");
+  if(((f.phone||"").replace(/\D/g,"")).length < 10) fail("phone");
+  if(!ok) return;
+
+  const btn = form.querySelector(".cta"); btn.disabled=true; btn.textContent="Scheduling...";
+  submitBooking({
+    calendarId: CALENDAR.id, startTime: state.slot,
+    firstName:f.firstName.trim(), lastName:f.lastName.trim(),
+    email:f.email.trim(), phone:f.phone.trim(), notes:(f.notes||"").trim()
+  }).then(res=> renderConfirmation(f, res))
+    .catch(()=>{ btn.disabled=false; btn.textContent="Schedule Meeting"; alert("Something went wrong. Please try again."); });
+}
+
+/* ---- confirmation ---- */
+function renderConfirmation(f, res){
+  pill.classList.remove("show");
+  panel.innerHTML = `
+    <div class="confirm">
+      <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h2>You're booked!</h2>
+      <p>${CALENDAR.thankYou}</p>
+      <div class="summary">
+        <div><div class="k">Service</div><div class="v">${CALENDAR.business} &bull; ${CALENDAR.name} (${CALENDAR.slotDurationMin} min)</div></div>
+        <div><div class="k">When</div><div class="v">${fmtDay(state.date)} at ${fmtTime(state.slot)} ET</div></div>
+        <div><div class="k">Who</div><div class="v">${f.firstName} ${f.lastName}</div></div>
+        <div><div class="k">Contact</div><div class="v">${f.email} &bull; ${f.phone}</div></div>
+        <div><div class="k">Confirmation</div><div class="v">${res.bookingId}</div></div>
+      </div>
+      <button class="linkbtn" id="again">Book another time</button>
+    </div>`;
+  panel.querySelector("#again").onclick = ()=>{ state={date:null,slot:null}; view=new Date(); view.setDate(1); renderCalendar(); };
+}
+
+renderCalendar();
+</script>
+</body>
+</html>
