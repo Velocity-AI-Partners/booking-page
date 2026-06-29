@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SynergyFx | Contact Us</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* SynergyFx brand red captured from the live HighLevel "Contact Us (Website)"
+     form's Send Message button: rgb(197,51,51) = #c53333. The form on the right
+     is SynergyFx's REAL HighLevel form (same one embedded on synergyfxfit.com),
+     so submissions land directly in their CRM, with their validation + recaptcha. */
+  :root{
+    --brand:#c53333; --brand-dark:#a82a2a;
+    --brand-tint:rgba(197,51,51,.07); --brand-tint2:rgba(197,51,51,.12);
+    --ink:#101828; --muted:#667085; --slate:#5f6b7a;
+    --line:#e4e7ec; --bg:#ffffff;
+    --shadow:0 6px 28px rgba(16,24,40,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    color:var(--ink);background:#f7f8fa;display:flex;align-items:center;justify-content:center;padding:30px 16px;
+  }
+  .card{
+    width:100%;max-width:1120px;background:var(--bg);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:340px 1fr;min-height:640px;
+  }
+  /* ---------- left info panel ---------- */
+  .info{padding:34px 30px;border-right:1px solid var(--line);display:flex;flex-direction:column}
+  .brandrow{display:flex;align-items:center;gap:11px;margin-bottom:26px}
+  .brandrow .dot{width:11px;height:11px;border-radius:50%;background:var(--brand)}
+  .brandrow .nm{font-size:15px;font-weight:700;letter-spacing:.2px;color:var(--ink)}
+  .info h1{font-size:26px;font-weight:700;line-height:1.2;margin:0 0 12px}
+  .info .lede{font-size:14.5px;line-height:1.55;color:var(--slate);margin:0 0 28px;max-width:280px}
+  .meta{display:flex;flex-direction:column;gap:18px;margin-bottom:30px}
+  .meta .row{display:flex;gap:13px;align-items:flex-start;font-size:14.5px;font-weight:500;color:var(--ink)}
+  .meta .row a{color:inherit;text-decoration:none}
+  .meta .row a:hover{color:var(--brand)}
+  .meta .ic{flex:0 0 20px;width:20px;height:20px;margin-top:1px;color:var(--brand)}
+  .meta .row span{line-height:1.5}
+  .mapbtn{display:inline-flex;align-items:center;justify-content:center;gap:9px;align-self:flex-start;
+    background:var(--brand);color:#fff;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.4px;
+    padding:14px 26px;border-radius:8px;text-transform:uppercase}
+  .mapbtn:hover{background:var(--brand-dark)}
+  .mapbtn svg{width:17px;height:17px}
+  .info .foot{margin-top:auto;padding-top:28px;font-size:12px;color:var(--muted)}
+  /* ---------- right form panel ---------- */
+  .stage{display:flex;flex-direction:column;min-width:0}
+  .formwrap{flex:1;padding:14px 14px 10px;min-height:0}
+  .formwrap iframe{width:100%;min-height:620px;border:none;background:transparent;display:block}
+  @media (max-width:880px){
+    .card{grid-template-columns:1fr}
+    .info{border-right:none;border-bottom:1px solid var(--line)}
+    .formwrap iframe{min-height:680px}
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <aside class="info">
+    <div class="brandrow"><span class="dot"></span><span class="nm">SynergyFx</span></div>
+    <h1>Get in touch</h1>
+    <p class="lede">Questions about memberships, classes, or getting started? Send us a note and our team will help.</p>
+    <div class="meta">
+      <div class="row">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        <span>8815 Columbia 100 Parkway, Suite 2<br>Columbia, MD 21045</span>
+      </div>
+      <div class="row">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+        <span><a href="tel:+14109649858">(410) 964-9858</a></span>
+      </div>
+      <div class="row">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+        <span><a href="mailto:info@synergyfxfit.com">info@synergyfxfit.com</a></span>
+      </div>
+    </div>
+    <a class="mapbtn" href="https://www.google.com/maps/search/?api=1&query=8815+Columbia+100+Parkway+Suite+2+Columbia+MD+21045" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Open in Maps
+    </a>
+    <div class="foot">SynergyFx &bull; Columbia, MD</div>
+  </aside>
+
+  <section class="stage">
+    <div class="formwrap">
+      <iframe
+        src="https://api.leadconnectorhq.com/widget/form/fzDRqjpw75oC0JSTTBVQ"
+        id="inline-fzDRqjpw75oC0JSTTBVQ"
+        data-layout="{'id':'INLINE'}"
+        data-trigger-type="alwaysShow"
+        data-form-name="Contact Us (Website)"
+        data-height="620"
+        data-layout-iframe-id="inline-fzDRqjpw75oC0JSTTBVQ"
+        data-form-id="fzDRqjpw75oC0JSTTBVQ"
+        title="Contact Us (Website)">
+      </iframe>
+    </div>
+  </section>
+</div>
+<script src="https://link.msgsndr.com/js/form_embed.js"></script>
+</body>
+</html>
