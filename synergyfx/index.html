@@ -151,11 +151,13 @@ const CALENDAR = {
 };
 const SLOTS_ENDPOINT = `https://services.leadconnectorhq.com/calendars/${CALENDAR.id}/free-slots`;
 
-/* Booking write is OFF on this shared page (creating an appointment writes to
-   SynergyFx's live CRM and emails the assigned coach). Flip to true + set
-   BOOK_ENDPOINT to a backend route (HighLevel adapter, token server-side). */
-const LIVE_BOOKING = false;
-const BOOK_ENDPOINT = "/api/highlevel/book";
+/* Booking now goes through the Velocity backend proxy (synergyfx-booking edge fn,
+   token server-side). The proxy keeps CRM writes GATED until SynergyFx approves:
+   while gated it returns a "preview" response and writes nothing, so the page shows
+   a captured-preview confirmation. Flip SYNERGYFX_LIVE_WRITES on the edge function
+   to go live; no page change needed. */
+const LIVE_BOOKING = true;
+const BOOK_ENDPOINT = "https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/synergyfx-booking";
 
 async function fetchAvailability(startMs,endMs){
   const url=`${SLOTS_ENDPOINT}?startDate=${startMs}&endDate=${endMs}&timezone=${encodeURIComponent(CALENDAR.timezone)}`;
@@ -312,7 +314,7 @@ function onSubmit(e){
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email||"")) fail("email");
   if(!ok) return;
   const btn=form.querySelector(".cta"); btn.disabled=true; btn.textContent="Scheduling...";
-  submitBooking({calendarId:CALENDAR.id,startTime:state.chosen,firstName:f.firstName.trim(),lastName:f.lastName.trim(),
+  submitBooking({action:"book",calendarId:CALENDAR.id,startTime:state.chosen,firstName:f.firstName.trim(),lastName:f.lastName.trim(),
     email:f.email.trim(),phone:f.phone.trim(),notes:(f.notes||"").trim()})
     .then(res=>renderConfirmation(f,res))
     .catch(()=>{ btn.disabled=false; btn.textContent="Schedule Meeting"; alert("Something went wrong. Please try again."); });
