@@ -117,6 +117,18 @@
   .zp-bk-s{font-size:11.5px; color:var(--faint); margin-top:2px}
   .zp-empty{margin:auto; text-align:center; color:var(--faint); font-size:14px; padding:40px}
 
+  .zp-drop{margin-bottom:9px}
+  .zp-drop-head{width:100%; text-align:left; cursor:pointer; margin-bottom:0}
+  .zp-drop-head:hover{background:#fafbfe}
+  .zp-drop.open .zp-drop-head{border-bottom-left-radius:0; border-bottom-right-radius:0}
+  .zp-chev{width:18px; height:18px; color:var(--faint); flex:0 0 auto; transition:transform .15s ease}
+  .zp-drop.open .zp-chev{transform:rotate(180deg)}
+  .zp-drop-body{background:var(--panel); border:1px solid var(--border); border-top:0; border-bottom-left-radius:11px; border-bottom-right-radius:11px; padding:6px 14px 10px}
+  .zp-kv{display:flex; gap:12px; padding:8px 0; border-bottom:1px solid var(--border-soft)}
+  .zp-kv:last-child{border-bottom:0}
+  .zp-kv-k{flex:0 0 108px; color:var(--muted); font-weight:600; font-size:12px; padding-top:1px}
+  .zp-kv-v{flex:1 1 auto; color:var(--ink); font-size:13px; word-break:break-word; white-space:pre-wrap}
+
   @media (max-width:760px){
     .zp-list{flex:1 1 auto; max-width:none}
     .zp-detail{display:none}
@@ -257,12 +269,36 @@
       detail.innerHTML=headHTML(i,'<span class="zp-tp consult">Consultation</span> <span class="zp-pill '+i.status+'">'+esc(i.statusLabel)+'</span>')+
         '<div class="zp-scroll"><p class="zp-sec">'+i.count+' consultation'+(i.count>1?'s':'')+' booked</p>'+hist+'</div>';
     } else {
-      var sub='Submitted their info'+(i.source&&i.source!=='(unknown)'&&i.source!==''?(' via '+esc(i.source)):'')+(i.program?(' · Interested in '+esc(i.program)):'');
+      var kv=[];
+      kv.push(['Name', i.name]);
+      kv.push(['Submitted', i.date]);
+      if(i.source && i.source!=='(unknown)' && i.source!=='') kv.push(['Source', srcLabel(i.source)]);
+      if(i.program) kv.push(['Interested in', i.program]);
+      if(i.phone) kv.push(['Phone', i.phone]);
+      if(i.email) kv.push(['Email', i.email]);
+      if(i.message) kv.push(['Message', i.message]);
+      var kvHtml='';
+      kv.forEach(function(p){kvHtml+='<div class="zp-kv"><span class="zp-kv-k">'+esc(p[0])+'</span><span class="zp-kv-v">'+esc(p[1])+'</span></div>';});
       detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> <span class="zp-pill upcoming">Not booked</span>')+
         '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
-        '<div class="zp-bk"><div class="zp-bk-ic">'+userSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">'+esc(i.date)+'</div><div class="zp-bk-s">'+sub+'</div></div></div>'+
+        '<div class="zp-drop" id="zpLeadDrop">'+
+          '<button class="zp-bk zp-drop-head" id="zpLeadDropBtn" type="button" aria-expanded="false" aria-controls="zpLeadDropBody">'+
+            '<div class="zp-bk-ic">'+userSvg()+'</div>'+
+            '<div class="zp-bk-main"><div class="zp-bk-t">Lead submitted their information.</div><div class="zp-bk-s">'+esc(i.date)+' · Click to view what they submitted</div></div>'+
+            '<svg class="zp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>'+
+          '</button>'+
+          '<div class="zp-drop-body" id="zpLeadDropBody" hidden>'+kvHtml+'</div>'+
+        '</div>'+
         '<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div>'+
         '</div>';
+      var dbtn=document.getElementById('zpLeadDropBtn');
+      if(dbtn) dbtn.onclick=function(){
+        var body=document.getElementById('zpLeadDropBody');
+        var opening=body.hasAttribute('hidden');
+        if(opening) body.removeAttribute('hidden'); else body.setAttribute('hidden','');
+        dbtn.setAttribute('aria-expanded', opening?'true':'false');
+        document.getElementById('zpLeadDrop').classList.toggle('open', opening);
+      };
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
