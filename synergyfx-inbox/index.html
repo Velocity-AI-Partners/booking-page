@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>SynergyFx - Website Inquiries</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📨</text></svg>">
-</head>
-<body>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128232;</text></svg>">
 <style>
   :root{
     --accent:#155eef; --accent-600:#1149c0; --accent-050:#eaf1ff;
@@ -22,28 +20,39 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  .zp-shell{font-family:var(--sans); color:var(--ink); background:var(--bg); height:100vh; min-height:100dvh; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; overflow:hidden}
-  .zp-shell *{font-family:inherit}
+  body{font-family:var(--sans); color:var(--ink); background:var(--bg); -webkit-font-smoothing:antialiased}
+  body *{font-family:inherit}
 
+  .zp-login{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px}
+  .zp-card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:34px 30px; width:100%; max-width:370px; box-shadow:0 12px 44px rgba(16,24,40,.10)}
+  .zp-lgmark{width:46px; height:46px; border-radius:12px; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:16px; margin:0 auto 16px}
+  .zp-card h1{font-size:19px; font-weight:680; text-align:center; margin:0 0 5px}
+  .zp-card .sub{font-size:13px; color:var(--muted); text-align:center; margin:0 0 24px}
+  .zp-field{margin-bottom:13px}
+  .zp-field label{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px}
+  .zp-field input{width:100%; padding:10px 12px; font-size:14px; color:var(--ink); border:1px solid var(--border); border-radius:10px; background:#fbfcfe; outline:none}
+  .zp-field input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
+  .zp-signin{width:100%; padding:11px; font-size:14px; font-weight:650; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; margin-top:8px}
+  .zp-signin:hover{background:var(--accent-600)}
+  .zp-signin:disabled{opacity:.6; cursor:default}
+  .zp-err{font-size:12.5px; color:var(--cancelled); text-align:center; min-height:16px; margin-top:12px}
+
+  .zp-shell{height:100vh; min-height:100dvh; display:none; flex-direction:column; overflow:hidden}
   .zp-top{flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:0 16px; height:56px; background:var(--panel); border-bottom:1px solid var(--border)}
   .zp-loc{display:flex; align-items:center; gap:10px; padding-right:14px; border-right:1px solid var(--border-soft)}
   .zp-mark{width:30px; height:30px; border-radius:8px; flex:0 0 auto; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:13px}
   .zp-loc b{font-size:14px; font-weight:650; line-height:1.1}
   .zp-loc span{display:block; font-size:11px; color:var(--muted); margin-top:1px}
   .zp-page-title{font-size:14px; font-weight:600}
+  .zp-asof{margin-left:auto; font-size:11px; color:var(--faint); font-weight:500; display:flex; align-items:center; gap:6px}
+  .zp-dot{width:6px; height:6px; border-radius:50%; background:var(--showed); display:inline-block}
 
   .zp-body{flex:1 1 auto; display:flex; min-height:0}
-  .zp-rail{flex:0 0 56px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 0}
-  .zp-rail button{width:38px; height:38px; border:0; background:transparent; border-radius:9px; color:var(--faint); display:grid; place-items:center; cursor:pointer}
-  .zp-rail button:hover{background:var(--bg); color:var(--muted)}
-  .zp-rail button.on{background:var(--accent-050); color:var(--accent)}
-  .zp-rail svg{width:19px; height:19px}
-
   .zp-list{flex:0 0 344px; max-width:344px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0}
   .zp-list-head{padding:14px 14px 0; border-bottom:1px solid var(--border-soft)}
   .zp-list-head h2{margin:0 0 11px; font-size:15px; font-weight:650}
   .zp-tabs{display:flex; gap:6px; margin-bottom:12px}
-  .zp-tab{flex:1 1 auto; font-size:12px; font-weight:600; color:var(--muted); background:var(--bg); border:1px solid var(--border-soft); padding:6px 4px; border-radius:9px; cursor:pointer; text-align:center; display:flex; flex-direction:column; gap:1px}
+  .zp-tab{flex:1 1 auto; white-space:nowrap; font-size:12px; font-weight:600; color:var(--muted); background:var(--bg); border:1px solid var(--border-soft); padding:6px 4px; border-radius:9px; cursor:pointer; text-align:center; display:flex; flex-direction:column; gap:1px}
   .zp-tab b{font-size:14px; font-variant-numeric:tabular-nums}
   .zp-tab:hover{color:var(--ink)}
   .zp-tab.on{background:var(--accent); color:#fff; border-color:var(--accent)}
@@ -67,13 +76,11 @@
   .zp-tp.inquiry{color:var(--accent); background:var(--accent-050)}
   .zp-tp.consult{color:var(--consult); background:var(--consult-bg)}
   .zp-tp.lead{color:var(--upcoming); background:var(--upcoming-bg)}
-  .zp-tab{white-space:nowrap}
   .zp-pill{font-size:10.5px; font-weight:650; padding:2px 8px; border-radius:999px; white-space:nowrap}
   .zp-pill.showed{color:var(--showed); background:var(--showed-bg)}
   .zp-pill.confirmed{color:var(--confirmed); background:var(--confirmed-bg)}
   .zp-pill.upcoming{color:var(--upcoming); background:var(--upcoming-bg)}
   .zp-pill.cancelled,.zp-pill.noshow{color:var(--cancelled); background:var(--cancelled-bg)}
-  .zp-mini{font-size:11px; color:var(--faint)}
 
   .zp-detail{flex:1 1 auto; display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--bg)}
   .zp-dhead{background:var(--panel); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:flex-start; gap:14px}
@@ -108,27 +115,34 @@
   .zp-bk-main{flex:1 1 auto; min-width:0}
   .zp-bk-t{font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums}
   .zp-bk-s{font-size:11.5px; color:var(--faint); margin-top:2px}
-
-  .zp-compose{flex:0 0 auto; background:var(--panel); border-top:1px solid var(--border); padding:12px 20px}
-  .zp-composer{display:flex; gap:10px}
-  .zp-composer input{flex:1 1 auto; padding:10px 13px; font-size:13.5px; border:1px solid var(--border); border-radius:10px; background:#fbfcfe; outline:none}
-  .zp-composer input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
-  .zp-send{border:0; background:var(--accent); color:#fff; font-weight:600; font-size:13px; padding:0 18px; border-radius:10px; cursor:pointer}
-  .zp-send:hover{background:var(--accent-600)}
-  .zp-toast{font-size:11.5px; color:var(--accent-600); margin-top:8px; height:14px}
+  .zp-empty{margin:auto; text-align:center; color:var(--faint); font-size:14px; padding:40px}
 
   @media (max-width:760px){
-    .zp-rail{display:none}
     .zp-list{flex:1 1 auto; max-width:none}
     .zp-detail{display:none}
     .zp-shell.detail-open .zp-list{display:none}
     .zp-shell.detail-open .zp-detail{display:flex; flex:1 1 auto}
     .zp-back{display:inline-flex; align-items:center}
     .zp-msg{max-width:88%}
+    .zp-page-title{display:none}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
-  .zp-row:focus-visible,.zp-tab:focus-visible,.zp-send:focus-visible,.zp-rail button:focus-visible,.zp-search input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .zp-row:focus-visible,.zp-tab:focus-visible,.zp-signin:focus-visible,.zp-search input:focus-visible,.zp-field input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 </style>
+</head>
+<body>
+
+<div class="zp-login" id="zpLogin">
+  <form class="zp-card" id="zpLoginForm" autocomplete="on">
+    <div class="zp-lgmark">SF</div>
+    <h1>SynergyFx</h1>
+    <p class="sub">Sign in to view your website inquiries</p>
+    <div class="zp-field"><label for="lgUser">Username</label><input id="lgUser" type="text" autocomplete="username" placeholder="you@example.com"></div>
+    <div class="zp-field"><label for="lgPass">Password</label><input id="lgPass" type="password" autocomplete="current-password"></div>
+    <button class="zp-signin" id="lgBtn" type="submit">Sign in</button>
+    <div class="zp-err" id="lgErr"></div>
+  </form>
+</div>
 
 <div class="zp-shell" id="zpShell">
   <header class="zp-top">
@@ -137,18 +151,9 @@
       <div><b>SynergyFx</b><span>Strength &amp; Wellness Lab</span></div>
     </div>
     <div class="zp-page-title">Website Inquiries</div>
-    <div style="margin-left:auto; font-size:11px; color:var(--faint); font-weight:500">As of Jul 3, 2026</div>
+    <div class="zp-asof"><span class="zp-dot"></span><span id="zpAsOf"></span></div>
   </header>
-
   <div class="zp-body">
-    <nav class="zp-rail" aria-label="Sections">
-      <button title="Dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></button>
-      <button class="on" title="Website Inquiries" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h18v14H3z"/><path d="M3 6l9 7 9-7"/></svg></button>
-      <button title="Conversations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-5A8 8 0 1 1 21 12z"/></svg></button>
-      <button title="Contacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></button>
-      <button title="Analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
-    </nav>
-
     <section class="zp-list">
       <div class="zp-list-head">
         <h2>Website Inquiries</h2>
@@ -165,88 +170,74 @@
       </div>
       <div class="zp-rows" id="zpRows"></div>
     </section>
-
     <section class="zp-detail" id="zpDetail"></section>
   </div>
 </div>
 
 <script>
 (function(){
-  var ZP = {"items": [{"id": "QVALa78aByr2GSTnCTUL", "name": "Jia Li", "initials": "JL", "email": "jiaruoli00@gmail.com", "phone": "+12163156342", "source": "Contact Us (Website)", "date": "Jun 29, 7:06 PM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Hello, I have been teaching pilates for a year now and would love to continue this journey in my local neighborhood. I would appreciate setting aside the time to chat about possible opportunities here.", "time": "Jun 29, 7:06 PM"}, {"dir": "out", "chan": "SMS", "body": "Hi Jia,\nCharmaine, owner of SynergyFx Strength & Wellness Lab. Would love to meet you and discuss the possibilities. What certification do you have? where do you teach now. Let's schedule a time to meet. What's good for you?\nReply STOP to unsubscribe.", "time": "Jul 3, 9:16 AM"}], "type": "inquiry"}, {"id": "g5HVtGOYGlc48p5Ogn6x", "name": "Armand Hodge", "initials": "AH", "email": "info@hodgeandcompany.com", "phone": "+12402065504", "source": "Contact Us (Website)", "date": "Jun 29, 12:27 PM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Good Afternoon, \n\nI hope you're doing well. My name is Armand Hodge, and I'm the Founder of StratEdge, a strategic communications, engagement, and AI advisory firm that helps organizations strengthen customer engagement, elevate their brand, and support sustainable growth.While learning more about SynergyFx, I was genuinely impressed by your approach to combining testing, personalized coaching, strength training, and recovery into a comprehensive wellness experience. Your emphasis on helping clients train with purpose\u2014not guesswork\u2014really stood out to me. As I was exploring your website and learning more about your business, a few ideas came to mind that I believe could support your continued growth. Rather than making assumptions, I'd love the opportunity to learn more about your goals, hear what's most important to your team over the next year, and share a few ideas that may be valuable. Would you be open to a brief 20-minute conversation over coffee or Zoom sometime this or next week? Whether or not we end up working together, I always enjoy connecting with business owners who are passionate about helping people improve their health and quality of life. I believe a conversation could be valuable for both of us.Thank you for your time and consideration. I hope we have the opportunity to connect.\n\nWarm regards,Armand Hodge, MBA\nFounder & Principal Consultant\n\nStratEdge | ASE AI Strategies\nStrategy | Communications | AI Advisory\n\ninfo@hodgeandcompany.com\nwww.hodgeandcompany.com\n(240) 206-5504", "time": "Jun 29, 12:27 PM"}], "type": "inquiry"}, {"id": "obOx7Cl39eZ8YIxBP35N", "name": "Carolyn Orourke", "initials": "CO", "email": "corourke2005@gmail.com", "phone": "+14108586072", "source": "", "date": "Jun 26, 2026", "program": "Pilates", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "jHTdPr8Z3e3iEU0iGyRl", "name": "Raminta Glemza", "initials": "RG", "email": "rgs424@gmail.com", "phone": "+14108687888", "count": 5, "latestDate": "Jun 25, 2026", "statusLabel": "Showed", "status": "showed", "bookings": [{"date": "May 14, 2026, 7:00 AM", "statusLabel": "Showed", "status": "showed"}, {"date": "May 21, 2026, 7:00 AM", "statusLabel": "Showed", "status": "showed"}, {"date": "May 28, 2026, 7:00 AM", "statusLabel": "Showed", "status": "showed"}, {"date": "Jun 11, 2026, 7:00 AM", "statusLabel": "Showed", "status": "showed"}, {"date": "Jun 25, 2026, 7:00 AM", "statusLabel": "Showed", "status": "showed"}], "type": "consultation"}, {"id": "6y2MQu0gARPbKgTpbZge", "name": "Davina Foster", "initials": "DF", "email": "davinafoster75@gmail.com", "phone": "+12022715226", "source": "", "date": "Jun 22, 2026", "program": "Pilates", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "W3aWzX4HRVdrGsB5qoJj", "name": "Michael Berman", "initials": "MB", "email": "mtberman@msn.com", "phone": "+14109715869", "source": "", "date": "Jun 22, 2026", "program": "Signature Group Training", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "zOFR0lIJmLG3smSFyE1D", "name": "Rod G", "initials": "RG", "email": "lightningrod26@gmail.com", "phone": "+14105983928", "count": 4, "latestDate": "Jun 19, 2026", "statusLabel": "Upcoming", "status": "upcoming", "bookings": [{"date": "May 11, 2026, 3:00 PM", "statusLabel": "Showed", "status": "showed"}, {"date": "May 29, 2026, 1:30 PM", "statusLabel": "Upcoming", "status": "upcoming"}, {"date": "Jun 18, 2026, 3:00 PM", "statusLabel": "Confirmed", "status": "confirmed"}, {"date": "Jun 19, 2026, 1:30 PM", "statusLabel": "Upcoming", "status": "upcoming"}], "type": "consultation"}, {"id": "6a4ZOFTaXnwR5bZqvnEb", "name": "Naomi Rabe", "initials": "NR", "email": "naomi.rabe17@gmail.com", "phone": "+18122640098", "count": 4, "latestDate": "Jun 19, 2026", "statusLabel": "Upcoming", "status": "upcoming", "bookings": [{"date": "May 11, 2026, 3:00 PM", "statusLabel": "Showed", "status": "showed"}, {"date": "May 15, 2026, 3:00 PM", "statusLabel": "Cancelled", "status": "cancelled"}, {"date": "Jun 18, 2026, 3:00 PM", "statusLabel": "Confirmed", "status": "confirmed"}, {"date": "Jun 19, 2026, 1:30 PM", "statusLabel": "Upcoming", "status": "upcoming"}], "type": "consultation"}, {"id": "Z809rBCx36gY6QuKC0wi", "name": "Ron Hogle", "initials": "RH", "email": "rwhogle@hotmail.com", "phone": "+13015204635", "source": "", "date": "Jun 18, 2026", "program": "Signature Group Training", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "CHafIaHGlqL4kKqQGq8x", "name": "Cathy Staropoli", "initials": "CS", "email": "staropoli@gmail.com", "phone": "+14433863382", "source": "", "date": "Jun 17, 2026", "program": "Signature Group Training", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "v1sVbPfCbrPxTpAmPQWA", "name": "Judith DeBose", "initials": "JD", "email": "jujudebose@gmail.com", "phone": "+13019742474", "count": 2, "latestDate": "Jun 16, 2026", "statusLabel": "Showed", "status": "showed", "bookings": [{"date": "May 5, 2026, 11:00 AM", "statusLabel": "Showed", "status": "showed"}, {"date": "Jun 16, 2026, 8:00 AM", "statusLabel": "Showed", "status": "showed"}], "type": "consultation"}, {"id": "OqZ81WnFNXJ7lXF9hW02", "name": "Suraj Tlapa", "initials": "ST", "email": "girwan.s.tlapa@gmail.com", "phone": "+17203776793", "source": "", "date": "Jun 12, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "lVMt4idpdMgFFuOpyIcB", "name": "Wesley Park", "initials": "WP", "email": "wesley.park64@yahoo.com", "phone": "+13198340258", "source": "Contact Us (Website)", "date": "Jun 10, 11:52 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "What is the schedule/booking process for privates?", "time": "Jun 10, 11:52 AM"}, {"dir": "out", "chan": "SMS", "body": "Hi Wesley! \n\nIt's Charmaine, the owner of SynergyFx Strength & Wellness Lab. If you are interested in taking privates, we will need to know your available days and times. Also, you will need to purchase a package of private personal training sessions. \n\nIf you have any questions, send me a text at 410-660-3179. Looking forward to hearing from you!\nReply STOP to unsubscribe.", "time": "Jun 12, 11:52 AM"}, {"dir": "out", "chan": "SMS", "body": "Also are you talking about Privates Pilates or Personal training?", "time": "Jun 12, 11:55 AM"}, {"dir": "in", "chan": "SMS", "body": "Private reformer pilates to fix my body", "time": "Jun 12, 12:08 PM"}, {"dir": "out", "chan": "SMS", "body": "great. when are you available to train and what are your problems you are trying to fix?", "time": "Jun 12, 12:58 PM"}], "type": "inquiry"}, {"id": "NaMEiIrVCCktnslvDLWp", "name": "Ben A", "initials": "BA", "email": "ben@outsource-bookkeeper.com", "phone": "+491116703589", "source": "Contact Us (Website)", "date": "Jun 8, 12:58 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "At OBK, we specialize in providing top-notch bookkeeping and tax services to help you focus on what matters most \u2013 growing your business. We understand that managing finances can be overwhelming, so we're here to make it easier for you.\nHere's what we offer: \nBookkeeping: Only $99 per month per account.\nPayroll Services: Just $10 per payroll per employee.\nPersonal Tax Returns: $199.\nBusiness Tax Returns: $399.\nSpecial Offer: Your First Month Free!\nAs a special promotion, we're offering your first month of bookkeeping service absolutely free. Experience our professional and reliable service without any risk or commitment. After the first month, our bookkeeping service is as low as $99 per month.\nTake advantage of this limited-time offer and let us handle your financial needs with expertise and precision.\nContact us today to get started!\nBest regards,\nBen A.\nben@outsource-bookkeeper.com\n877-670-3589", "time": "Jun 8, 12:58 AM"}, {"dir": "out", "chan": "SMS", "body": "STOP\nReply STOP to unsubscribe.\nThanks, SynergyFx", "time": "Jun 8, 4:11 AM"}], "type": "inquiry"}, {"id": "ZeW2crB0YIZLyTWComHb", "name": "John M", "initials": "JM", "email": "john@outsource-bookkeeper.com", "phone": "+928166703589", "source": "Contact Us (Website)", "date": "Jun 2, 6:45 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "out", "chan": "SMS", "body": "STOP\nReply STOP to unsubscribe.\nThanks, SynergyFx", "time": "Jun 4, 1:40 PM"}], "type": "inquiry"}, {"id": "xbI93ZaV6miVyBK7NYM6", "name": "Effie Wells", "initials": "EW", "email": "effie.wells@proonlineprofile.com", "phone": "+928149805065", "source": "Contact Us (Website)", "date": "May 29, 7:58 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Wikipedia is considered to be the World\u2019s most significant tool for reference material. The Wiki links show up on the 1st page of Google 97% of the time. With a Page on one of the most revered reference tools, you are sure to get yourself or your business noticed. So if you're thinking of getting a Wikipedia Page created, it's the best time of the year.\n\nIf you are interested in getting more information just respond back to this email.\n\nThanks,\n\nEffie Wells\nSales Executive\nPro Online Profile\neffie.wells@proonlineprofile.com\n\nReply STOP to opt out.", "time": "May 29, 7:58 AM"}, {"dir": "out", "chan": "SMS", "body": "STOP\nReply STOP to unsubscribe.\nThanks, SynergyFx", "time": "May 30, 8:39 AM"}], "type": "inquiry"}, {"id": "jAspNtHTXydm9fqnlm40", "name": "Liesl W", "initials": "LW", "email": "liesl.p.winter@gmail.com", "phone": "+14102924503", "count": 2, "latestDate": "May 29, 2026", "statusLabel": "Upcoming", "status": "upcoming", "bookings": [{"date": "May 11, 2026, 3:00 PM", "statusLabel": "Showed", "status": "showed"}, {"date": "May 29, 2026, 1:30 PM", "statusLabel": "Upcoming", "status": "upcoming"}], "type": "consultation"}, {"id": "vYzK6sPCZd4qVEZeJALB", "name": "Teresa Berman", "initials": "TB", "email": "teresaberman1@gmail.com", "phone": "+14103704834", "count": 1, "latestDate": "May 25, 2026", "statusLabel": "Showed", "status": "showed", "bookings": [{"date": "May 25, 2026, 9:30 AM", "statusLabel": "Showed", "status": "showed"}], "type": "consultation"}, {"id": "dZsLcq8nbqlqHk6gV1Br", "name": "Bethany Robinson", "initials": "BR", "email": "robinsonbethanymkt@gmail.com", "phone": "+17855552012", "source": "Contact Us (Website)", "date": "May 21, 6:44 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Hi\nI\u2019ve taken some time to review your website and noticed a few areas where there may be opportunities to improve overall performance, user engagement, and online visibility. I would love the opportunity to share several ideas and recommendations that could help strengthen your website\u2019s lead generation, improve organic search traffic, and create a stronger digital presence for your business.\n \nThese suggestions are simply meant to provide value and insight into what may be possible for your website from both a design and marketing perspective. In many cases, even small improvements in areas such as user experience, SEO structure, mobile responsiveness, page speed, content presentation, and conversion flow can make a meaningful difference in attracting and converting more visitors into potential customers.\n \nI would be happy to put together a few personalized suggestions based specifically on your website and industry. There is absolutely no obligation \u2014 just an opportunity to review some ideas that may help improve your online growth and visibility.\n \nWould it be okay if I shared the suggestions I have in mind?\nThank You.\nBethany Robinson", "time": "May 21, 6:44 AM"}, {"dir": "out", "chan": "SMS", "body": "I have a web developer. Thanks but no thanks\nReply STOP to unsubscribe.\nThanks, SynergyFx", "time": "May 21, 4:51 PM"}, {"dir": "in", "chan": "SMS", "body": "DnD enabled by customer", "time": "May 21, 4:51 PM"}], "type": "inquiry"}, {"id": "3xTnhY9REUkHiwM0LMgv", "name": "Amber Jacobs", "initials": "AJ", "email": "amberaurapilates@gmail.com", "phone": "+13477527521", "source": "Contact Us (Website)", "date": "May 19, 11:49 PM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Hi there, I\u2019m a comprehensive Pilates teacher looking for a new space to work with clients. I would love to discuss this further.", "time": "May 19, 11:49 PM"}], "type": "inquiry"}, {"id": "3AOxiBW74WbqiPujUcqo", "name": "Rae Millman", "initials": "RM", "email": "raemillman@gmail.com", "phone": "+14432851109", "count": 1, "latestDate": "May 19, 2026", "statusLabel": "Cancelled", "status": "cancelled", "bookings": [{"date": "May 19, 2026, 10:00 AM", "statusLabel": "Cancelled", "status": "cancelled"}], "type": "consultation"}, {"id": "Dbg1GKMTtHc6TnJCooWO", "name": "Kathy Elza-Brown", "initials": "KE", "email": "kelzabrown@verizon.net", "phone": "+14104581690", "count": 1, "latestDate": "May 18, 2026", "statusLabel": "Showed", "status": "showed", "bookings": [{"date": "May 18, 2026, 10:30 AM", "statusLabel": "Showed", "status": "showed"}], "type": "consultation"}, {"id": "0bKHYXpKq8Ofu0U6sX14", "name": "Kareem Thabet", "initials": "KT", "email": "kareemthabet01@gmail.com", "phone": "+17472360742", "source": "Contact Us (Website)", "date": "May 16, 10:33 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Can I sign up for gym membership without any coaching or personal training involved ?", "time": "May 16, 10:33 AM"}, {"dir": "out", "chan": "SMS", "body": "yes you can train here. can do small group training classes\u2014 OG Strength, TRX  Unplugged, Functional  Training Fx, rowing, mma, Sproing (HIIT) and Buddha Camp (Pilates mat tower). can do droppings, buy packages or get a membership. Let\u2019s make an appointment so I can show you around and get you started.", "time": "May 17, 9:25 AM"}, {"dir": "out", "chan": "SMS", "body": "drop ins not droppings lol. or personal train here.", "time": "May 17, 11:03 AM"}], "type": "inquiry"}, {"id": "fg62ioasUTHoWxJpe6me", "name": "Warwick Susskind", "initials": "WS", "email": "warwick_susskind@wellnessentropy.com", "phone": "+16198221960", "source": "Contact Us (Website)", "date": "May 15, 10:10 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Hi SynergyFx,\n\nI saw your Strength & Wellness Lab in the Columbia area and figured I'd drop a quick note.\n\nI'm in the wellness field too and since what we do is not competitive yet serves the same patients, I wanted to share a simple idea for how we could team up.\n\nIn short, I've built a free software tool for practitioners that reads lab results and highlights the key markers, making it easy to spot and explain root causes to patients. What's extra useful is that I've linked with labs here in Maryland so patients can get blood work at a lower price without seeing a separate doctor first.\n\nWe shaped the platform with guidance from practitioners and would enjoy showing you how it works. It costs nothing to use and adds revenue by letting you offer direct blood diagnostics to your clients.\n\nWould you be up for a quick intro chat next week?\n\nAll the best,\nWarwick", "time": "May 15, 10:10 AM"}, {"dir": "out", "chan": "SMS", "body": "Let's set up a time to meet. What's your availability? Middle of day is generally good for me.\nReply STOP to unsubscribe.\nThanks, SynergyFx", "time": "Jun 15, 9:47 PM"}, {"dir": "in", "chan": "SMS", "body": "DnD enabled by customer", "time": "Jun 15, 9:47 PM"}], "type": "inquiry"}, {"id": "VK1qykwVfkPsO1Dhjtew", "name": "Chloe Terry", "initials": "CT", "email": "chloe@crystalpointcleaners.com", "phone": "+922403358224", "source": "Contact Us (Website)", "date": "May 14, 11:51 AM", "status": "new", "statusLabel": "New lead", "program": "Open Gym", "messages": [{"dir": "in", "chan": "Form", "body": "Hi,\n\nI work in Columbia, and help many local companies. I was hoping I could come by and offer a complimentary cleaning bid?\n\nThank you in advance for your response.\n\nAll the best,\n\nChloe Terry\nBusiness Development Representative\nCrystalPoint Cleaners\nchloe@crystalpointcleaners.com\n\nRespond with stop to optout.", "time": "May 14, 11:51 AM"}, {"dir": "out", "chan": "Email", "body": "Right now i have a cleaning service. If you still want to give me an estimate afternoon is the best. What is your cell? I think\nyou entered it incorrectly. My cell is 410 660-3179. The best way to contact me is through text.", "time": "May 17, 2:51 PM"}], "type": "inquiry"}, {"id": "M09lkbXLBVPncFFwuz35", "name": "Donovan Foster", "initials": "DF", "email": "donovanfoster2@yahoo.com", "phone": "+13015756582", "count": 1, "latestDate": "May 13, 2026", "statusLabel": "Upcoming", "status": "upcoming", "bookings": [{"date": "May 13, 2026, 10:30 AM", "statusLabel": "Upcoming", "status": "upcoming"}], "type": "consultation"}, {"id": "8I5j9xVSbOJBrKz4Ms70", "name": "Lakshmi Gheewala", "initials": "LG", "email": "jigheewala@gmail.com", "phone": "+14108849966", "source": "", "date": "May 12, 2026", "program": "Signature Small Group Training", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "wB0unU2jYOBuwNxXeU1j", "name": "Lee Burrows", "initials": "LB", "email": "leetv@mac.com", "phone": "", "source": "", "date": "May 11, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "Ea5lmgCFXTfvo1ze833W", "name": "Lauren Myers", "initials": "LM", "email": "myerslk62@yahoo.com", "phone": "", "source": "", "date": "May 11, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "MtV9dNRUqRKiiImO98Ui", "name": "Kristina Gardner", "initials": "KG", "email": "ceciis4cookies@gmail.com", "phone": "", "source": "", "date": "May 11, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "yAf3nn3CHBSQwzUEqSxa", "name": "Jill Lapides", "initials": "JL", "email": "jill@lapidesgroup.com", "phone": "", "source": "", "date": "May 11, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "FpPQHMraamlqeySAiFI3", "name": "Judith H. Vereen", "initials": "JH", "email": "jvereen@ft.newyorklife.com", "phone": "", "source": "", "date": "May 11, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "YfVQG1Ugf3CZ739XZ1E1", "name": "Jennifer Dotzenrod", "initials": "JD", "email": "dotzenrod@jhu.edu", "phone": "", "source": "", "date": "May 11, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "bmaBMwa3msIF8hLaC02s", "name": "Diane Juray", "initials": "DJ", "email": "jurayd@yahoo.com", "phone": "", "source": "", "date": "May 11, 2026", "program": "", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "2kiaKwdb8fMcX3t7ER7x", "name": "Claire Concha", "initials": "CC", "email": "cconcha2021@gmail.com", "phone": "+14104563978", "source": "", "date": "May 11, 2026", "program": "Pilates", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "A4a8QYcmphamSUs2TXEM", "name": "Rileigh Matson", "initials": "RM", "email": "rileigh.matson@gmail.com", "phone": "+14438761987", "source": "", "date": "May 11, 2026", "program": "Pilates", "status": "lead", "statusLabel": "Not booked", "type": "lead"}, {"id": "1r021J6Ba2hzneva4uLp", "name": "Tracy Williams", "initials": "TW", "email": "samtracyw@comcast.net", "phone": "+14434528862", "count": 1, "latestDate": "May 10, 2026", "statusLabel": "Showed", "status": "showed", "bookings": [{"date": "May 10, 2026, 10:30 AM", "statusLabel": "Showed", "status": "showed"}], "type": "consultation"}, {"id": "v2tzIy6H1bNnXh1uyyUk", "name": "Olga Leite", "initials": "OL", "email": "olgaleite@hotmail.com", "phone": "+13016425373", "count": 1, "latestDate": "May 10, 2026", "statusLabel": "Showed", "status": "showed", "bookings": [{"date": "May 10, 2026, 10:30 AM", "statusLabel": "Showed", "status": "showed"}], "type": "consultation"}, {"id": "3pZYg3X4VrN2Ffe5xLGN", "name": "Trina Foster", "initials": "TF", "email": "trinabfoster@yahoo.com", "phone": "+14437456175", "count": 1, "latestDate": "May 10, 2026", "statusLabel": "Showed", "status": "showed", "bookings": [{"date": "May 10, 2026, 10:30 AM", "statusLabel": "Showed", "status": "showed"}], "type": "consultation"}]};
-  var items = ZP.items;
+  var API="https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/synergyfx-inbox";
+  var CREDS=null, ITEMS=[], state={filter:'all', search:'', active:null};
   var AV=['#155eef','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
   function color(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AV[s%AV.length];}
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-  function srcLabel(s){return /website|contact us/i.test(s||'')?'Website form':((s&&s!=='(unknown)')?s:'Website form');}
-
-  var state={filter:'all', search:'', active:items.length?items[0].id:null};
-  var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail');
-  var shell=document.getElementById('zpShell');
-  document.getElementById('cAll').textContent=items.length;
-  document.getElementById('cInq').textContent=items.filter(function(i){return i.type==='inquiry';}).length;
-  document.getElementById('cCon').textContent=items.filter(function(i){return i.type==='consultation';}).length;
-  document.getElementById('cLead').textContent=items.filter(function(i){return i.type==='lead';}).length;
-
-  function visible(){
-    return items.filter(function(i){
-      if(state.filter!=='all' && i.type!==state.filter) return false;
-      if(state.search && i.name.toLowerCase().indexOf(state.search)<0) return false;
-      return true;
-    });
-  }
+  function srcLabel(s){return /website|contact us/i.test(s||'')?'Website form':((s&&s!=='(unknown)'&&s!=='')?s:'Website form');}
   function phoneSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5c0 8 7 15 15 15l0-3-4-2-2 2c-3-1-6-4-7-7l2-2-2-4z"/></svg>';}
   function mailSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';}
   function calSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>';}
   function userSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>';}
 
+  var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail'), shell=document.getElementById('zpShell');
+
+  function counts(){
+    document.getElementById('cAll').textContent=ITEMS.length;
+    document.getElementById('cInq').textContent=ITEMS.filter(function(i){return i.type==='inquiry';}).length;
+    document.getElementById('cCon').textContent=ITEMS.filter(function(i){return i.type==='consultation';}).length;
+    document.getElementById('cLead').textContent=ITEMS.filter(function(i){return i.type==='lead';}).length;
+  }
+  function visible(){
+    return ITEMS.filter(function(i){
+      if(state.filter!=='all' && i.type!==state.filter) return false;
+      if(state.search && i.name.toLowerCase().indexOf(state.search)<0) return false;
+      return true;
+    });
+  }
   function renderList(){
     var v=visible(); rows.innerHTML='';
-    if(!v.length){rows.innerHTML='<div style="padding:26px 16px;font-size:13px;color:var(--faint);text-align:center">Nothing here yet.</div>';return;}
+    if(!v.length){rows.innerHTML='<div class="zp-empty">Nothing here yet.</div>';return;}
     v.forEach(function(i){
       var foot, snip, time;
       if(i.type==='inquiry'){
         snip=(i.messages[0]?i.messages[0].body:'(no message)').replace(/\s+/g,' ');
-        time=i.date;
-        foot='<span class="zp-tp inquiry">Website form</span>';
+        time=i.date; foot='<span class="zp-tp inquiry">Website form</span>';
       } else if(i.type==='consultation'){
         snip='Booked a consultation'+(i.count>1?(' · '+i.count+' sessions'):'');
-        time=i.latestDate;
-        foot='<span class="zp-tp consult">Consultation</span><span class="zp-pill '+i.status+'">'+esc(i.statusLabel)+'</span>';
+        time=i.latestDate; foot='<span class="zp-tp consult">Consultation</span><span class="zp-pill '+i.status+'">'+esc(i.statusLabel)+'</span>';
       } else {
         snip=i.program?('Interested in '+i.program):'Submitted info, no booking yet';
-        time=i.date;
-        foot='<span class="zp-tp lead">Lead</span><span class="zp-pill upcoming">Not booked</span>';
+        time=i.date; foot='<span class="zp-tp lead">Lead</span><span class="zp-pill upcoming">Not booked</span>';
       }
       var b=document.createElement('button');
       b.className='zp-row'+(i.id===state.active?' on':'');
-      b.innerHTML=
-        '<div class="zp-av" style="background:'+color(i.name)+'">'+esc(i.initials)+'</div>'+
-        '<div class="zp-row-main">'+
-          '<div class="zp-row-top"><span class="zp-row-name">'+esc(i.name)+'</span><span class="zp-row-time">'+esc(time)+'</span></div>'+
-          '<div class="zp-row-snip">'+esc(snip)+'</div>'+
-          '<div class="zp-row-foot">'+foot+'</div>'+
-        '</div>';
+      b.innerHTML='<div class="zp-av" style="background:'+color(i.name)+'">'+esc(i.initials)+'</div>'+
+        '<div class="zp-row-main"><div class="zp-row-top"><span class="zp-row-name">'+esc(i.name)+'</span><span class="zp-row-time">'+esc(time)+'</span></div>'+
+        '<div class="zp-row-snip">'+esc(snip)+'</div><div class="zp-row-foot">'+foot+'</div></div>';
       b.onclick=function(){state.active=i.id; shell.classList.add('detail-open'); renderList(); renderDetail();};
       rows.appendChild(b);
     });
   }
-
-  function headHTML(i, pills){
-    return '<div class="zp-dhead">'+
-      '<button class="zp-back" id="zpBack" aria-label="Back"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>'+
+  function headHTML(i,pills){
+    return '<div class="zp-dhead"><button class="zp-back" id="zpBack" aria-label="Back"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>'+
       '<div class="zp-av" style="background:'+color(i.name)+'">'+esc(i.initials)+'</div>'+
-      '<div class="zp-dmeta">'+
-        '<div class="zp-dname">'+esc(i.name)+' '+pills+'</div>'+
-        '<div class="zp-chipsrow">'+
-          (i.phone?'<span class="zp-contact">'+phoneSvg()+esc(i.phone)+'</span>':'')+
-          (i.email?'<span class="zp-contact">'+mailSvg()+esc(i.email)+'</span>':'')+
-        '</div>'+
-      '</div></div>';
+      '<div class="zp-dmeta"><div class="zp-dname">'+esc(i.name)+' '+pills+'</div>'+
+      '<div class="zp-chipsrow">'+
+        (i.phone?'<span class="zp-contact">'+phoneSvg()+esc(i.phone)+'</span>':'')+
+        (i.email?'<span class="zp-contact">'+mailSvg()+esc(i.email)+'</span>':'')+
+      '</div></div></div>';
   }
-
   function renderDetail(){
-    var i=items.filter(function(x){return x.id===state.active;})[0];
-    if(!i){detail.innerHTML='<div style="margin:auto;text-align:center;color:var(--faint);font-size:14px">Select someone to view the details.</div>';return;}
+    var i=ITEMS.filter(function(x){return x.id===state.active;})[0];
+    if(!i){detail.innerHTML='<div class="zp-empty">Select someone to view the details.</div>';return;}
     if(i.type==='inquiry'){
       var thread='';
       i.messages.forEach(function(m){
@@ -255,32 +246,27 @@
           '<div class="zp-mt"><span class="zp-chan '+m.chan+'">'+m.chan+'</span> <b>'+esc(who)+'</b>'+(m.time?' · '+esc(m.time):'')+'</div></div>';
       });
       var interest=i.program?'<span class="zp-interest">Interest: '+esc(i.program)+'</span>':'';
-      var pills='<span class="zp-tp inquiry">Website form</span> '+interest;
-      detail.innerHTML=headHTML(i,pills)+
-        '<div class="zp-chipsrow" style="padding:0 20px;margin-top:-6px;color:var(--faint)"><span class="zp-contact" style="font-size:12px">'+srcLabel(i.source)+' · '+esc(i.date)+'</span></div>'+
-        '<div class="zp-scroll"><div class="zp-thread">'+thread+'</div></div>'+
-        '<div class="zp-compose"><div class="zp-composer"><input type="text" placeholder="Type a message..." aria-label="Message"><button class="zp-send" id="zpSend">Send</button></div><div class="zp-toast" id="zpToast"></div></div>';
+      detail.innerHTML=headHTML(i,'<span class="zp-tp inquiry">Website form</span> '+interest)+
+        '<div class="zp-chipsrow" style="padding:0 20px;margin-top:-6px"><span class="zp-contact" style="font-size:12px">'+esc(srcLabel(i.source))+' · '+esc(i.date)+'</span></div>'+
+        '<div class="zp-scroll"><div class="zp-thread">'+(thread||'<div class="zp-empty">No messages yet.</div>')+'</div></div>';
     } else if(i.type==='consultation'){
       var hist='';
       i.bookings.slice().reverse().forEach(function(b){
         hist+='<div class="zp-bk"><div class="zp-bk-ic">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">'+esc(b.date)+'</div><div class="zp-bk-s">Consultation with Charmaine</div></div><span class="zp-pill '+b.status+'">'+esc(b.statusLabel)+'</span></div>';
       });
-      var pills='<span class="zp-tp consult">Consultation</span> <span class="zp-pill '+i.status+'">'+esc(i.statusLabel)+'</span>';
-      detail.innerHTML=headHTML(i,pills)+
+      detail.innerHTML=headHTML(i,'<span class="zp-tp consult">Consultation</span> <span class="zp-pill '+i.status+'">'+esc(i.statusLabel)+'</span>')+
         '<div class="zp-scroll"><p class="zp-sec">'+i.count+' consultation'+(i.count>1?'s':'')+' booked</p>'+hist+'</div>';
     } else {
-      var lp='<span class="zp-tp lead">Lead</span> <span class="zp-pill upcoming">Not booked</span>';
       var sub='Submitted their info'+(i.source&&i.source!=='(unknown)'&&i.source!==''?(' via '+esc(i.source)):'')+(i.program?(' · Interested in '+esc(i.program)):'');
-      detail.innerHTML=headHTML(i,lp)+
-        '<div class="zp-scroll">'+
-          '<p class="zp-sec">Lead details</p>'+
-          '<div class="zp-bk"><div class="zp-bk-ic">'+userSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">'+esc(i.date)+'</div><div class="zp-bk-s">'+sub+'</div></div></div>'+
-          '<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div>'+
+      detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> <span class="zp-pill upcoming">Not booked</span>')+
+        '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
+        '<div class="zp-bk"><div class="zp-bk-ic">'+userSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">'+esc(i.date)+'</div><div class="zp-bk-s">'+sub+'</div></div></div>'+
+        '<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div>'+
         '</div>';
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
-    var send=document.getElementById('zpSend'); if(send) send.onclick=function(){var t=document.getElementById('zpToast'); t.textContent='Read-only view.'; setTimeout(function(){t.textContent='';},2400);};
   }
+  function renderAll(){ counts(); renderList(); renderDetail(); }
 
   document.getElementById('zpTabs').addEventListener('click',function(e){
     var b=e.target.closest('.zp-tab'); if(!b) return;
@@ -290,9 +276,43 @@
     renderList(); renderDetail();
   });
   document.getElementById('zpSearch').addEventListener('input',function(e){state.search=e.target.value.toLowerCase().trim(); renderList();});
-  renderList(); renderDetail();
+
+  function apply(data){
+    ITEMS=data.items||[];
+    document.getElementById('zpAsOf').textContent='Updated '+(data.asOf||'just now');
+    if(!state.active || !ITEMS.some(function(i){return i.id===state.active;})){
+      var v=visible(); state.active=v.length?v[0].id:null;
+    }
+    renderAll();
+  }
+  function fetchInbox(creds){
+    return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(creds)});
+  }
+  async function refresh(){
+    if(!CREDS) return;
+    try{ var r=await fetchInbox(CREDS); if(r.ok){ apply(await r.json()); } }catch(e){}
+  }
+
+  var form=document.getElementById('zpLoginForm'), btn=document.getElementById('lgBtn'), errEl=document.getElementById('lgErr');
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    var username=document.getElementById('lgUser').value.trim();
+    var password=document.getElementById('lgPass').value;
+    errEl.textContent=''; btn.disabled=true; btn.textContent='Signing in...';
+    try{
+      var r=await fetchInbox({username:username,password:password});
+      if(r.status===401){ errEl.textContent='Incorrect username or password.'; btn.disabled=false; btn.textContent='Sign in'; return; }
+      if(!r.ok){ errEl.textContent='Something went wrong. Please try again.'; btn.disabled=false; btn.textContent='Sign in'; return; }
+      CREDS={username:username,password:password};
+      apply(await r.json());
+      document.getElementById('zpLogin').style.display='none';
+      shell.style.display='flex';
+      setInterval(refresh, 180000);
+    }catch(err){
+      errEl.textContent='Could not reach the server. Please try again.'; btn.disabled=false; btn.textContent='Sign in';
+    }
+  });
 })();
 </script>
-
 </body>
 </html>
