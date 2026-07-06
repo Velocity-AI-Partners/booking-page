@@ -7,94 +7,346 @@
 <title>SynergyFx - Leads &amp; Bookings</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128202;</text></svg>">
 <style>
-  /* SynergyFx command center. Everything (leads, bookings, inquiries) now lives in
-     Zen Planner Studio -- one shared database and one calendar, so a booking is
-     visible no matter which coach it is assigned to. This page routes Charmaine
-     straight into Studio's unified views. Data + sign-in are handled by Studio;
-     no data is stored on this page. Deep-links verified live 2026-07-06. */
+  /* SynergyFx staff command center. This page is PUBLIC (GitHub Pages), so it holds
+     no data and no service key. A staff member signs in with a shared password; that
+     password is checked server-side by the vap-zp-staff proxy (POST /inbox), which
+     then returns the aggregated, read-only Zen Planner Studio roster. The password is
+     kept only in sessionStorage (gone when the tab closes) and never in page source.
+
+     Everyone shows in ONE place: Studio has a single shared person database (no per-
+     coach split like HighLevel/Engage had), so every person appears exactly once no
+     matter which coach they inquired with. Leads that came in through Zen Planner
+     Engage are included and tagged in the Source column. Individual consult
+     appointments live on Studio's one shared calendar, linked below. */
   :root{
     --accent:#155eef; --accent-600:#1149c0; --accent-050:#eaf1ff;
     --ink:#101828; --muted:#667085; --faint:#98a2b3;
     --bg:#f4f6fb; --panel:#ffffff; --border:#e6e9f1;
-    --leads:#155eef; --leads-bg:#eaf1ff;
-    --cal:#067647; --cal-bg:#e7f6ec;
-    --inq:#b25e00; --inq-bg:#fff4e3;
-    --studio:#6941c6; --studio-bg:#f4f0ff;
+    --member:#067647; --member-bg:#e7f6ec;
+    --prospect:#155eef; --prospect-bg:#eaf1ff;
+    --engage:#b25e00; --engage-bg:#fff4e3;
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;min-height:100vh}
-  .wrap{max-width:880px;margin:0 auto;padding:34px 20px 60px}
-  .top{display:flex;align-items:center;gap:12px;margin-bottom:28px}
   .mark{width:38px;height:38px;border-radius:10px;flex:0 0 auto;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px}
-  .top b{font-size:17px;font-weight:680;line-height:1.1;display:block}
-  .top span{font-size:12.5px;color:var(--muted)}
-  .hero{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:26px 26px 24px;margin-bottom:20px;box-shadow:0 8px 30px rgba(16,24,40,.05)}
-  .hero h1{margin:0 0 8px;font-size:21px;font-weight:700}
-  .hero p{margin:0;font-size:14.5px;line-height:1.6;color:var(--muted);max-width:620px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-  @media (max-width:640px){.grid{grid-template-columns:1fr}}
-  .card{display:flex;gap:15px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 18px;text-decoration:none;color:inherit;transition:box-shadow .15s ease,transform .15s ease}
-  .card:hover{box-shadow:0 10px 30px rgba(16,24,40,.09);transform:translateY(-1px)}
-  .ic{width:42px;height:42px;flex:0 0 auto;border-radius:11px;display:grid;place-items:center}
-  .ic svg{width:21px;height:21px}
-  .c-leads .ic{background:var(--leads-bg);color:var(--leads)}
-  .c-cal .ic{background:var(--cal-bg);color:var(--cal)}
-  .c-inq .ic{background:var(--inq-bg);color:var(--inq)}
-  .c-studio .ic{background:var(--studio-bg);color:var(--studio)}
-  .card .body{min-width:0}
-  .card .t{font-size:15px;font-weight:650;display:flex;align-items:center;gap:7px}
-  .card .t .arw{color:var(--faint)}
-  .card .d{font-size:12.8px;color:var(--muted);margin-top:4px;line-height:1.5}
-  .note{display:flex;gap:13px;align-items:flex-start;background:var(--accent-050);border:1px solid #d5e2ff;border-radius:13px;padding:16px 18px;margin-bottom:18px}
-  .note .ni{flex:0 0 auto;color:var(--accent);margin-top:1px}
-  .note .nt{font-size:13.2px;line-height:1.55;color:#1c3b7a}
+
+  /* login */
+  #login{min-height:100vh;display:grid;place-items:center;padding:20px}
+  .login-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:30px 28px;box-shadow:0 10px 40px rgba(16,24,40,.08)}
+  .login-card .top{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .login-card .top b{font-size:16px;font-weight:680;display:block;line-height:1.1}
+  .login-card .top span{font-size:12.5px;color:var(--muted)}
+  .login-card h1{font-size:18px;margin:0 0 6px}
+  .login-card p{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+  .field{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:7px}
+  input[type=password],input[type=search]{width:100%;font-size:14.5px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--ink)}
+  input:focus{outline:2px solid var(--accent-050);border-color:var(--accent)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;background:var(--accent);color:#fff;border:0;border-radius:9px;font-size:14.5px;font-weight:640;padding:12px 16px;cursor:pointer}
+  .btn:hover{background:var(--accent-600)}
+  .btn[disabled]{opacity:.6;cursor:default}
+  .msg{font-size:12.8px;margin-top:12px;min-height:16px}
+  .msg.err{color:#b42318}
+  .msg.info{color:var(--muted)}
+
+  /* dashboard */
+  #dash[hidden]{display:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:22px 20px 60px}
+  .bar{display:flex;align-items:center;gap:13px;margin-bottom:20px;flex-wrap:wrap}
+  .bar .who{display:flex;align-items:center;gap:12px;flex:1 1 auto}
+  .bar .who b{font-size:16px;font-weight:680;display:block;line-height:1.1}
+  .bar .who span{font-size:12px;color:var(--muted)}
+  .bar .act{display:flex;gap:8px;align-items:center}
+  .ghost{background:#fff;border:1px solid var(--border);color:var(--ink);border-radius:8px;font-size:12.8px;font-weight:600;padding:8px 13px;cursor:pointer}
+  .ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .stamp{font-size:11.5px;color:var(--faint)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px}
+  @media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 16px}
+  .stat .n{font-size:25px;font-weight:720;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:6px}
+
+  .note{display:flex;gap:12px;align-items:flex-start;background:var(--accent-050);border:1px solid #d5e2ff;border-radius:12px;padding:13px 16px;margin-bottom:18px}
+  .note .nt{font-size:12.8px;line-height:1.55;color:#1c3b7a}
   .note .nt b{color:#0f2a5e}
-  .foot{font-size:12px;color:var(--faint);text-align:center;margin-top:26px;line-height:1.6}
-  .foot a{color:var(--muted)}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:18px}
+  .panel .head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .panel .head h2{font-size:14.5px;margin:0;font-weight:680;flex:0 0 auto}
+  .panel .head .sub{font-size:12px;color:var(--muted)}
+  .spacer{flex:1 1 auto}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:12.3px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .search{max-width:260px}
+
+  .tablewrap{overflow-x:auto}
+  .list{max-height:620px;overflow-y:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:#f8fafc;text-align:left;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:680;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:1}
+  tbody td{padding:10px 14px;border-bottom:1px solid #f0f2f6;vertical-align:top}
+  tbody tr:hover{background:#fafbfe}
+  .nm{font-weight:600}
+  .contact{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+  .badge{display:inline-block;font-size:11px;font-weight:680;padding:2px 8px;border-radius:6px;white-space:nowrap}
+  .b-member{background:var(--member-bg);color:var(--member)}
+  .b-prospect{background:var(--prospect-bg);color:var(--prospect)}
+  .src{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#f1f3f7;color:var(--muted);white-space:nowrap}
+  .src.engage{background:var(--engage-bg);color:var(--engage)}
+  .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+
+  .links{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:640px){.links{grid-template-columns:1fr}}
+  .link{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:inherit}
+  .link:hover{border-color:var(--accent)}
+  .link .t{font-size:13.5px;font-weight:650}
+  .link .d{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .foot{font-size:11.5px;color:var(--faint);text-align:center;margin-top:22px;line-height:1.6}
+  .loading{display:flex;align-items:center;gap:10px;justify-content:center;padding:40px;color:var(--muted);font-size:13.5px}
+  .spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div class="mark">SF</div>
-    <div><b>SynergyFx</b><span>Leads &amp; Bookings</span></div>
-  </div>
 
-  <div class="hero">
-    <h1>Everything in one place</h1>
-    <p>Your leads, consultations, and bookings all live in Zen Planner now. Every booking shows on one shared calendar, so nothing gets hidden. Open any view below and sign in with your Zen Planner login.</p>
-  </div>
+<!-- LOGIN -->
+<div id="login">
+  <form class="login-card" id="loginForm">
+    <div class="top"><div class="mark">SF</div><div><b>SynergyFx</b><span>Leads &amp; Bookings</span></div></div>
+    <h1>Sign in</h1>
+    <p>View every SynergyFx lead, prospect, and member in one place. Ask Charmaine for the team password.</p>
+    <label class="field" for="pw">Team password</label>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="Enter password">
+    <button class="btn" id="loginBtn" type="submit">View leads &amp; bookings</button>
+    <div class="msg info" id="loginMsg"></div>
+  </form>
+</div>
 
-  <div class="grid">
-    <a class="card c-leads" href="https://studio.zenplanner.com/zenplanner/studio/index.html#/main/iframe/zenplanner/studio/bookmark/click.cfm?BookmarkId=852414E7-9D1A-4D47-B9D4-EAF0F4CAD6C8" target="_blank" rel="noopener">
-      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a6 6 0 0 1 11 0M16 11h5M16 15h5M16 7h5"/></svg></div>
-      <div class="body"><div class="t">All Leads &amp; Prospects <span class="arw">&#8599;</span></div><div class="d">Every lead from every source, with status and inquiry date.</div></div>
-    </a>
-    <a class="card c-cal" href="https://studio.zenplanner.com/zenplanner/studio/index.html#/main/iframe/zenplanner/studio/calendar/index.cfm" target="_blank" rel="noopener">
-      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg></div>
-      <div class="body"><div class="t">Full Calendar <span class="arw">&#8599;</span></div><div class="d">Every consultation and class booking, across all coaches.</div></div>
-    </a>
-    <a class="card c-inq" href="https://studio.zenplanner.com/zenplanner/studio/index.html#/main/iframe/zenplanner/studio/bookmark/click.cfm?BookmarkId=53DED606-FF22-06E6-F871-D249A7882184" target="_blank" rel="noopener">
-      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H8l-4 4V5z"/></svg></div>
-      <div class="body"><div class="t">Recent Inquiries <span class="arw">&#8599;</span></div><div class="d">The last 30 days of new inquiries with source and interest.</div></div>
-    </a>
-    <a class="card c-studio" href="https://studio.zenplanner.com/zenplanner/studio/index.html" target="_blank" rel="noopener">
-      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
-      <div class="body"><div class="t">Open Zen Planner <span class="arw">&#8599;</span></div><div class="d">The full studio: people, memberships, billing, and reports.</div></div>
-    </a>
-  </div>
+<!-- DASHBOARD -->
+<div id="dash" hidden>
+  <div class="wrap">
+    <div class="bar">
+      <div class="who"><div class="mark">SF</div><div><b>Leads &amp; Bookings</b><span id="stamp" class="stamp"></span></div></div>
+      <div class="act">
+        <button class="ghost" id="refreshBtn">Refresh</button>
+        <button class="ghost" id="signout">Sign out</button>
+      </div>
+    </div>
 
-  <div class="note">
-    <span class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
-    <span class="nt"><b>Why nothing gets missed now:</b> Zen Planner uses one shared calendar. A consultation shows up here even when it's booked with a different coach, so two people can never land on two separate calendars the way they did before.</span>
-  </div>
+    <div id="dashBody" hidden>
+      <div class="stats" id="stats"></div>
 
-  <div class="foot">
-    SynergyFx &bull; Columbia, MD<br>
-    Powered by Zen Planner. Sign in with your Zen Planner login to view your data.
+      <div class="note"><span class="nt"><b>Everyone is here, once.</b> This is the full Zen Planner roster, including leads that came in through Zen Planner Engage (tagged in Source). Because Studio uses one shared calendar and one person list, a person shows up here no matter which coach they booked with, so two people can't land on two separate calendars the way they did before.</span></div>
+
+      <div class="panel">
+        <div class="head">
+          <h2>Recent inquiries</h2>
+          <span class="sub" id="inqSub"></span>
+        </div>
+        <div class="tablewrap"><table id="inqTable">
+          <thead><tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Inquiry date</th><th>Days as prospect</th></tr></thead>
+          <tbody id="inqBody"></tbody>
+        </table></div>
+      </div>
+
+      <div class="panel">
+        <div class="head">
+          <h2>All people</h2>
+          <div class="chips" id="chips">
+            <button class="chip on" data-f="all">All</button>
+            <button class="chip" data-f="Member">Members</button>
+            <button class="chip" data-f="Prospect">Prospects</button>
+          </div>
+          <div class="spacer"></div>
+          <input class="search" id="search" type="search" placeholder="Search name, phone, email...">
+        </div>
+        <div class="list tablewrap"><table id="peopleTable">
+          <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Source</th><th>Contact</th><th>Detail</th><th>Date</th></tr></thead>
+          <tbody id="peopleBody"></tbody>
+        </table></div>
+      </div>
+
+      <div class="links">
+        <a class="link" target="_blank" rel="noopener" href="https://studio.zenplanner.com/zenplanner/studio/index.html#/main/iframe/zenplanner/studio/calendar/index.cfm">
+          <div><div class="t">Full Calendar (all coaches) &#8599;</div><div class="d">Every consultation and class booking on Studio's one shared calendar.</div></div>
+        </a>
+        <a class="link" target="_blank" rel="noopener" href="https://studio.zenplanner.com/zenplanner/studio/index.html">
+          <div><div class="t">Open Zen Planner &#8599;</div><div class="d">The full studio: memberships, billing, notes, and booking actions.</div></div>
+        </a>
+      </div>
+
+      <div class="foot">SynergyFx &bull; Columbia, MD &bull; Live from Zen Planner Studio</div>
+    </div>
+
+    <div class="loading" id="dashLoading"><span class="spin"></span><span id="loadingText">Loading all SynergyFx people... the first load can take about 20 seconds.</span></div>
+    <div class="msg err" id="dashErr" style="text-align:center;padding:10px"></div>
   </div>
 </div>
+
+<script>
+(function(){
+  var API = 'https://vap-zp-staff.fly.dev/inbox';
+  var KEY = 'sfx_inbox_pw';
+
+  var el = function(id){ return document.getElementById(id); };
+  var loginScreen = el('login'), dash = el('dash');
+  var loginForm = el('loginForm'), pwInput = el('pw'), loginBtn = el('loginBtn'), loginMsg = el('loginMsg');
+  var dashBody = el('dashBody'), dashLoading = el('dashLoading'), dashErr = el('dashErr'), loadingText = el('loadingText');
+  var current = { people: [], inquiries: [] };
+  var filter = 'all', query = '';
+
+  function td(text, cls){ var c = document.createElement('td'); if(cls) c.className = cls; c.textContent = (text == null ? '' : String(text)); return c; }
+  function badgeCell(type){
+    var c = document.createElement('td');
+    var b = document.createElement('span');
+    b.className = 'badge ' + (type === 'Member' ? 'b-member' : 'b-prospect');
+    b.textContent = type;
+    c.appendChild(b); return c;
+  }
+  function sourceCell(src){
+    var c = document.createElement('td');
+    if(src){
+      var s = document.createElement('span');
+      s.className = 'src' + (/engage/i.test(src) ? ' engage' : '');
+      s.textContent = src;
+      c.appendChild(s);
+    }
+    return c;
+  }
+
+  function parseDate(s){ var t = Date.parse(s); return isNaN(t) ? -Infinity : t; }
+
+  function renderStats(c){
+    var stats = [
+      ['people','Total people'], ['members','Members'], ['prospects','Prospects'], ['newThisWeek','New this week']
+    ];
+    var box = el('stats'); box.innerHTML = '';
+    stats.forEach(function(s){
+      var d = document.createElement('div'); d.className = 'stat';
+      var n = document.createElement('div'); n.className = 'n'; n.textContent = (c[s[0]] != null ? c[s[0]] : 0);
+      var l = document.createElement('div'); l.className = 'l'; l.textContent = s[1];
+      d.appendChild(n); d.appendChild(l); box.appendChild(d);
+    });
+  }
+
+  function renderInquiries(rows){
+    el('inqSub').textContent = rows.length + ' most recent';
+    var body = el('inqBody'); body.innerHTML = '';
+    if(!rows.length){ var tr = document.createElement('tr'); var c = td('No recent inquiries.'); c.colSpan = 6; c.className='empty'; tr.appendChild(c); body.appendChild(tr); return; }
+    rows.slice().sort(function(a,b){ return parseDate(b['INQUIRY DATE']) - parseDate(a['INQUIRY DATE']); }).forEach(function(q){
+      var tr = document.createElement('tr');
+      var nm = ((q['FIRST NAME']||'') + ' ' + (q['LAST NAME']||'')).trim();
+      tr.appendChild(td(nm, 'nm'));
+      tr.appendChild(td(q.PHONE, 'contact'));
+      tr.appendChild(sourceCell(q.SOURCE));
+      tr.appendChild(td(q.INTEREST || '-'));
+      tr.appendChild(td(q['INQUIRY DATE']));
+      tr.appendChild(td(q['DAYS AS PROSPECT']));
+      body.appendChild(tr);
+    });
+  }
+
+  function renderPeople(){
+    var body = el('peopleBody'); body.innerHTML = '';
+    var q = query.trim().toLowerCase();
+    var rows = current.people.filter(function(p){
+      if(filter !== 'all' && p.type !== filter) return false;
+      if(!q) return true;
+      return (p.name + ' ' + p.phone + ' ' + p.email + ' ' + p.detail + ' ' + p.source).toLowerCase().indexOf(q) >= 0;
+    });
+    rows.sort(function(a,b){ return parseDate(b.date) - parseDate(a.date); });
+    if(!rows.length){ var tr = document.createElement('tr'); var c = td('No matching people.'); c.colSpan = 7; c.className='empty'; tr.appendChild(c); body.appendChild(tr); return; }
+    var frag = document.createDocumentFragment();
+    rows.forEach(function(p){
+      var tr = document.createElement('tr');
+      tr.appendChild(td(p.name, 'nm'));
+      tr.appendChild(badgeCell(p.type));
+      tr.appendChild(td(p.status));
+      tr.appendChild(sourceCell(p.source));
+      var contact = [p.phone, p.email].filter(Boolean).join('  ');
+      tr.appendChild(td(contact, 'contact'));
+      var detail = p.detail;
+      if(p.amount) detail = (detail ? detail + ' - ' : '') + p.amount;
+      tr.appendChild(td(detail));
+      tr.appendChild(td(p.date));
+      frag.appendChild(tr);
+    });
+    body.appendChild(frag);
+  }
+
+  function render(p){
+    current.people = p.people || [];
+    current.inquiries = p.inquiries || [];
+    renderStats(p.counts || {});
+    renderInquiries(current.inquiries);
+    renderPeople();
+    var when = p.generatedAt ? new Date(p.generatedAt) : new Date();
+    el('stamp').textContent = 'Updated ' + when.toLocaleString() + (p.cached ? ' (cached)' : '');
+    dashLoading.hidden = true; dashErr.textContent = ''; dashBody.hidden = false;
+  }
+
+  function showLoading(on){ dashLoading.hidden = !on; if(on){ dashBody.hidden = true; dashErr.textContent = ''; } }
+
+  function load(pw, refresh){
+    loginScreen.style.display = 'none'; dash.hidden = false;
+    showLoading(true);
+    return fetch(API, {
+      method: 'POST', headers: {'content-type':'application/json'},
+      body: JSON.stringify({ password: pw, refresh: !!refresh })
+    }).then(function(r){
+      if(r.status === 403){ throw { code: 403 }; }
+      if(!r.ok){ return r.json().catch(function(){ return {}; }).then(function(j){ throw { code: r.status, msg: j.error || ('HTTP ' + r.status) }; }); }
+      return r.json();
+    }).then(function(j){
+      sessionStorage.setItem(KEY, pw);
+      render(j);
+    }).catch(function(e){
+      if(e && e.code === 403){
+        sessionStorage.removeItem(KEY);
+        dash.hidden = true; loginScreen.style.display = 'grid';
+        loginMsg.className = 'msg err'; loginMsg.textContent = 'Wrong password. Try again.';
+        loginBtn.disabled = false; loginBtn.textContent = 'View leads & bookings';
+        return;
+      }
+      showLoading(false);
+      dashErr.textContent = 'Could not load: ' + ((e && e.msg) || 'network error') + '. Try Refresh.';
+    });
+  }
+
+  loginForm.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var pw = pwInput.value.trim();
+    if(!pw){ loginMsg.className = 'msg err'; loginMsg.textContent = 'Enter the team password.'; return; }
+    loginBtn.disabled = true; loginBtn.textContent = 'Loading...';
+    loginMsg.className = 'msg info'; loginMsg.textContent = 'Loading all people, this can take about 20 seconds on the first load.';
+    load(pw, false).then(function(){ loginBtn.disabled = false; loginBtn.textContent = 'View leads & bookings'; });
+  });
+
+  el('refreshBtn').addEventListener('click', function(){
+    var pw = sessionStorage.getItem(KEY); if(!pw) return;
+    load(pw, true);
+  });
+  el('signout').addEventListener('click', function(){
+    sessionStorage.removeItem(KEY);
+    dash.hidden = true; loginScreen.style.display = 'grid';
+    pwInput.value = ''; loginMsg.textContent = '';
+  });
+
+  el('search').addEventListener('input', function(e){ query = e.target.value; renderPeople(); });
+  Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(ch){
+    ch.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(x){ x.classList.remove('on'); });
+      ch.classList.add('on'); filter = ch.getAttribute('data-f'); renderPeople();
+    });
+  });
+
+  // Auto-resume if a password is already in this tab's session.
+  var saved = sessionStorage.getItem(KEY);
+  if(saved){ load(saved, false); } else { loginScreen.style.display = 'grid'; }
+})();
+</script>
 </body>
 </html>
