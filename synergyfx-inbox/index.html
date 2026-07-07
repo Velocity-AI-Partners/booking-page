@@ -97,6 +97,12 @@
   .src{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#f1f3f7;color:var(--muted);white-space:nowrap}
   .src.engage{background:var(--engage-bg);color:var(--engage)}
   .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .toggle input{margin:0}
+  .subnote{font-size:12px;color:var(--muted);line-height:1.5;padding:11px 18px;border-bottom:1px solid var(--border);background:#fbfcfe}
+  .b-consult{background:#fdece8;color:#b42318}
+  .day-sep td{background:#f4f6fb;font-weight:680;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:7px 14px}
+  .coach-open{color:var(--faint);font-style:italic}
 
   .links{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media (max-width:640px){.links{grid-template-columns:1fr}}
@@ -150,6 +156,23 @@
           <thead><tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Inquiry date</th><th>Days as prospect</th></tr></thead>
           <tbody id="inqBody"></tbody>
         </table></div>
+      </div>
+
+      <div class="panel">
+        <div class="head">
+          <h2>Appointments &amp; consults</h2>
+          <span class="sub" id="apptSub">next 7 days</span>
+          <div class="spacer"></div>
+          <label class="toggle"><input type="checkbox" id="consultOnly"> Consultations only</label>
+          <button class="ghost" id="apptRefresh">Refresh</button>
+        </div>
+        <div class="subnote" id="apptNote">Every booked appointment, all coaches, in one place. Coach is shown for today; Studio only exposes the assigned coach same-day, so future dates read "open in Studio" (use the Full Calendar link below).</div>
+        <div class="tablewrap"><table id="apptTable">
+          <thead><tr><th>Time</th><th>Type</th><th>Client</th><th>Coach</th></tr></thead>
+          <tbody id="apptBody"></tbody>
+        </table></div>
+        <div class="loading" id="apptLoading"><span class="spin"></span><span>Loading appointments... the first load takes about 30-40 seconds.</span></div>
+        <div class="msg err" id="apptErr" style="padding:10px 16px"></div>
       </div>
 
       <div class="panel">
@@ -286,6 +309,75 @@
     var when = p.generatedAt ? new Date(p.generatedAt) : new Date();
     el('stamp').textContent = 'Updated ' + when.toLocaleString() + (p.cached ? ' (cached)' : '');
     dashLoading.hidden = true; dashErr.textContent = ''; dashBody.hidden = false;
+    startAppointments(false);
+  }
+
+  // ---- appointments (loaded after people; the backend scrape takes ~30-40s, so poll) ----
+  var apptTimer = null;
+  function stopApptPoll(){ if(apptTimer){ clearTimeout(apptTimer); apptTimer = null; } }
+  function fmtDay(ds){
+    var p = (ds || '').split('-'); if(p.length !== 3) return ds;
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    return d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+  }
+  function startAppointments(refresh){
+    var pw = sessionStorage.getItem(KEY); if(!pw) return;
+    stopApptPoll();
+    el('apptErr').textContent = ''; el('apptLoading').hidden = false;
+    if(refresh) el('apptBody').innerHTML = '';
+    var poll = function(isFirst){
+      fetch(API, { method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ password: pw, section:'appointments', days: 7, refresh: !!(isFirst && refresh) }) })
+      .then(function(r){
+        if(r.status === 403){ throw { code:403 }; }
+        if(!r.ok){ return r.json().catch(function(){ return {}; }).then(function(j){ throw { msg: j.error || ('HTTP ' + r.status) }; }); }
+        return r.json();
+      })
+      .then(function(j){
+        if(j.building){ apptTimer = setTimeout(function(){ poll(false); }, 6000); return; }
+        current.appts = j.appointments || []; current.apptMeta = j;
+        el('apptLoading').hidden = true; renderAppointments();
+      })
+      .catch(function(e){
+        el('apptLoading').hidden = true;
+        if(e && e.code === 403){ sessionStorage.removeItem(KEY); dash.hidden = true; loginScreen.style.display = 'grid'; return; }
+        el('apptErr').textContent = 'Could not load appointments: ' + ((e && e.msg) || 'network error') + '. Try Refresh.';
+      });
+    };
+    poll(true);
+  }
+  function renderAppointments(){
+    var meta = current.apptMeta || {}, rows = current.appts || [];
+    var only = el('consultOnly').checked;
+    var list = only ? rows.filter(function(a){ return a.isConsult; }) : rows;
+    var c = meta.counts || {};
+    el('apptSub').textContent = (c.total || 0) + ' appts, ' + (c.consults || 0) + ' consult' + (c.consults === 1 ? '' : 's') + ', next ' + (meta.windowDays || 7) + ' days';
+    var body = el('apptBody'); body.innerHTML = '';
+    if(!list.length){
+      var tr = document.createElement('tr'); var ec = td(only ? 'No consultations booked in this window.' : 'No appointments in this window.');
+      ec.colSpan = 4; ec.className = 'empty'; tr.appendChild(ec); body.appendChild(tr); return;
+    }
+    var curDate = null, frag = document.createDocumentFragment();
+    list.forEach(function(a){
+      if(a.date !== curDate){
+        curDate = a.date;
+        var sep = document.createElement('tr'); sep.className = 'day-sep';
+        var sc = td(fmtDay(a.date)); sc.colSpan = 4; sep.appendChild(sc); frag.appendChild(sep);
+      }
+      var tr = document.createElement('tr');
+      tr.appendChild(td(a.time || ''));
+      var typeCell = document.createElement('td');
+      if(a.isConsult){ var b = document.createElement('span'); b.className = 'badge b-consult'; b.textContent = 'Consult'; typeCell.appendChild(b); typeCell.appendChild(document.createTextNode(' ')); }
+      typeCell.appendChild(document.createTextNode(a.type || ''));
+      tr.appendChild(typeCell);
+      tr.appendChild(td(a.client, 'nm'));
+      var coachCell = document.createElement('td');
+      if(a.coachKnown){ coachCell.textContent = a.coach; }
+      else { var s = document.createElement('span'); s.className = 'coach-open'; s.textContent = 'open in Studio'; coachCell.appendChild(s); }
+      tr.appendChild(coachCell);
+      frag.appendChild(tr);
+    });
+    body.appendChild(frag);
   }
 
   function showLoading(on){ dashLoading.hidden = !on; if(on){ dashBody.hidden = true; dashErr.textContent = ''; } }
@@ -335,6 +427,8 @@
     pwInput.value = ''; loginMsg.textContent = '';
   });
 
+  el('consultOnly').addEventListener('change', renderAppointments);
+  el('apptRefresh').addEventListener('click', function(){ startAppointments(true); });
   el('search').addEventListener('input', function(e){ query = e.target.value; renderPeople(); });
   Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(ch){
     ch.addEventListener('click', function(){
