@@ -13,18 +13,16 @@
      then returns the aggregated, read-only Zen Planner Studio roster. The password is
      kept only in sessionStorage (gone when the tab closes) and never in page source.
 
-     Everyone shows in ONE place: Studio has a single shared person database (no per-
-     coach split like HighLevel/Engage had), so every person appears exactly once no
-     matter which coach they inquired with. Leads that came in through Zen Planner
-     Engage are included and tagged in the Source column. Individual consult
-     appointments live on Studio's one shared calendar, linked below. */
+     Everyone shows in ONE place: Studio has a single shared person database, so every
+     person appears exactly once no matter which coach they inquired with, with each
+     lead's origin shown in the Source column. Individual consult appointments live on
+     Studio's one shared calendar, linked below. */
   :root{
     --accent:#155eef; --accent-600:#1149c0; --accent-050:#eaf1ff;
     --ink:#101828; --muted:#667085; --faint:#98a2b3;
     --bg:#f4f6fb; --panel:#ffffff; --border:#e6e9f1;
     --member:#067647; --member-bg:#e7f6ec;
     --prospect:#155eef; --prospect-bg:#eaf1ff;
-    --engage:#b25e00; --engage-bg:#fff4e3;
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
@@ -95,7 +93,6 @@
   .b-member{background:var(--member-bg);color:var(--member)}
   .b-prospect{background:var(--prospect-bg);color:var(--prospect)}
   .src{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#f1f3f7;color:var(--muted);white-space:nowrap}
-  .src.engage{background:var(--engage-bg);color:var(--engage)}
   .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
   .toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
   .toggle input{margin:0}
@@ -145,7 +142,7 @@
     <div id="dashBody" hidden>
       <div class="stats" id="stats"></div>
 
-      <div class="note"><span class="nt"><b>Everyone is here, once.</b> This is the full Zen Planner roster, including leads that came in through Zen Planner Engage (tagged in Source). Because Studio uses one shared calendar and one person list, a person shows up here no matter which coach they booked with, so two people can't land on two separate calendars the way they did before.</span></div>
+      <div class="note"><span class="nt"><b>Everyone is here, once.</b> This is the full Zen Planner roster, with each lead's origin shown in the Source column. Because Studio uses one shared calendar and one person list, a person shows up here no matter which coach they booked with, so two people can't land on two separate calendars the way they did before.</span></div>
 
       <div class="panel">
         <div class="head">
@@ -233,7 +230,7 @@
     var c = document.createElement('td');
     if(src){
       var s = document.createElement('span');
-      s.className = 'src' + (/engage/i.test(src) ? ' engage' : '');
+      s.className = 'src';
       s.textContent = src;
       c.appendChild(s);
     }
