@@ -247,7 +247,10 @@
   function fmtDay(iso){var t=Date.parse(iso+'T12:00:00');if(isNaN(t))return iso;return new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
   function fmtISO(s){var t=Date.parse(s||'');if(isNaN(t))return s||'';return new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
   var PINFO={};
-  var PLABELS=[['status','Studio status'],['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Visits (30 days)'],['attendanceSinceSignupDate','Visits (since signup)'],['lastLogDate','Last logged note'],['trialEndDate','Trial ends'],['gender','Gender'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
+  // status omitted (STUDENT/PROSPECT adds nothing) and lastLogDate omitted (a bare
+  // date without the note text reads as noise) per user feedback 2026-07-08.
+  // "Check-ins" because Studio counts every visit type (classes, PT, red light, PEMF).
+  var PLABELS=[['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Check-ins (30 days)'],['attendanceSinceSignupDate','Check-ins (since signup)'],['trialEndDate','Trial ends'],['gender','Gender'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
   function personRowsHTML(p, skip){
     var rows='';
     PLABELS.forEach(function(pair){
@@ -398,7 +401,7 @@
       curWeek=(t===today)?null:k;
       var have=WEEKS[weekKey()];
       if(have){DATA.appt=have.list; apptReady=true;}
-      else {apptReady=false; DATA.appt=[];}
+      else {apptReady=false; DATA.appt=[]; apptFirstPoll=Date.now();}
       renderCal();
       if(!have) fetchAppts();
     };
