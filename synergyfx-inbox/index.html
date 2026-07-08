@@ -94,6 +94,22 @@
   .zp-pill.upcoming{color:var(--upcoming); background:var(--upcoming-bg)}
   .zp-pill.cancelled{color:var(--cancelled); background:var(--cancelled-bg)}
 
+  .zp-cal{flex:1 1 auto; display:none; min-width:0; min-height:0; overflow:auto; background:var(--bg); padding:16px}
+  .zp-cal-grid{display:grid; grid-template-columns:repeat(7, minmax(150px,1fr)); gap:10px; min-width:1080px}
+  .zp-cal-day{background:var(--panel); border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; min-height:200px}
+  .zp-cal-day.today{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+  .zp-cal-dhead{padding:9px 11px; border-bottom:1px solid var(--border-soft); font-size:12px; font-weight:650}
+  .zp-cal-dhead span{display:block; font-size:10.5px; font-weight:600; color:var(--faint); margin-top:1px}
+  .zp-cal-day.today .zp-cal-dhead{color:var(--accent-600)}
+  .zp-cal-items{padding:8px; display:flex; flex-direction:column; gap:6px}
+  .zp-cal-it{border:1px solid var(--border-soft); border-left:3px solid var(--confirmed); border-radius:8px; padding:7px 9px; background:#fbfcfe}
+  .zp-cal-it.consult{border-left-color:var(--consult); background:var(--consult-bg)}
+  .zp-cal-t{font-size:11px; font-weight:700; color:var(--muted); font-variant-numeric:tabular-nums}
+  .zp-cal-n{font-size:12.5px; font-weight:600; margin-top:2px}
+  .zp-cal-s{font-size:11px; color:var(--faint); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .zp-cal-none{font-size:11.5px; color:var(--faint); text-align:center; padding:14px 4px}
+  .zp-cal-loading{margin:auto; color:var(--faint); font-size:14px; padding:60px; text-align:center}
+
   .zp-detail{flex:1 1 auto; display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--bg)}
   .zp-dhead{background:var(--panel); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:flex-start; gap:14px}
   .zp-back{display:none; border:0; background:transparent; cursor:pointer; color:var(--muted); padding:4px; margin:-4px 2px -4px -4px}
@@ -175,6 +191,7 @@
       <div class="zp-rows" id="zpRows"></div>
     </section>
     <section class="zp-detail" id="zpDetail"></section>
+    <section class="zp-cal" id="zpCal"></section>
   </div>
 </div>
 
@@ -182,7 +199,7 @@
 (function(){
   var API='https://vap-zp-staff.fly.dev/inbox';
   var PW=null, state={view:'inquiry', search:'', active:null};
-  var DATA={inquiry:[], appt:[], lead:[], member:[]}, apptReady=false;
+  var DATA={inquiry:[], appt:[], lead:[], member:[]}, apptReady=false, apptWindow=7;
   var AV=['#155eef','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
   function color(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AV[s%AV.length];}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -216,17 +233,10 @@
     renderAll();
   }
   function applyAppts(d){
-    var by={};
-    (d.appointments||[]).forEach(function(a){
-      var k=a.client||'(no name)';
-      (by[k]=by[k]||[]).push(a);
-    });
-    DATA.appt=Object.keys(by).map(function(name,ix){
-      var list=by[name].slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.minutes-b.minutes;});
-      return {id:'a'+ix, name:name, list:list, next:list[0], hasConsult:list.some(function(x){return x.isConsult;})};
-    }).sort(function(a,b){var x=a.next,y=b.next;return x.date<y.date?-1:x.date>y.date?1:x.minutes-y.minutes;});
+    DATA.appt=(d.appointments||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.minutes-b.minutes;});
+    apptWindow=d.windowDays||7;
     apptReady=true;
-    document.getElementById('nAppt').textContent=(d.appointments||[]).length;
+    document.getElementById('nAppt').textContent=DATA.appt.length;
     if(state.view==='appt') renderAll();
   }
 
@@ -237,17 +247,11 @@
   }
   function rowMeta(i){
     if(state.view==='inquiry') return {snip:(i.interest?('Interest: '+i.interest):(i.source||'Inquiry')), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'};
-    if(state.view==='appt'){
-      var n=i.list.length;
-      return {snip:n+' upcoming'+(n>1?' appointments':' appointment'), time:fmtDay(i.next.date)+' '+i.next.time,
-        foot:'<span class="zp-tp '+(i.hasConsult?'consult">Consultation':'appt">Appointment')+'</span>'};
-    }
     if(state.view==='lead') return {snip:(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet'), time:i.date, foot:'<span class="zp-tp lead">Lead</span><span class="zp-pill upcoming">Not booked</span>'};
     return {snip:i.plan||'Member', time:i.beginDate, foot:'<span class="zp-tp member">Member</span>'+(i.status?'<span class="zp-pill confirmed">'+esc(i.status)+'</span>':'')};
   }
   function renderList(){
     var v=visible(); rows.innerHTML='';
-    if(state.view==='appt' && !apptReady){rows.innerHTML='<div class="zp-empty">Loading appointments&hellip;</div>';return;}
     if(!v.length){rows.innerHTML='<div class="zp-empty">Nothing here yet.</div>';return;}
     v.forEach(function(i){
       var m=rowMeta(i);
@@ -280,16 +284,6 @@
       detail.innerHTML=headHTML(i,'<span class="zp-tp inquiry">Inquiry</span> '+interest,contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Inquiry details</p>'+
         kvCard([['Name',i.name],['Received',i.date],['Source',i.source],['Interest',i.interest],['Phone',i.phone]])+'</div>';
-    } else if(state.view==='appt'){
-      var hist='';
-      i.list.forEach(function(a){
-        hist+='<div class="zp-bk"><div class="zp-bk-ic">'+calSvg()+'</div><div class="zp-bk-main">'+
-          '<div class="zp-bk-t">'+esc(fmtDay(a.date))+' &middot; '+esc(a.time)+'</div>'+
-          '<div class="zp-bk-s">'+esc(a.type)+(a.coach?(' &middot; with '+esc(a.coach)):'')+'</div></div>'+
-          (a.isConsult?'<span class="zp-pill confirmed">Consultation</span>':'')+'</div>';
-      });
-      detail.innerHTML=headHTML(i,'<span class="zp-tp '+(i.hasConsult?'consult">Consultation':'appt">Appointment')+'</span>','')+
-        '<div class="zp-scroll"><p class="zp-sec">'+i.list.length+' upcoming</p>'+hist+'</div>';
     } else if(state.view==='lead'){
       detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> <span class="zp-pill upcoming">Not booked</span>',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
@@ -302,7 +296,38 @@
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
-  function renderAll(){ renderList(); renderDetail(); }
+  var calEl=document.getElementById('zpCal');
+  function renderCal(){
+    if(!apptReady){calEl.innerHTML='<div class="zp-cal-loading">Loading appointments&hellip;</div>';return;}
+    var fmt=new Intl.DateTimeFormat('en-CA'); // YYYY-MM-DD local
+    var days=[], now=Date.now();
+    for(var i=0;i<7;i++) days.push(fmt.format(new Date(now+i*86400000)));
+    var by={};
+    DATA.appt.forEach(function(a){(by[a.date]=by[a.date]||[]).push(a);});
+    var h='<div class="zp-cal-grid">';
+    days.forEach(function(d,ix){
+      var t=Date.parse(d+'T12:00:00'), dt=new Date(t);
+      var wd=dt.toLocaleDateString('en-US',{weekday:'short'}), md=dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      h+='<div class="zp-cal-day'+(ix===0?' today':'')+'"><div class="zp-cal-dhead">'+(ix===0?'Today':esc(wd))+'<span>'+esc(md)+'</span></div><div class="zp-cal-items">';
+      var list=by[d]||[];
+      if(!list.length) h+='<div class="zp-cal-none">No appointments</div>';
+      list.forEach(function(a){
+        h+='<div class="zp-cal-it'+(a.isConsult?' consult':'')+'"><div class="zp-cal-t">'+esc(a.time)+(a.isConsult?' &middot; Consultation':'')+'</div>'+
+           '<div class="zp-cal-n">'+esc(a.client)+'</div>'+
+           '<div class="zp-cal-s">'+esc(a.type)+(a.coach?(' &middot; '+esc(a.coach)):'')+'</div></div>';
+      });
+      h+='</div></div>';
+    });
+    h+='</div>';
+    calEl.innerHTML=h;
+  }
+  function setPanes(){
+    var isCal=state.view==='appt';
+    document.querySelector('.zp-list').style.display=isCal?'none':'flex';
+    detail.style.display=isCal?'none':'flex';
+    calEl.style.display=isCal?'block':'none';
+  }
+  function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else {renderList(); renderDetail();} }
 
   document.getElementById('zpNav').addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b) return;
@@ -310,7 +335,7 @@
     [].forEach.call(this.children,function(c){c.classList.toggle('on',c===b);});
     document.getElementById('zpTitle').textContent=TITLES[state.view];
     document.getElementById('zpListTitle').textContent=TITLES[state.view];
-    var v=visible(); state.active=v.length?v[0].id:null;
+    var v=state.view==='appt'?[]:visible(); state.active=v.length?v[0].id:null;
     shell.classList.remove('detail-open');
     renderAll();
   });
