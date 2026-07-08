@@ -251,6 +251,7 @@
     PLABELS.forEach(function(pair){
       var v=p[pair[0]];
       if(v===undefined||v===null||v==='') return;
+      if(pair[0]==='gender'&&/nospec/i.test(String(v))) return;
       if(/Date$/.test(pair[0])||pair[0]==='birthDate') v=fmtISO(v);
       rows+='<div class="zp-kv"><span class="zp-kv-k">'+esc(pair[1])+'</span><span class="zp-kv-v">'+esc(v)+'</span></div>';
     });
@@ -478,7 +479,7 @@
     [].forEach.call(this.children,function(c){c.classList.toggle('on',c===b);});
     document.getElementById('zpTitle').textContent=TITLES[state.view];
     document.getElementById('zpListTitle').textContent=TITLES[state.view];
-    var v=state.view==='appt'?[]:visible(); state.active=v.length?v[0].id:null;
+    var v=(state.view==='appt'||state.view==='forms')?[]:visible(); state.active=v.length?v[0].id:null;
     shell.classList.remove('detail-open');
     renderAll();
   });
