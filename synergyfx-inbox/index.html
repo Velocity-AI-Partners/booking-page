@@ -127,7 +127,9 @@
   .zp-form-head{padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; font-weight:650; display:flex; align-items:center; justify-content:space-between}
   .zp-form-head a{font-size:11.5px; font-weight:600; color:var(--accent-600); text-decoration:none}
   .zp-form-head a:hover{text-decoration:underline}
-  .zp-forms iframe{flex:1 1 auto; width:100%; border:0; min-height:0}
+  .zp-form-shot{flex:1 1 auto; min-height:0; overflow:auto; display:block}
+  .zp-form-shot img{width:100%; display:block}
+  .zp-form-shot:hover{opacity:.93}
   @media (max-width:900px){ .zp-forms{flex-direction:column} }
 
   .zp-detail{flex:1 1 auto; display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--bg)}
@@ -215,12 +217,12 @@
     <section class="zp-cal" id="zpCal"></section>
     <section class="zp-forms" id="zpForms">
       <div class="zp-form-col">
-        <div class="zp-form-head">Booking page <a href="../synergyfx/" target="_blank" rel="noopener">Open in new tab</a></div>
-        <iframe id="ifBook" title="SynergyFx booking page"></iframe>
+        <div class="zp-form-head">Booking page <a href="../synergyfx/" target="_blank" rel="noopener">Open form</a></div>
+        <a class="zp-form-shot" href="../synergyfx/" target="_blank" rel="noopener"><img src="assets/form-book.png" alt="SynergyFx booking page preview" loading="lazy"></a>
       </div>
       <div class="zp-form-col">
-        <div class="zp-form-head">Contact / lead form <a href="../synergyfx-contact/" target="_blank" rel="noopener">Open in new tab</a></div>
-        <iframe id="ifContact" title="SynergyFx contact form"></iframe>
+        <div class="zp-form-head">Contact / lead form <a href="../synergyfx-contact/" target="_blank" rel="noopener">Open form</a></div>
+        <a class="zp-form-shot" href="../synergyfx-contact/" target="_blank" rel="noopener"><img src="assets/form-contact.png" alt="SynergyFx contact form preview" loading="lazy"></a>
       </div>
     </section>
   </div>
@@ -465,11 +467,6 @@
     calEl.style.display=isCal?'block':'none';
     var f=document.getElementById('zpForms');
     f.style.display=isForms?'flex':'none';
-    if(isForms){
-      var b=document.getElementById('ifBook'), c=document.getElementById('ifContact');
-      if(!b.src) b.src='../synergyfx/';
-      if(!c.src) c.src='../synergyfx-contact/';
-    }
   }
   function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else if(state.view!=='forms'){renderList(); renderDetail();} }
 
