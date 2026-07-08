@@ -248,9 +248,10 @@
   function fmtISO(s){var t=Date.parse(s||'');if(isNaN(t))return s||'';return new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
   var PINFO={};
   var PLABELS=[['status','Studio status'],['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Visits (30 days)'],['attendanceSinceSignupDate','Visits (since signup)'],['lastLogDate','Last logged note'],['trialEndDate','Trial ends'],['gender','Gender'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
-  function personRowsHTML(p){
+  function personRowsHTML(p, skip){
     var rows='';
     PLABELS.forEach(function(pair){
+      if(skip && skip.indexOf(pair[0])>=0) return;
       var v=p[pair[0]];
       if(v===undefined||v===null||v==='') return;
       if(pair[0]==='gender'&&/nospec/i.test(String(v))) return;
@@ -262,22 +263,26 @@
     });
     return rows;
   }
-  function loadPersonInfo(elId, params){
+  // Renders only fields NOT already shown on the card (skip list). If nothing new
+  // remains, the whole section disappears rather than repeating known info.
+  function loadPersonInfo(elId, params, skip){
     var key=(params.phone||'')+'|'+(params.email||'')+'|'+(params.name||'');
     var el=document.getElementById(elId); if(!el) return;
     var render=function(d){
       var box=document.getElementById(elId); if(!box) return;
-      if(!d || !d.found){ box.innerHTML='<div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Nothing further on file in Zen Planner.</span></div>'; return; }
-      var rows=personRowsHTML(d.person);
-      box.innerHTML=rows||'<div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Nothing further on file in Zen Planner.</span></div>';
+      var wrap=document.getElementById(elId+'Wrap')||box;
+      var rows=(d && d.found)?personRowsHTML(d.person, skip):'';
+      if(!rows){ wrap.style.display='none'; return; }
+      wrap.style.display='';
+      box.innerHTML=rows;
     };
     if(PINFO[key]){ render(PINFO[key]); return; }
     fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW,section:'person',name:params.name||'',phone:params.phone||'',email:params.email||''})})
       .then(function(r){return r.json();})
       .then(function(d){ PINFO[key]=d; render(d); })
-      .catch(function(){ var box=document.getElementById(elId); if(box) box.innerHTML='<div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Could not load right now.</span></div>'; });
+      .catch(function(){ var box=document.getElementById(elId); var wrap=document.getElementById(elId+'Wrap'); if(wrap) wrap.style.display='none'; else if(box) box.style.display='none'; });
   }
-  function moreBox(){ return '<p class="zp-sec" style="margin-top:16px">From Zen Planner</p><div class="zp-kvcard" id="zpMoreInfo"><div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Loading&hellip;</span></div></div>'; }
+  function moreBox(){ return '<div id="zpMoreInfoWrap"><p class="zp-sec" style="margin-top:16px">From Zen Planner</p><div class="zp-kvcard" id="zpMoreInfo"><div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Loading&hellip;</span></div></div></div>'; }
 
   var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail'), shell=document.getElementById('zpShell');
   var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members', forms:'Forms'};
@@ -355,18 +360,18 @@
       detail.innerHTML=headHTML(i,'<span class="zp-tp inquiry">Inquiry</span> '+interest,contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Inquiry details</p>'+
         kvCard([['Name',i.name],['Received',i.date],['Source',i.source],['Interest',i.interest],['Phone',i.phone]])+moreBox()+'</div>';
-      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone});
+      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone},['status','phone','email']);
     } else if(state.view==='lead'){
       detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> <span class="zp-pill upcoming">Not booked</span>',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
         kvCard([['Name',i.name],['Submitted',i.date],['Source',i.source],['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
         '<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div>'+moreBox()+'</div>';
-      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email});
+      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else {
       detail.innerHTML=headHTML(i,'<span class="zp-tp member">Member</span>'+(i.status?' <span class="zp-pill confirmed">'+esc(i.status)+'</span>':''),'')+
         '<div class="zp-scroll"><p class="zp-sec">Membership</p>'+
         kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+moreBox()+'</div>';
-      loadPersonInfo('zpMoreInfo',{name:i.name});
+      loadPersonInfo('zpMoreInfo',{name:i.name},['status']);
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
