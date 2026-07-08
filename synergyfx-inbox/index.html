@@ -250,7 +250,7 @@
   // status omitted (STUDENT/PROSPECT adds nothing) and lastLogDate omitted (a bare
   // date without the note text reads as noise) per user feedback 2026-07-08.
   // "Check-ins" because Studio counts every visit type (classes, PT, red light, PEMF).
-  var PLABELS=[['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Check-ins (30 days)'],['attendanceSinceSignupDate','Check-ins (since signup)'],['trialEndDate','Trial ends'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
+  var PLABELS=[['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Check-ins (30 days)'],['trialEndDate','Trial ends'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
   function personRowsHTML(p, skip){
     var rows='';
     PLABELS.forEach(function(pair){
