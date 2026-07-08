@@ -245,7 +245,7 @@
   function fmtDay(iso){var t=Date.parse(iso+'T12:00:00');if(isNaN(t))return iso;return new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
   function fmtISO(s){var t=Date.parse(s||'');if(isNaN(t))return s||'';return new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
   var PINFO={};
-  var PLABELS=[['status','Studio status'],['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Visits (30 days)'],['attendanceSinceSignupDate','Visits (since signup)'],['lastLogDate','Last contact'],['trialEndDate','Trial ends'],['gender','Gender'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
+  var PLABELS=[['status','Studio status'],['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Visits (30 days)'],['attendanceSinceSignupDate','Visits (since signup)'],['lastLogDate','Last logged note'],['trialEndDate','Trial ends'],['gender','Gender'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
   function personRowsHTML(p){
     var rows='';
     PLABELS.forEach(function(pair){
