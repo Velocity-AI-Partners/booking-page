@@ -296,9 +296,15 @@
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
-  var calEl=document.getElementById('zpCal');
+  var calEl=document.getElementById('zpCal'), apptFirstPoll=0;
   function renderCal(){
-    if(!apptReady){calEl.innerHTML='<div class="zp-cal-loading">Loading appointments&hellip;</div>';return;}
+    if(!apptReady){
+      var waited=apptFirstPoll?Date.now()-apptFirstPoll:0;
+      calEl.innerHTML='<div class="zp-cal-loading">'+(waited>120000
+        ?'Appointments are taking longer than usual. The calendar is being rebuilt and will appear here as soon as it\'s ready.'
+        :'Loading appointments&hellip;')+'</div>';
+      return;
+    }
     var fmt=new Intl.DateTimeFormat('en-CA'); // YYYY-MM-DD local
     var days=[], now=Date.now();
     for(var i=0;i<7;i++) days.push(fmt.format(new Date(now+i*86400000)));
@@ -347,11 +353,14 @@
   var apptTimer=null;
   function fetchAppts(){
     if(apptTimer){clearTimeout(apptTimer); apptTimer=null;}
+    if(!apptFirstPoll) apptFirstPoll=Date.now();
     fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW,section:'appointments',days:7})})
       .then(function(r){return r.json();})
       .then(function(d){
-        if(d && d.building){ apptTimer=setTimeout(fetchAppts,6000); return; }
+        // A stale payload still renders (better than an empty grid) while the
+        // server rebuilds; keep polling until a fresh build lands.
         if(d && d.appointments) applyAppts(d);
+        if(d && d.building){ apptTimer=setTimeout(fetchAppts,6000); if(!d.appointments && state.view==='appt') renderCal(); return; }
       })
       .catch(function(){ apptTimer=setTimeout(fetchAppts,15000); });
   }
