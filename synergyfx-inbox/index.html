@@ -199,7 +199,7 @@
       <button class="on" data-v="appt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>Appointments<b id="nAppt">&hellip;</b></button>
       <button data-v="lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Leads<b id="nLead">0</b></button>
       <button data-v="member"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0M15 5a3.2 3.2 0 0 1 0 6M17 13a6 6 0 0 1 4 6"/></svg>Members<b id="nMem">0</b></button>
-      <button data-v="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Book &amp; Contact</button>
+      <button data-v="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Forms</button>
     </nav>
     <section class="zp-list">
       <div class="zp-list-head">
@@ -252,7 +252,7 @@
       var v=p[pair[0]];
       if(v===undefined||v===null||v==='') return;
       if(pair[0]==='gender'&&/nospec/i.test(String(v))) return;
-      if(/Date$/.test(pair[0])||pair[0]==='birthDate') v=fmtISO(v);
+      if(/^\d{4}-\d{2}-\d{2}T/.test(String(v))) v=fmtISO(v);
       rows+='<div class="zp-kv"><span class="zp-kv-k">'+esc(pair[1])+'</span><span class="zp-kv-v">'+esc(v)+'</span></div>';
     });
     (p.customFields||[]).forEach(function(c){
@@ -278,7 +278,7 @@
   function moreBox(){ return '<p class="zp-sec" style="margin-top:16px">From Zen Planner</p><div class="zp-kvcard" id="zpMoreInfo"><div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Loading&hellip;</span></div></div>'; }
 
   var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail'), shell=document.getElementById('zpShell');
-  var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members', forms:'Book & Contact'};
+  var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members', forms:'Forms'};
 
   function applyRoster(d){
     var inq=(d.inquiries||[]).map(function(q,ix){
