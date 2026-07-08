@@ -109,6 +109,26 @@
   .zp-cal-s{font-size:11px; color:var(--faint); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .zp-cal-none{font-size:11.5px; color:var(--faint); text-align:center; padding:14px 4px}
   .zp-cal-loading{margin:auto; color:var(--faint); font-size:14px; padding:60px; text-align:center}
+  .zp-cal-it{cursor:pointer}
+  .zp-cal-it:hover{border-color:var(--accent); box-shadow:0 1px 6px rgba(16,24,40,.08)}
+  .zp-wk{display:flex; align-items:center; gap:10px; margin-bottom:12px}
+  .zp-wk button{border:1px solid var(--border); background:var(--panel); color:var(--ink); font-size:12.5px; font-weight:600; padding:7px 12px; border-radius:9px; cursor:pointer}
+  .zp-wk button:hover{border-color:var(--accent); color:var(--accent-600)}
+  .zp-wk .zp-wk-label{font-size:13.5px; font-weight:650}
+  .zp-wk .zp-wk-cur{margin-left:2px; font-size:12px; color:var(--accent-600); background:var(--accent-050); border-color:var(--accent-050)}
+  .zp-modal{position:fixed; inset:0; background:rgba(16,24,40,.45); display:flex; align-items:center; justify-content:center; z-index:60; padding:20px}
+  .zp-modal-card{background:var(--panel); border-radius:14px; width:100%; max-width:420px; box-shadow:0 18px 60px rgba(16,24,40,.25); overflow:hidden}
+  .zp-modal-head{display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid var(--border)}
+  .zp-modal-head b{font-size:15.5px}
+  .zp-modal-x{margin-left:auto; border:0; background:transparent; cursor:pointer; color:var(--muted); font-size:18px; line-height:1; padding:4px}
+  .zp-modal-body{padding:10px 18px 16px}
+  .zp-forms{flex:1 1 auto; display:none; min-width:0; min-height:0; background:var(--bg); padding:16px; gap:14px}
+  .zp-form-col{flex:1 1 50%; min-width:0; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden}
+  .zp-form-head{padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; font-weight:650; display:flex; align-items:center; justify-content:space-between}
+  .zp-form-head a{font-size:11.5px; font-weight:600; color:var(--accent-600); text-decoration:none}
+  .zp-form-head a:hover{text-decoration:underline}
+  .zp-forms iframe{flex:1 1 auto; width:100%; border:0; min-height:0}
+  @media (max-width:900px){ .zp-forms{flex-direction:column} }
 
   .zp-detail{flex:1 1 auto; display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--bg)}
   .zp-dhead{background:var(--panel); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:flex-start; gap:14px}
@@ -170,19 +190,20 @@
       <div class="zp-mark">SF</div>
       <div><b>SynergyFx</b><span>Strength &amp; Wellness Lab</span></div>
     </div>
-    <div class="zp-page-title" id="zpTitle">Inquiries</div>
+    <div class="zp-page-title" id="zpTitle">Appointments</div>
     <div class="zp-asof"><span class="zp-dot"></span><span id="zpAsOf"></span></div>
   </header>
   <div class="zp-body">
     <nav class="zp-nav" id="zpNav">
-      <button class="on" data-v="inquiry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Inquiries<b id="nInq">0</b></button>
-      <button data-v="appt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>Appointments<b id="nAppt">&hellip;</b></button>
+      <button data-v="inquiry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Inquiries<b id="nInq">0</b></button>
+      <button class="on" data-v="appt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>Appointments<b id="nAppt">&hellip;</b></button>
       <button data-v="lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Leads<b id="nLead">0</b></button>
       <button data-v="member"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0M15 5a3.2 3.2 0 0 1 0 6M17 13a6 6 0 0 1 4 6"/></svg>Members<b id="nMem">0</b></button>
+      <button data-v="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Book &amp; Contact</button>
     </nav>
     <section class="zp-list">
       <div class="zp-list-head">
-        <h2 id="zpListTitle">Inquiries</h2>
+        <h2 id="zpListTitle">Appointments</h2>
         <div class="zp-search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
           <input id="zpSearch" type="text" placeholder="Search by name..." aria-label="Search">
@@ -192,14 +213,27 @@
     </section>
     <section class="zp-detail" id="zpDetail"></section>
     <section class="zp-cal" id="zpCal"></section>
+    <section class="zp-forms" id="zpForms">
+      <div class="zp-form-col">
+        <div class="zp-form-head">Booking page <a href="../synergyfx/" target="_blank" rel="noopener">Open in new tab</a></div>
+        <iframe id="ifBook" title="SynergyFx booking page"></iframe>
+      </div>
+      <div class="zp-form-col">
+        <div class="zp-form-head">Contact / lead form <a href="../synergyfx-contact/" target="_blank" rel="noopener">Open in new tab</a></div>
+        <iframe id="ifContact" title="SynergyFx contact form"></iframe>
+      </div>
+    </section>
   </div>
 </div>
 
 <script>
 (function(){
   var API='https://vap-zp-staff.fly.dev/inbox';
-  var PW=null, state={view:'inquiry', search:'', active:null};
+  var PW=null, state={view:'appt', search:'', active:null};
   var DATA={inquiry:[], appt:[], lead:[], member:[]}, apptReady=false, apptWindow=7;
+  var WEEKS={}, curWeek=null; // curWeek=null -> rolling current week; else 'YYYY-MM-DD'
+  function fmtYMD(t){var d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function weekKey(){return curWeek||'current';}
   var AV=['#155eef','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
   function color(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AV[s%AV.length];}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -211,7 +245,7 @@
   function fmtDay(iso){var t=Date.parse(iso+'T12:00:00');if(isNaN(t))return iso;return new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
 
   var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail'), shell=document.getElementById('zpShell');
-  var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members'};
+  var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members', forms:'Book & Contact'};
 
   function applyRoster(d){
     var inq=(d.inquiries||[]).map(function(q,ix){
@@ -232,12 +266,14 @@
     document.getElementById('zpAsOf').textContent='Updated '+new Date(d.generatedAt||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
     renderAll();
   }
-  function applyAppts(d){
-    DATA.appt=(d.appointments||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.minutes-b.minutes;});
-    apptWindow=d.windowDays||7;
-    apptReady=true;
-    document.getElementById('nAppt').textContent=DATA.appt.length;
-    if(state.view==='appt') renderAll();
+  function applyAppts(d, key){
+    var sorted=(d.appointments||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.minutes-b.minutes;});
+    WEEKS[key||'current']={list:sorted, weekStart:d.weekStart||null};
+    if((key||'current')===weekKey()){
+      DATA.appt=sorted; apptWindow=d.windowDays||7; apptReady=true;
+      if(state.view==='appt') renderAll();
+    }
+    if((key||'current')==='current') document.getElementById('nAppt').textContent=sorted.length;
   }
 
   function visible(){
@@ -297,28 +333,85 @@
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
   var calEl=document.getElementById('zpCal'), apptFirstPoll=0;
+  function weekBaseTs(){
+    if(curWeek) return Date.parse(curWeek+'T12:00:00');
+    var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate(),12).getTime();
+  }
+  function weekNavHTML(){
+    var b=weekBaseTs(), end=b+6*86400000;
+    var f=function(t){return new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric'});};
+    return '<div class="zp-wk">'+
+      '<button id="wkPrev">&larr; Previous week</button>'+
+      '<span class="zp-wk-label">'+esc(f(b))+' &ndash; '+esc(f(end))+'</span>'+
+      '<button id="wkNext">Next week &rarr;</button>'+
+      (curWeek?'<button class="zp-wk-cur" id="wkCur">Back to this week</button>':'')+
+      '</div>';
+  }
+  function wireWeekNav(){
+    var shift=function(d){
+      var t=weekBaseTs()+d*7*86400000;
+      var today=new Date(); today=new Date(today.getFullYear(),today.getMonth(),today.getDate(),12).getTime();
+      var k=fmtYMD(t);
+      curWeek=(t===today)?null:k;
+      var have=WEEKS[weekKey()];
+      if(have){DATA.appt=have.list; apptReady=true;}
+      else {apptReady=false; DATA.appt=[];}
+      renderCal();
+      if(!have) fetchAppts();
+    };
+    var p=document.getElementById('wkPrev'), n=document.getElementById('wkNext'), c=document.getElementById('wkCur');
+    if(p) p.onclick=function(){shift(-1);};
+    if(n) n.onclick=function(){shift(1);};
+    if(c) c.onclick=function(){curWeek=null; var have=WEEKS['current']; if(have){DATA.appt=have.list; apptReady=true;} else {apptReady=false;} renderCal(); if(!have) fetchAppts();};
+  }
+  function showApptModal(a){
+    var old=document.getElementById('zpModal'); if(old) old.remove();
+    var wrap=document.createElement('div'); wrap.className='zp-modal'; wrap.id='zpModal';
+    var when=fmtDay(a.date)+' &middot; '+esc(a.time)+(a.duration?(' &middot; '+a.duration+' min'):'');
+    var kv=[['Client',a.client],['Type',a.type],['When',null],['Coach',a.coach||'(not assigned yet)'],['Location',a.location||''],];
+    var rows='';
+    kv.forEach(function(p){
+      var v=p[0]==='When'?when:esc(p[1]||'');
+      if(!v) return;
+      rows+='<div class="zp-kv"><span class="zp-kv-k">'+esc(p[0])+'</span><span class="zp-kv-v">'+v+'</span></div>';
+    });
+    wrap.innerHTML='<div class="zp-modal-card"><div class="zp-modal-head">'+
+      '<div class="zp-av" style="background:'+color(a.client)+'">'+esc(initials(a.client))+'</div>'+
+      '<b>'+esc(a.client)+'</b>'+(a.isConsult?' <span class="zp-tp consult">Consultation</span>':'')+
+      '<button class="zp-modal-x" aria-label="Close">&times;</button></div>'+
+      '<div class="zp-modal-body">'+rows+'</div></div>';
+    wrap.addEventListener('click',function(e){ if(e.target===wrap||e.target.closest('.zp-modal-x')) wrap.remove(); });
+    document.body.appendChild(wrap);
+  }
+  calEl.addEventListener('click',function(e){
+    var it=e.target.closest('.zp-cal-it'); if(!it) return;
+    var idx=parseInt(it.getAttribute('data-i'),10);
+    if(!isNaN(idx) && DATA.appt[idx]) showApptModal(DATA.appt[idx]);
+  });
   function renderCal(){
     if(!apptReady){
       var waited=apptFirstPoll?Date.now()-apptFirstPoll:0;
-      calEl.innerHTML='<div class="zp-cal-loading">'+(waited>120000
+      calEl.innerHTML=weekNavHTML()+'<div class="zp-cal-loading">'+(waited>120000
         ?'Appointments are taking longer than usual. The calendar is being rebuilt and will appear here as soon as it\'s ready.'
-        :'Loading appointments&hellip;')+'</div>';
+        :(curWeek?'Loading that week&hellip; (first load of a past week takes a couple of minutes)':'Loading appointments&hellip;'))+'</div>';
+      wireWeekNav();
       return;
     }
-    var fmt=new Intl.DateTimeFormat('en-CA'); // YYYY-MM-DD local
-    var days=[], now=Date.now();
-    for(var i=0;i<7;i++) days.push(fmt.format(new Date(now+i*86400000)));
+    var days=[], b=weekBaseTs();
+    for(var i=0;i<7;i++) days.push(fmtYMD(b+i*86400000));
+    var todayStr=fmtYMD(Date.now());
     var by={};
-    DATA.appt.forEach(function(a){(by[a.date]=by[a.date]||[]).push(a);});
-    var h='<div class="zp-cal-grid">';
-    days.forEach(function(d,ix){
+    DATA.appt.forEach(function(a,ix){a._ix=ix;(by[a.date]=by[a.date]||[]).push(a);});
+    var h=weekNavHTML()+'<div class="zp-cal-grid">';
+    days.forEach(function(d){
       var t=Date.parse(d+'T12:00:00'), dt=new Date(t);
+      var isToday=(d===todayStr);
       var wd=dt.toLocaleDateString('en-US',{weekday:'short'}), md=dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-      h+='<div class="zp-cal-day'+(ix===0?' today':'')+'"><div class="zp-cal-dhead">'+(ix===0?'Today':esc(wd))+'<span>'+esc(md)+'</span></div><div class="zp-cal-items">';
+      h+='<div class="zp-cal-day'+(isToday?' today':'')+'"><div class="zp-cal-dhead">'+(isToday?'Today':esc(wd))+'<span>'+esc(md)+'</span></div><div class="zp-cal-items">';
       var list=by[d]||[];
       if(!list.length) h+='<div class="zp-cal-none">No appointments</div>';
       list.forEach(function(a){
-        h+='<div class="zp-cal-it'+(a.isConsult?' consult':'')+'"><div class="zp-cal-t">'+esc(a.time)+(a.isConsult?' &middot; Consultation':'')+'</div>'+
+        h+='<div class="zp-cal-it'+(a.isConsult?' consult':'')+'" data-i="'+a._ix+'"><div class="zp-cal-t">'+esc(a.time)+(a.isConsult?' &middot; Consultation':'')+'</div>'+
            '<div class="zp-cal-n">'+esc(a.client)+'</div>'+
            '<div class="zp-cal-s">'+esc(a.type)+(a.coach?(' &middot; '+esc(a.coach)):'')+'</div></div>';
       });
@@ -326,14 +419,22 @@
     });
     h+='</div>';
     calEl.innerHTML=h;
+    wireWeekNav();
   }
   function setPanes(){
-    var isCal=state.view==='appt';
-    document.querySelector('.zp-list').style.display=isCal?'none':'flex';
-    detail.style.display=isCal?'none':'flex';
+    var isCal=state.view==='appt', isForms=state.view==='forms';
+    document.querySelector('.zp-list').style.display=(isCal||isForms)?'none':'flex';
+    detail.style.display=(isCal||isForms)?'none':'flex';
     calEl.style.display=isCal?'block':'none';
+    var f=document.getElementById('zpForms');
+    f.style.display=isForms?'flex':'none';
+    if(isForms){
+      var b=document.getElementById('ifBook'), c=document.getElementById('ifContact');
+      if(!b.src) b.src='../synergyfx/';
+      if(!c.src) c.src='../synergyfx-contact/';
+    }
   }
-  function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else {renderList(); renderDetail();} }
+  function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else if(state.view!=='forms'){renderList(); renderDetail();} }
 
   document.getElementById('zpNav').addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b) return;
@@ -354,15 +455,18 @@
   function fetchAppts(){
     if(apptTimer){clearTimeout(apptTimer); apptTimer=null;}
     if(!apptFirstPoll) apptFirstPoll=Date.now();
-    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW,section:'appointments',days:7})})
+    var key=weekKey();
+    var body={password:PW,section:'appointments',days:7};
+    if(curWeek) body.start=curWeek;
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(function(r){return r.json();})
       .then(function(d){
         // A stale payload still renders (better than an empty grid) while the
         // server rebuilds; keep polling until a fresh build lands.
-        if(d && d.appointments) applyAppts(d);
-        if(d && d.building){ apptTimer=setTimeout(fetchAppts,6000); if(!d.appointments && state.view==='appt') renderCal(); return; }
+        if(d && d.appointments) applyAppts(d, key);
+        if(d && d.building){ if(key===weekKey()){ apptTimer=setTimeout(fetchAppts,6000); if(!d.appointments && state.view==='appt') renderCal(); } return; }
       })
-      .catch(function(){ apptTimer=setTimeout(fetchAppts,15000); });
+      .catch(function(){ if(key===weekKey()) apptTimer=setTimeout(fetchAppts,15000); });
   }
   async function refresh(){
     if(!PW) return;
