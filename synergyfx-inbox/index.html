@@ -4,439 +4,375 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>SynergyFx - Leads &amp; Bookings</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128202;</text></svg>">
+<title>SynergyFx - Inbox</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128232;</text></svg>">
+<!--
+  Login-gated view of SynergyFx's Zen Planner Studio data. This page is public GitHub
+  Pages, so it holds no data and no service key: a staff member signs in with the team
+  password, which the vap-zp-staff proxy (POST /inbox) checks server-side before
+  returning the aggregated read-only feeds. Appointments load asynchronously (the
+  server builds them from Studio's calendar; a keep-warm refresher keeps it instant).
+-->
 <style>
-  /* SynergyFx staff command center. This page is PUBLIC (GitHub Pages), so it holds
-     no data and no service key. A staff member signs in with a shared password; that
-     password is checked server-side by the vap-zp-staff proxy (POST /inbox), which
-     then returns the aggregated, read-only Zen Planner Studio roster. The password is
-     kept only in sessionStorage (gone when the tab closes) and never in page source.
-
-     Everyone shows in ONE place: Studio has a single shared person database, so every
-     person appears exactly once no matter which coach they inquired with, with each
-     lead's origin shown in the Source column. Individual consult appointments live on
-     Studio's one shared calendar, linked below. */
   :root{
     --accent:#155eef; --accent-600:#1149c0; --accent-050:#eaf1ff;
     --ink:#101828; --muted:#667085; --faint:#98a2b3;
-    --bg:#f4f6fb; --panel:#ffffff; --border:#e6e9f1;
+    --bg:#f4f6fb; --panel:#ffffff; --border:#e6e9f1; --border-soft:#eef1f7;
+    --showed:#067647; --showed-bg:#e7f6ec;
+    --confirmed:#155eef; --confirmed-bg:#eaf1ff;
+    --upcoming:#b25e00; --upcoming-bg:#fff4e3;
+    --cancelled:#b42318; --cancelled-bg:#fee4e2;
+    --consult:#0e7490; --consult-bg:#e0f2fe;
     --member:#067647; --member-bg:#e7f6ec;
-    --prospect:#155eef; --prospect-bg:#eaf1ff;
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;min-height:100vh}
-  .mark{width:38px;height:38px;border-radius:10px;flex:0 0 auto;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px}
+  body{font-family:var(--sans); color:var(--ink); background:var(--bg); -webkit-font-smoothing:antialiased}
+  body *{font-family:inherit}
 
-  /* login */
-  #login{min-height:100vh;display:grid;place-items:center;padding:20px}
-  .login-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:30px 28px;box-shadow:0 10px 40px rgba(16,24,40,.08)}
-  .login-card .top{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-  .login-card .top b{font-size:16px;font-weight:680;display:block;line-height:1.1}
-  .login-card .top span{font-size:12.5px;color:var(--muted)}
-  .login-card h1{font-size:18px;margin:0 0 6px}
-  .login-card p{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5}
-  .field{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:7px}
-  input[type=password],input[type=search]{width:100%;font-size:14.5px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--ink)}
-  input:focus{outline:2px solid var(--accent-050);border-color:var(--accent)}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;background:var(--accent);color:#fff;border:0;border-radius:9px;font-size:14.5px;font-weight:640;padding:12px 16px;cursor:pointer}
-  .btn:hover{background:var(--accent-600)}
-  .btn[disabled]{opacity:.6;cursor:default}
-  .msg{font-size:12.8px;margin-top:12px;min-height:16px}
-  .msg.err{color:#b42318}
-  .msg.info{color:var(--muted)}
+  .zp-login{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px}
+  .zp-card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:34px 30px; width:100%; max-width:370px; box-shadow:0 12px 44px rgba(16,24,40,.10)}
+  .zp-lgmark{width:46px; height:46px; border-radius:12px; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:16px; margin:0 auto 16px}
+  .zp-card h1{font-size:19px; font-weight:680; text-align:center; margin:0 0 24px}
+  .zp-field{margin-bottom:13px}
+  .zp-field label{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px}
+  .zp-field input{width:100%; padding:10px 12px; font-size:14px; color:var(--ink); border:1px solid var(--border); border-radius:10px; background:#fbfcfe; outline:none}
+  .zp-field input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
+  .zp-signin{width:100%; padding:11px; font-size:14px; font-weight:650; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; margin-top:8px}
+  .zp-signin:hover{background:var(--accent-600)}
+  .zp-signin:disabled{opacity:.6; cursor:default}
+  .zp-err{font-size:12.5px; color:var(--cancelled); text-align:center; min-height:16px; margin-top:12px}
 
-  /* dashboard */
-  #dash[hidden]{display:none}
-  .wrap{max-width:1120px;margin:0 auto;padding:22px 20px 60px}
-  .bar{display:flex;align-items:center;gap:13px;margin-bottom:20px;flex-wrap:wrap}
-  .bar .who{display:flex;align-items:center;gap:12px;flex:1 1 auto}
-  .bar .who b{font-size:16px;font-weight:680;display:block;line-height:1.1}
-  .bar .who span{font-size:12px;color:var(--muted)}
-  .bar .act{display:flex;gap:8px;align-items:center}
-  .ghost{background:#fff;border:1px solid var(--border);color:var(--ink);border-radius:8px;font-size:12.8px;font-weight:600;padding:8px 13px;cursor:pointer}
-  .ghost:hover{border-color:var(--accent);color:var(--accent)}
-  .stamp{font-size:11.5px;color:var(--faint)}
+  .zp-shell{height:100vh; min-height:100dvh; display:none; flex-direction:column; overflow:hidden}
+  .zp-top{flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:0 16px; height:56px; background:var(--panel); border-bottom:1px solid var(--border)}
+  .zp-loc{display:flex; align-items:center; gap:10px; padding-right:14px; border-right:1px solid var(--border-soft)}
+  .zp-mark{width:30px; height:30px; border-radius:8px; flex:0 0 auto; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:13px}
+  .zp-loc b{font-size:14px; font-weight:650; line-height:1.1}
+  .zp-loc span{display:block; font-size:11px; color:var(--muted); margin-top:1px}
+  .zp-page-title{font-size:14px; font-weight:600}
+  .zp-asof{margin-left:auto; font-size:11px; color:var(--faint); font-weight:500; display:flex; align-items:center; gap:6px}
+  .zp-dot{width:6px; height:6px; border-radius:50%; background:var(--showed); display:inline-block}
 
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px}
-  @media (max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
-  .stat{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 16px}
-  .stat .n{font-size:25px;font-weight:720;line-height:1;font-variant-numeric:tabular-nums}
-  .stat .l{font-size:12px;color:var(--muted);margin-top:6px}
+  .zp-body{flex:1 1 auto; display:flex; min-height:0}
 
-  .note{display:flex;gap:12px;align-items:flex-start;background:var(--accent-050);border:1px solid #d5e2ff;border-radius:12px;padding:13px 16px;margin-bottom:18px}
-  .note .nt{font-size:12.8px;line-height:1.55;color:#1c3b7a}
-  .note .nt b{color:#0f2a5e}
+  .zp-nav{flex:0 0 190px; background:var(--panel); border-right:1px solid var(--border); padding:14px 10px; display:flex; flex-direction:column; gap:4px}
+  .zp-nav button{display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:0; background:transparent; cursor:pointer; padding:9px 12px; border-radius:9px; font-size:13px; font-weight:600; color:var(--muted)}
+  .zp-nav button:hover{background:var(--bg); color:var(--ink)}
+  .zp-nav button.on{background:var(--accent-050); color:var(--accent-600)}
+  .zp-nav b{margin-left:auto; font-size:12px; font-variant-numeric:tabular-nums; font-weight:650}
+  .zp-nav svg{width:16px; height:16px; flex:0 0 auto}
 
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:18px}
-  .panel .head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .panel .head h2{font-size:14.5px;margin:0;font-weight:680;flex:0 0 auto}
-  .panel .head .sub{font-size:12px;color:var(--muted)}
-  .spacer{flex:1 1 auto}
-  .chips{display:flex;gap:6px;flex-wrap:wrap}
-  .chip{font-size:12.3px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer}
-  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  .search{max-width:260px}
+  .zp-list{flex:0 0 330px; max-width:330px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0}
+  .zp-list-head{padding:14px 14px 0; border-bottom:1px solid var(--border-soft)}
+  .zp-list-head h2{margin:0 0 11px; font-size:15px; font-weight:650}
+  .zp-search{position:relative; margin-bottom:12px}
+  .zp-search svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--faint)}
+  .zp-search input{width:100%; padding:8px 10px 8px 32px; font-size:13px; color:var(--ink); border:1px solid var(--border); border-radius:9px; background:#fbfcfe; outline:none}
+  .zp-search input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
+  .zp-rows{flex:1 1 auto; overflow-y:auto; min-height:0}
+  .zp-row{width:100%; text-align:left; border:0; background:transparent; cursor:pointer; display:flex; gap:11px; padding:12px 14px; border-bottom:1px solid var(--border-soft); border-left:3px solid transparent}
+  .zp-row:hover{background:#fafbfe}
+  .zp-row.on{background:var(--accent-050); border-left-color:var(--accent)}
+  .zp-av{width:36px; height:36px; flex:0 0 auto; border-radius:50%; display:grid; place-items:center; font-size:13px; font-weight:650; color:#fff}
+  .zp-row-main{flex:1 1 auto; min-width:0}
+  .zp-row-top{display:flex; align-items:baseline; gap:8px}
+  .zp-row-name{font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .zp-row-time{margin-left:auto; font-size:11px; color:var(--faint); flex:0 0 auto; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .zp-row-snip{font-size:12.5px; color:var(--muted); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .zp-row-foot{display:flex; align-items:center; gap:7px; margin-top:7px; flex-wrap:wrap}
 
-  .tablewrap{overflow-x:auto}
-  .list{max-height:620px;overflow-y:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  thead th{position:sticky;top:0;background:#f8fafc;text-align:left;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:680;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;z-index:1}
-  tbody td{padding:10px 14px;border-bottom:1px solid #f0f2f6;vertical-align:top}
-  tbody tr:hover{background:#fafbfe}
-  .nm{font-weight:600}
-  .contact{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
-  .badge{display:inline-block;font-size:11px;font-weight:680;padding:2px 8px;border-radius:6px;white-space:nowrap}
-  .b-member{background:var(--member-bg);color:var(--member)}
-  .b-prospect{background:var(--prospect-bg);color:var(--prospect)}
-  .src{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#f1f3f7;color:var(--muted);white-space:nowrap}
-  .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
-  .toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
-  .toggle input{margin:0}
-  .subnote{font-size:12px;color:var(--muted);line-height:1.5;padding:11px 18px;border-bottom:1px solid var(--border);background:#fbfcfe}
-  .b-consult{background:#fdece8;color:#b42318}
-  .day-sep td{background:#f4f6fb;font-weight:680;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:7px 14px}
-  .coach-open{color:var(--faint);font-style:italic}
+  .zp-tp{font-size:10.5px; font-weight:650; padding:2px 8px; border-radius:999px; white-space:nowrap}
+  .zp-tp.inquiry{color:var(--accent); background:var(--accent-050)}
+  .zp-tp.consult{color:var(--consult); background:var(--consult-bg)}
+  .zp-tp.appt{color:var(--confirmed); background:var(--confirmed-bg)}
+  .zp-tp.lead{color:var(--upcoming); background:var(--upcoming-bg)}
+  .zp-tp.member{color:var(--member); background:var(--member-bg)}
+  .zp-pill{font-size:10.5px; font-weight:650; padding:2px 8px; border-radius:999px; white-space:nowrap}
+  .zp-pill.showed{color:var(--showed); background:var(--showed-bg)}
+  .zp-pill.confirmed{color:var(--confirmed); background:var(--confirmed-bg)}
+  .zp-pill.upcoming{color:var(--upcoming); background:var(--upcoming-bg)}
+  .zp-pill.cancelled{color:var(--cancelled); background:var(--cancelled-bg)}
 
-  .links{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width:640px){.links{grid-template-columns:1fr}}
-  .link{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;color:inherit}
-  .link:hover{border-color:var(--accent)}
-  .link .t{font-size:13.5px;font-weight:650}
-  .link .d{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
-  .foot{font-size:11.5px;color:var(--faint);text-align:center;margin-top:22px;line-height:1.6}
-  .loading{display:flex;align-items:center;gap:10px;justify-content:center;padding:40px;color:var(--muted);font-size:13.5px}
-  .spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite}
-  @keyframes sp{to{transform:rotate(360deg)}}
+  .zp-detail{flex:1 1 auto; display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--bg)}
+  .zp-dhead{background:var(--panel); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:flex-start; gap:14px}
+  .zp-back{display:none; border:0; background:transparent; cursor:pointer; color:var(--muted); padding:4px; margin:-4px 2px -4px -4px}
+  .zp-dhead .zp-av{width:44px; height:44px; font-size:15px}
+  .zp-dmeta{flex:1 1 auto; min-width:0}
+  .zp-dname{font-size:16px; font-weight:680; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .zp-chipsrow{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:8px}
+  .zp-contact{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted)}
+  .zp-contact svg{width:14px; height:14px; color:var(--faint); flex:0 0 auto}
+  .zp-interest{font-size:11px; font-weight:600; color:var(--accent-600); background:var(--accent-050); padding:3px 9px; border-radius:999px}
+
+  .zp-scroll{flex:1 1 auto; overflow-y:auto; min-height:0; padding:22px 20px}
+  .zp-sec{font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--faint); margin:0 0 12px}
+  .zp-bk{display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--border); border-radius:11px; padding:12px 14px; margin-bottom:9px}
+  .zp-bk-ic{width:34px; height:34px; flex:0 0 auto; border-radius:9px; background:var(--consult-bg); color:var(--consult); display:grid; place-items:center}
+  .zp-bk-ic svg{width:17px; height:17px}
+  .zp-bk-main{flex:1 1 auto; min-width:0}
+  .zp-bk-t{font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums}
+  .zp-bk-s{font-size:11.5px; color:var(--faint); margin-top:2px}
+  .zp-empty{margin:auto; text-align:center; color:var(--faint); font-size:14px; padding:40px}
+  .zp-kv{display:flex; gap:12px; padding:8px 0; border-bottom:1px solid var(--border-soft)}
+  .zp-kv:last-child{border-bottom:0}
+  .zp-kv-k{flex:0 0 108px; color:var(--muted); font-weight:600; font-size:12px; padding-top:1px}
+  .zp-kv-v{flex:1 1 auto; color:var(--ink); font-size:13px; word-break:break-word; white-space:pre-wrap}
+  .zp-kvcard{background:var(--panel); border:1px solid var(--border); border-radius:11px; padding:6px 14px 10px; margin-bottom:9px}
+
+  @media (max-width:900px){
+    .zp-nav{flex:0 0 auto; flex-direction:row; overflow-x:auto; border-right:0; border-bottom:1px solid var(--border); padding:8px 10px}
+    .zp-nav button{width:auto; white-space:nowrap}
+    .zp-body{flex-direction:column}
+    .zp-list{flex:1 1 auto; max-width:none; border-right:0}
+    .zp-detail{display:none}
+    .zp-shell.detail-open .zp-nav{display:none}
+    .zp-shell.detail-open .zp-list{display:none}
+    .zp-shell.detail-open .zp-detail{display:flex; flex:1 1 auto}
+    .zp-back{display:inline-flex; align-items:center}
+    .zp-page-title{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+  .zp-row:focus-visible,.zp-nav button:focus-visible,.zp-signin:focus-visible,.zp-search input:focus-visible,.zp-field input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login">
-  <form class="login-card" id="loginForm">
-    <div class="top"><div class="mark">SF</div><div><b>SynergyFx</b><span>Leads &amp; Bookings</span></div></div>
-    <h1>Sign in</h1>
-    <p>View every SynergyFx lead, prospect, and member in one place. Ask Charmaine for the team password.</p>
-    <label class="field" for="pw">Team password</label>
-    <input id="pw" type="password" autocomplete="current-password" placeholder="Enter password">
-    <button class="btn" id="loginBtn" type="submit">View leads &amp; bookings</button>
-    <div class="msg info" id="loginMsg"></div>
+<div class="zp-login" id="zpLogin">
+  <form class="zp-card" id="zpLoginForm" autocomplete="on">
+    <div class="zp-lgmark">SF</div>
+    <h1>SynergyFx</h1>
+    <div class="zp-field"><label for="lgPass">Team password</label><input id="lgPass" type="password" autocomplete="current-password"></div>
+    <button class="zp-signin" id="lgBtn" type="submit">Sign in</button>
+    <div class="zp-err" id="lgErr"></div>
   </form>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dash" hidden>
-  <div class="wrap">
-    <div class="bar">
-      <div class="who"><div class="mark">SF</div><div><b>Leads &amp; Bookings</b><span id="stamp" class="stamp"></span></div></div>
-      <div class="act">
-        <button class="ghost" id="refreshBtn">Refresh</button>
-        <button class="ghost" id="signout">Sign out</button>
-      </div>
+<div class="zp-shell" id="zpShell">
+  <header class="zp-top">
+    <div class="zp-loc">
+      <div class="zp-mark">SF</div>
+      <div><b>SynergyFx</b><span>Strength &amp; Wellness Lab</span></div>
     </div>
-
-    <div id="dashBody" hidden>
-      <div class="stats" id="stats"></div>
-
-      <div class="note"><span class="nt"><b>Everyone is here, once.</b> This is the full Zen Planner roster, with each lead's origin shown in the Source column. Because Studio uses one shared calendar and one person list, a person shows up here no matter which coach they booked with, so two people can't land on two separate calendars the way they did before.</span></div>
-
-      <div class="panel">
-        <div class="head">
-          <h2>Recent inquiries</h2>
-          <span class="sub" id="inqSub"></span>
+    <div class="zp-page-title" id="zpTitle">Inquiries</div>
+    <div class="zp-asof"><span class="zp-dot"></span><span id="zpAsOf"></span></div>
+  </header>
+  <div class="zp-body">
+    <nav class="zp-nav" id="zpNav">
+      <button class="on" data-v="inquiry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Inquiries<b id="nInq">0</b></button>
+      <button data-v="appt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>Appointments<b id="nAppt">&hellip;</b></button>
+      <button data-v="lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Leads<b id="nLead">0</b></button>
+      <button data-v="member"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0M15 5a3.2 3.2 0 0 1 0 6M17 13a6 6 0 0 1 4 6"/></svg>Members<b id="nMem">0</b></button>
+    </nav>
+    <section class="zp-list">
+      <div class="zp-list-head">
+        <h2 id="zpListTitle">Inquiries</h2>
+        <div class="zp-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+          <input id="zpSearch" type="text" placeholder="Search by name..." aria-label="Search">
         </div>
-        <div class="tablewrap"><table id="inqTable">
-          <thead><tr><th>Name</th><th>Phone</th><th>Source</th><th>Interest</th><th>Inquiry date</th><th>Days as prospect</th></tr></thead>
-          <tbody id="inqBody"></tbody>
-        </table></div>
       </div>
-
-      <div class="panel">
-        <div class="head">
-          <h2>Appointments &amp; consults</h2>
-          <span class="sub" id="apptSub">next 7 days</span>
-          <div class="spacer"></div>
-          <label class="toggle"><input type="checkbox" id="consultOnly"> Consultations only</label>
-          <button class="ghost" id="apptRefresh">Refresh</button>
-        </div>
-        <div class="subnote" id="apptNote">Every booked appointment, all coaches, in one place. Coach is shown for today; Studio only exposes the assigned coach same-day, so future dates read "open in Studio" (use the Full Calendar link below).</div>
-        <div class="tablewrap"><table id="apptTable">
-          <thead><tr><th>Time</th><th>Type</th><th>Client</th><th>Coach</th></tr></thead>
-          <tbody id="apptBody"></tbody>
-        </table></div>
-        <div class="loading" id="apptLoading"><span class="spin"></span><span>Loading appointments... the first load takes about 30-40 seconds.</span></div>
-        <div class="msg err" id="apptErr" style="padding:10px 16px"></div>
-      </div>
-
-      <div class="panel">
-        <div class="head">
-          <h2>All people</h2>
-          <div class="chips" id="chips">
-            <button class="chip on" data-f="all">All</button>
-            <button class="chip" data-f="Member">Members</button>
-            <button class="chip" data-f="Prospect">Prospects</button>
-          </div>
-          <div class="spacer"></div>
-          <input class="search" id="search" type="search" placeholder="Search name, phone, email...">
-        </div>
-        <div class="list tablewrap"><table id="peopleTable">
-          <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Source</th><th>Contact</th><th>Detail</th><th>Date</th></tr></thead>
-          <tbody id="peopleBody"></tbody>
-        </table></div>
-      </div>
-
-      <div class="links">
-        <a class="link" target="_blank" rel="noopener" href="https://studio.zenplanner.com/zenplanner/studio/index.html#/main/iframe/zenplanner/studio/calendar/index.cfm">
-          <div><div class="t">Full Calendar (all coaches) &#8599;</div><div class="d">Every consultation and class booking on Studio's one shared calendar.</div></div>
-        </a>
-        <a class="link" target="_blank" rel="noopener" href="https://studio.zenplanner.com/zenplanner/studio/index.html">
-          <div><div class="t">Open Zen Planner &#8599;</div><div class="d">The full studio: memberships, billing, notes, and booking actions.</div></div>
-        </a>
-      </div>
-
-      <div class="foot">SynergyFx &bull; Columbia, MD &bull; Live from Zen Planner Studio</div>
-    </div>
-
-    <div class="loading" id="dashLoading"><span class="spin"></span><span id="loadingText">Loading all SynergyFx people... the first load can take about 20 seconds.</span></div>
-    <div class="msg err" id="dashErr" style="text-align:center;padding:10px"></div>
+      <div class="zp-rows" id="zpRows"></div>
+    </section>
+    <section class="zp-detail" id="zpDetail"></section>
   </div>
 </div>
 
 <script>
 (function(){
-  var API = 'https://vap-zp-staff.fly.dev/inbox';
-  var KEY = 'sfx_inbox_pw';
+  var API='https://vap-zp-staff.fly.dev/inbox';
+  var PW=null, state={view:'inquiry', search:'', active:null};
+  var DATA={inquiry:[], appt:[], lead:[], member:[]}, apptReady=false;
+  var AV=['#155eef','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
+  function color(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AV[s%AV.length];}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function initials(n){return n.split(/\s+/).slice(0,2).map(function(w){return w.charAt(0);}).join('').toUpperCase()||'?';}
+  function ts(d){var t=Date.parse(d||'');return isNaN(t)?0:t;}
+  function phoneSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5c0 8 7 15 15 15l0-3-4-2-2 2c-3-1-6-4-7-7l2-2-2-4z"/></svg>';}
+  function mailSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';}
+  function calSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>';}
+  function fmtDay(iso){var t=Date.parse(iso+'T12:00:00');if(isNaN(t))return iso;return new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
 
-  var el = function(id){ return document.getElementById(id); };
-  var loginScreen = el('login'), dash = el('dash');
-  var loginForm = el('loginForm'), pwInput = el('pw'), loginBtn = el('loginBtn'), loginMsg = el('loginMsg');
-  var dashBody = el('dashBody'), dashLoading = el('dashLoading'), dashErr = el('dashErr'), loadingText = el('loadingText');
-  var current = { people: [], inquiries: [] };
-  var filter = 'all', query = '';
+  var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail'), shell=document.getElementById('zpShell');
+  var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members'};
 
-  function td(text, cls){ var c = document.createElement('td'); if(cls) c.className = cls; c.textContent = (text == null ? '' : String(text)); return c; }
-  function badgeCell(type){
-    var c = document.createElement('td');
-    var b = document.createElement('span');
-    b.className = 'badge ' + (type === 'Member' ? 'b-member' : 'b-prospect');
-    b.textContent = type;
-    c.appendChild(b); return c;
+  function applyRoster(d){
+    var inq=(d.inquiries||[]).map(function(q,ix){
+      var name=((q['FIRST NAME']||'')+' '+(q['LAST NAME']||'')).trim()||'(no name)';
+      return {id:'q'+ix, name:name, phone:q.PHONE||'', source:q.SOURCE||'', interest:q.INTEREST||'', date:q['INQUIRY DATE']||''};
+    }).sort(function(a,b){return ts(b.date)-ts(a.date);});
+    var leads=[], mems=[];
+    (d.people||[]).forEach(function(p,ix){
+      if(p.type==='Member') mems.push({id:'m'+ix, name:p.name, status:p.status, plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate});
+      else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date});
+    });
+    leads.sort(function(a,b){return ts(b.date)-ts(a.date);});
+    mems.sort(function(a,b){return a.name<b.name?-1:1;});
+    DATA.inquiry=inq; DATA.lead=leads; DATA.member=mems;
+    document.getElementById('nInq').textContent=inq.length;
+    document.getElementById('nLead').textContent=leads.length;
+    document.getElementById('nMem').textContent=mems.length;
+    document.getElementById('zpAsOf').textContent='Updated '+new Date(d.generatedAt||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    renderAll();
   }
-  function sourceCell(src){
-    var c = document.createElement('td');
-    if(src){
-      var s = document.createElement('span');
-      s.className = 'src';
-      s.textContent = src;
-      c.appendChild(s);
+  function applyAppts(d){
+    var by={};
+    (d.appointments||[]).forEach(function(a){
+      var k=a.client||'(no name)';
+      (by[k]=by[k]||[]).push(a);
+    });
+    DATA.appt=Object.keys(by).map(function(name,ix){
+      var list=by[name].slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.minutes-b.minutes;});
+      return {id:'a'+ix, name:name, list:list, next:list[0], hasConsult:list.some(function(x){return x.isConsult;})};
+    }).sort(function(a,b){var x=a.next,y=b.next;return x.date<y.date?-1:x.date>y.date?1:x.minutes-y.minutes;});
+    apptReady=true;
+    document.getElementById('nAppt').textContent=(d.appointments||[]).length;
+    if(state.view==='appt') renderAll();
+  }
+
+  function visible(){
+    return DATA[state.view].filter(function(i){
+      return !state.search || i.name.toLowerCase().indexOf(state.search)>=0;
+    });
+  }
+  function rowMeta(i){
+    if(state.view==='inquiry') return {snip:(i.interest?('Interest: '+i.interest):(i.source||'Inquiry')), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'};
+    if(state.view==='appt'){
+      var n=i.list.length;
+      return {snip:n+' upcoming'+(n>1?' appointments':' appointment'), time:fmtDay(i.next.date)+' '+i.next.time,
+        foot:'<span class="zp-tp '+(i.hasConsult?'consult">Consultation':'appt">Appointment')+'</span>'};
     }
-    return c;
+    if(state.view==='lead') return {snip:(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet'), time:i.date, foot:'<span class="zp-tp lead">Lead</span><span class="zp-pill upcoming">Not booked</span>'};
+    return {snip:i.plan||'Member', time:i.beginDate, foot:'<span class="zp-tp member">Member</span>'+(i.status?'<span class="zp-pill confirmed">'+esc(i.status)+'</span>':'')};
   }
-
-  function parseDate(s){ var t = Date.parse(s); return isNaN(t) ? -Infinity : t; }
-
-  function renderStats(c){
-    var stats = [
-      ['people','Total people'], ['members','Members'], ['prospects','Prospects'], ['newThisWeek','New this week']
-    ];
-    var box = el('stats'); box.innerHTML = '';
-    stats.forEach(function(s){
-      var d = document.createElement('div'); d.className = 'stat';
-      var n = document.createElement('div'); n.className = 'n'; n.textContent = (c[s[0]] != null ? c[s[0]] : 0);
-      var l = document.createElement('div'); l.className = 'l'; l.textContent = s[1];
-      d.appendChild(n); d.appendChild(l); box.appendChild(d);
+  function renderList(){
+    var v=visible(); rows.innerHTML='';
+    if(state.view==='appt' && !apptReady){rows.innerHTML='<div class="zp-empty">Loading appointments&hellip;</div>';return;}
+    if(!v.length){rows.innerHTML='<div class="zp-empty">Nothing here yet.</div>';return;}
+    v.forEach(function(i){
+      var m=rowMeta(i);
+      var b=document.createElement('button');
+      b.className='zp-row'+(i.id===state.active?' on':'');
+      b.innerHTML='<div class="zp-av" style="background:'+color(i.name)+'">'+esc(initials(i.name))+'</div>'+
+        '<div class="zp-row-main"><div class="zp-row-top"><span class="zp-row-name">'+esc(i.name)+'</span><span class="zp-row-time">'+esc(m.time)+'</span></div>'+
+        '<div class="zp-row-snip">'+esc(m.snip)+'</div><div class="zp-row-foot">'+m.foot+'</div></div>';
+      b.onclick=function(){state.active=i.id; shell.classList.add('detail-open'); renderList(); renderDetail();};
+      rows.appendChild(b);
     });
   }
-
-  function renderInquiries(rows){
-    el('inqSub').textContent = rows.length + ' most recent';
-    var body = el('inqBody'); body.innerHTML = '';
-    if(!rows.length){ var tr = document.createElement('tr'); var c = td('No recent inquiries.'); c.colSpan = 6; c.className='empty'; tr.appendChild(c); body.appendChild(tr); return; }
-    rows.slice().sort(function(a,b){ return parseDate(b['INQUIRY DATE']) - parseDate(a['INQUIRY DATE']); }).forEach(function(q){
-      var tr = document.createElement('tr');
-      var nm = ((q['FIRST NAME']||'') + ' ' + (q['LAST NAME']||'')).trim();
-      tr.appendChild(td(nm, 'nm'));
-      tr.appendChild(td(q.PHONE, 'contact'));
-      tr.appendChild(sourceCell(q.SOURCE));
-      tr.appendChild(td(q.INTEREST || '-'));
-      tr.appendChild(td(q['INQUIRY DATE']));
-      tr.appendChild(td(q['DAYS AS PROSPECT']));
-      body.appendChild(tr);
-    });
+  function headHTML(i,pills,contacts){
+    return '<div class="zp-dhead"><button class="zp-back" id="zpBack" aria-label="Back"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>'+
+      '<div class="zp-av" style="background:'+color(i.name)+'">'+esc(initials(i.name))+'</div>'+
+      '<div class="zp-dmeta"><div class="zp-dname">'+esc(i.name)+' '+pills+'</div>'+
+      '<div class="zp-chipsrow">'+(contacts||'')+'</div></div></div>';
   }
-
-  function renderPeople(){
-    var body = el('peopleBody'); body.innerHTML = '';
-    var q = query.trim().toLowerCase();
-    var rows = current.people.filter(function(p){
-      if(filter !== 'all' && p.type !== filter) return false;
-      if(!q) return true;
-      return (p.name + ' ' + p.phone + ' ' + p.email + ' ' + p.detail + ' ' + p.source).toLowerCase().indexOf(q) >= 0;
-    });
-    rows.sort(function(a,b){ return parseDate(b.date) - parseDate(a.date); });
-    if(!rows.length){ var tr = document.createElement('tr'); var c = td('No matching people.'); c.colSpan = 7; c.className='empty'; tr.appendChild(c); body.appendChild(tr); return; }
-    var frag = document.createDocumentFragment();
-    rows.forEach(function(p){
-      var tr = document.createElement('tr');
-      tr.appendChild(td(p.name, 'nm'));
-      tr.appendChild(badgeCell(p.type));
-      tr.appendChild(td(p.status));
-      tr.appendChild(sourceCell(p.source));
-      var contact = [p.phone, p.email].filter(Boolean).join('  ');
-      tr.appendChild(td(contact, 'contact'));
-      var detail = p.detail;
-      if(p.amount) detail = (detail ? detail + ' - ' : '') + p.amount;
-      tr.appendChild(td(detail));
-      tr.appendChild(td(p.date));
-      frag.appendChild(tr);
-    });
-    body.appendChild(frag);
+  function kvCard(pairs){
+    var h='';
+    pairs.forEach(function(p){ if(p[1]) h+='<div class="zp-kv"><span class="zp-kv-k">'+esc(p[0])+'</span><span class="zp-kv-v">'+esc(p[1])+'</span></div>'; });
+    return '<div class="zp-kvcard">'+h+'</div>';
   }
-
-  function render(p){
-    current.people = p.people || [];
-    current.inquiries = p.inquiries || [];
-    renderStats(p.counts || {});
-    renderInquiries(current.inquiries);
-    renderPeople();
-    var when = p.generatedAt ? new Date(p.generatedAt) : new Date();
-    el('stamp').textContent = 'Updated ' + when.toLocaleString() + (p.cached ? ' (cached)' : '');
-    dashLoading.hidden = true; dashErr.textContent = ''; dashBody.hidden = false;
-    startAppointments(false);
-  }
-
-  // ---- appointments (loaded after people; the backend scrape takes ~30-40s, so poll) ----
-  var apptTimer = null;
-  function stopApptPoll(){ if(apptTimer){ clearTimeout(apptTimer); apptTimer = null; } }
-  function fmtDay(ds){
-    var p = (ds || '').split('-'); if(p.length !== 3) return ds;
-    var d = new Date(+p[0], +p[1] - 1, +p[2]);
-    return d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
-  }
-  function startAppointments(refresh){
-    var pw = sessionStorage.getItem(KEY); if(!pw) return;
-    stopApptPoll();
-    el('apptErr').textContent = ''; el('apptLoading').hidden = false;
-    if(refresh) el('apptBody').innerHTML = '';
-    var poll = function(isFirst){
-      fetch(API, { method:'POST', headers:{'content-type':'application/json'},
-        body: JSON.stringify({ password: pw, section:'appointments', days: 7, refresh: !!(isFirst && refresh) }) })
-      .then(function(r){
-        if(r.status === 403){ throw { code:403 }; }
-        if(!r.ok){ return r.json().catch(function(){ return {}; }).then(function(j){ throw { msg: j.error || ('HTTP ' + r.status) }; }); }
-        return r.json();
-      })
-      .then(function(j){
-        if(j.building){ apptTimer = setTimeout(function(){ poll(false); }, 6000); return; }
-        current.appts = j.appointments || []; current.apptMeta = j;
-        el('apptLoading').hidden = true; renderAppointments();
-      })
-      .catch(function(e){
-        el('apptLoading').hidden = true;
-        if(e && e.code === 403){ sessionStorage.removeItem(KEY); dash.hidden = true; loginScreen.style.display = 'grid'; return; }
-        el('apptErr').textContent = 'Could not load appointments: ' + ((e && e.msg) || 'network error') + '. Try Refresh.';
+  function renderDetail(){
+    var i=DATA[state.view].filter(function(x){return x.id===state.active;})[0];
+    if(!i){detail.innerHTML='<div class="zp-empty">Select someone to view the details.</div>';return;}
+    var contacts=(i.phone?'<span class="zp-contact">'+phoneSvg()+esc(i.phone)+'</span>':'')+(i.email?'<span class="zp-contact">'+mailSvg()+esc(i.email)+'</span>':'');
+    if(state.view==='inquiry'){
+      var interest=i.interest?'<span class="zp-interest">Interest: '+esc(i.interest)+'</span>':'';
+      detail.innerHTML=headHTML(i,'<span class="zp-tp inquiry">Inquiry</span> '+interest,contacts)+
+        '<div class="zp-scroll"><p class="zp-sec">Inquiry details</p>'+
+        kvCard([['Name',i.name],['Received',i.date],['Source',i.source],['Interest',i.interest],['Phone',i.phone]])+'</div>';
+    } else if(state.view==='appt'){
+      var hist='';
+      i.list.forEach(function(a){
+        hist+='<div class="zp-bk"><div class="zp-bk-ic">'+calSvg()+'</div><div class="zp-bk-main">'+
+          '<div class="zp-bk-t">'+esc(fmtDay(a.date))+' &middot; '+esc(a.time)+'</div>'+
+          '<div class="zp-bk-s">'+esc(a.type)+(a.coach?(' &middot; with '+esc(a.coach)):'')+'</div></div>'+
+          (a.isConsult?'<span class="zp-pill confirmed">Consultation</span>':'')+'</div>';
       });
-    };
-    poll(true);
-  }
-  function renderAppointments(){
-    var meta = current.apptMeta || {}, rows = current.appts || [];
-    var only = el('consultOnly').checked;
-    var list = only ? rows.filter(function(a){ return a.isConsult; }) : rows;
-    var c = meta.counts || {};
-    el('apptSub').textContent = (c.total || 0) + ' appts, ' + (c.consults || 0) + ' consult' + (c.consults === 1 ? '' : 's') + ', next ' + (meta.windowDays || 7) + ' days';
-    var body = el('apptBody'); body.innerHTML = '';
-    if(!list.length){
-      var tr = document.createElement('tr'); var ec = td(only ? 'No consultations booked in this window.' : 'No appointments in this window.');
-      ec.colSpan = 4; ec.className = 'empty'; tr.appendChild(ec); body.appendChild(tr); return;
+      detail.innerHTML=headHTML(i,'<span class="zp-tp '+(i.hasConsult?'consult">Consultation':'appt">Appointment')+'</span>','')+
+        '<div class="zp-scroll"><p class="zp-sec">'+i.list.length+' upcoming</p>'+hist+'</div>';
+    } else if(state.view==='lead'){
+      detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> <span class="zp-pill upcoming">Not booked</span>',contacts)+
+        '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
+        kvCard([['Name',i.name],['Submitted',i.date],['Source',i.source],['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
+        '<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div></div>';
+    } else {
+      detail.innerHTML=headHTML(i,'<span class="zp-tp member">Member</span>'+(i.status?' <span class="zp-pill confirmed">'+esc(i.status)+'</span>':''),'')+
+        '<div class="zp-scroll"><p class="zp-sec">Membership</p>'+
+        kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+'</div>';
     }
-    var curDate = null, frag = document.createDocumentFragment();
-    list.forEach(function(a){
-      if(a.date !== curDate){
-        curDate = a.date;
-        var sep = document.createElement('tr'); sep.className = 'day-sep';
-        var sc = td(fmtDay(a.date)); sc.colSpan = 4; sep.appendChild(sc); frag.appendChild(sep);
-      }
-      var tr = document.createElement('tr');
-      tr.appendChild(td(a.time || ''));
-      var typeCell = document.createElement('td');
-      if(a.isConsult){ var b = document.createElement('span'); b.className = 'badge b-consult'; b.textContent = 'Consult'; typeCell.appendChild(b); typeCell.appendChild(document.createTextNode(' ')); }
-      typeCell.appendChild(document.createTextNode(a.type || ''));
-      tr.appendChild(typeCell);
-      tr.appendChild(td(a.client, 'nm'));
-      var coachCell = document.createElement('td');
-      if(a.coachKnown){ coachCell.textContent = a.coach; }
-      else { var s = document.createElement('span'); s.className = 'coach-open'; s.textContent = 'open in Studio'; coachCell.appendChild(s); }
-      tr.appendChild(coachCell);
-      frag.appendChild(tr);
-    });
-    body.appendChild(frag);
+    var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
+  }
+  function renderAll(){ renderList(); renderDetail(); }
+
+  document.getElementById('zpNav').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    state.view=b.getAttribute('data-v'); state.search=''; document.getElementById('zpSearch').value='';
+    [].forEach.call(this.children,function(c){c.classList.toggle('on',c===b);});
+    document.getElementById('zpTitle').textContent=TITLES[state.view];
+    document.getElementById('zpListTitle').textContent=TITLES[state.view];
+    var v=visible(); state.active=v.length?v[0].id:null;
+    shell.classList.remove('detail-open');
+    renderAll();
+  });
+  document.getElementById('zpSearch').addEventListener('input',function(e){state.search=e.target.value.toLowerCase().trim(); renderList();});
+
+  function fetchRoster(){
+    return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW})});
+  }
+  var apptTimer=null;
+  function fetchAppts(){
+    if(apptTimer){clearTimeout(apptTimer); apptTimer=null;}
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW,section:'appointments',days:7})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d && d.building){ apptTimer=setTimeout(fetchAppts,6000); return; }
+        if(d && d.appointments) applyAppts(d);
+      })
+      .catch(function(){ apptTimer=setTimeout(fetchAppts,15000); });
+  }
+  async function refresh(){
+    if(!PW) return;
+    try{ var r=await fetchRoster(); if(r.ok){ applyRoster(await r.json()); } }catch(e){}
   }
 
-  function showLoading(on){ dashLoading.hidden = !on; if(on){ dashBody.hidden = true; dashErr.textContent = ''; } }
-
-  function load(pw, refresh){
-    loginScreen.style.display = 'none'; dash.hidden = false;
-    showLoading(true);
-    return fetch(API, {
-      method: 'POST', headers: {'content-type':'application/json'},
-      body: JSON.stringify({ password: pw, refresh: !!refresh })
-    }).then(function(r){
-      if(r.status === 403){ throw { code: 403 }; }
-      if(!r.ok){ return r.json().catch(function(){ return {}; }).then(function(j){ throw { code: r.status, msg: j.error || ('HTTP ' + r.status) }; }); }
-      return r.json();
-    }).then(function(j){
-      sessionStorage.setItem(KEY, pw);
-      render(j);
-    }).catch(function(e){
-      if(e && e.code === 403){
-        sessionStorage.removeItem(KEY);
-        dash.hidden = true; loginScreen.style.display = 'grid';
-        loginMsg.className = 'msg err'; loginMsg.textContent = 'Wrong password. Try again.';
-        loginBtn.disabled = false; loginBtn.textContent = 'View leads & bookings';
-        return;
-      }
-      showLoading(false);
-      dashErr.textContent = 'Could not load: ' + ((e && e.msg) || 'network error') + '. Try Refresh.';
-    });
+  function enter(data){
+    applyRoster(data);
+    var v=visible(); state.active=v.length?v[0].id:null;
+    renderAll();
+    document.getElementById('zpLogin').style.display='none';
+    shell.style.display='flex';
+    fetchAppts();
+    setInterval(refresh,180000);
+    setInterval(fetchAppts,600000);
   }
 
-  loginForm.addEventListener('submit', function(ev){
-    ev.preventDefault();
-    var pw = pwInput.value.trim();
-    if(!pw){ loginMsg.className = 'msg err'; loginMsg.textContent = 'Enter the team password.'; return; }
-    loginBtn.disabled = true; loginBtn.textContent = 'Loading...';
-    loginMsg.className = 'msg info'; loginMsg.textContent = 'Loading all people, this can take about 20 seconds on the first load.';
-    load(pw, false).then(function(){ loginBtn.disabled = false; loginBtn.textContent = 'View leads & bookings'; });
-  });
-
-  el('refreshBtn').addEventListener('click', function(){
-    var pw = sessionStorage.getItem(KEY); if(!pw) return;
-    load(pw, true);
-  });
-  el('signout').addEventListener('click', function(){
-    sessionStorage.removeItem(KEY);
-    dash.hidden = true; loginScreen.style.display = 'grid';
-    pwInput.value = ''; loginMsg.textContent = '';
-  });
-
-  el('consultOnly').addEventListener('change', renderAppointments);
-  el('apptRefresh').addEventListener('click', function(){ startAppointments(true); });
-  el('search').addEventListener('input', function(e){ query = e.target.value; renderPeople(); });
-  Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(ch){
-    ch.addEventListener('click', function(){
-      Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function(x){ x.classList.remove('on'); });
-      ch.classList.add('on'); filter = ch.getAttribute('data-f'); renderPeople();
-    });
+  var form=document.getElementById('zpLoginForm'), btn=document.getElementById('lgBtn'), errEl=document.getElementById('lgErr');
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    var pw=document.getElementById('lgPass').value;
+    if(!pw){errEl.textContent='Enter the team password.';return;}
+    errEl.textContent=''; btn.disabled=true; btn.textContent='Signing in...';
+    try{
+      PW=pw;
+      var r=await fetchRoster();
+      if(r.status===403){ errEl.textContent='Wrong password. Try again.'; btn.disabled=false; btn.textContent='Sign in'; PW=null; return; }
+      if(!r.ok){ errEl.textContent='Something went wrong. Please try again.'; btn.disabled=false; btn.textContent='Sign in'; PW=null; return; }
+      sessionStorage.setItem('sfxpw',pw);
+      enter(await r.json());
+    }catch(err){
+      errEl.textContent='Could not reach the server. Please try again.'; btn.disabled=false; btn.textContent='Sign in'; PW=null;
+    }
   });
 
   // Auto-resume if a password is already in this tab's session.
-  var saved = sessionStorage.getItem(KEY);
-  if(saved){ load(saved, false); } else { loginScreen.style.display = 'grid'; }
+  var saved=sessionStorage.getItem('sfxpw');
+  if(saved){
+    PW=saved;
+    fetchRoster().then(function(r){
+      if(r.ok) return r.json().then(enter);
+      PW=null; sessionStorage.removeItem('sfxpw');
+    }).catch(function(){ PW=null; });
+  }
 })();
 </script>
 </body>
