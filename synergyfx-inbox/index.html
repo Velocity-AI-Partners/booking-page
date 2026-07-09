@@ -26,6 +26,7 @@
     --member:#067647; --member-bg:#e7f6ec;
     --input-bg:#fbfcfd; --row-hover:#f6f7f8; --overlay:rgba(17,24,39,.45);
     --logo-mark:#314AAE; --logo-word:#0F172A;
+    --nav-w:190px; /* shared: sidebar width AND header logo-cell width, so their divider lines up */
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   html[data-theme="dark"]{
@@ -61,7 +62,7 @@
   .zp-err{font-size:12.5px; color:var(--cancelled); text-align:center; min-height:16px; margin-top:12px}
 
   .zp-shell{height:100vh; min-height:100dvh; display:none; flex-direction:column; overflow:hidden}
-  .zp-top{flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:0 16px; height:56px; background:var(--panel); border-bottom:1px solid var(--border)}
+  .zp-top{flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:0; height:56px; background:var(--panel); border-bottom:1px solid var(--border)}
   .zp-loc{display:flex; align-items:center; gap:10px; padding-right:14px; border-right:1px solid var(--border-soft)}
   .zp-mark{width:30px; height:30px; border-radius:8px; flex:0 0 auto; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:13px}
   .zp-loc b{font-size:14px; font-weight:650; line-height:1.1}
@@ -72,7 +73,7 @@
 
   .zp-body{flex:1 1 auto; display:flex; min-height:0}
 
-  .zp-nav{flex:0 0 190px; background:var(--panel); border-right:1px solid var(--border); padding:14px 10px; display:flex; flex-direction:column; gap:4px}
+  .zp-nav{flex:0 0 var(--nav-w); background:var(--panel); border-right:1px solid var(--border); padding:14px 10px; display:flex; flex-direction:column; gap:4px}
   .zp-nav button{display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:0; background:transparent; cursor:pointer; padding:9px 12px; border-radius:9px; font-size:13px; font-weight:600; color:var(--muted)}
   .zp-nav button:hover{background:var(--bg); color:var(--ink)}
   .zp-nav button.on{background:var(--accent-050); color:var(--accent-600)}
@@ -196,11 +197,11 @@
   .velo-lockup .vm{fill:var(--logo-mark)}
   .velo-lockup .vw{fill:var(--logo-word); font-family:var(--sans); font-weight:800}
   .velo-lockup .vp{fill:var(--logo-mark); font-family:var(--sans); font-weight:700}
-  .zp-brand{display:flex; align-items:center; text-decoration:none; flex:0 0 auto}
+  .zp-brand{flex:0 0 var(--nav-w); box-sizing:border-box; display:flex; align-items:center; height:100%; padding-left:20px; padding-right:12px; border-right:1px solid var(--border); text-decoration:none}
   .zp-brand .velo-lockup{height:28px}
-  .zp-hdiv{flex:0 0 auto; width:1px; height:26px; background:var(--border)}
   .zp-client{flex:0 1 auto; min-width:0; font-size:14px; font-weight:680; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .zp-crumb{flex:0 0 auto; color:var(--faint); font-size:15px}
+  @media (max-width:900px){ .zp-brand{flex:0 0 auto; width:auto; padding-left:14px} }
   .zp-lgmark .velo-mark{height:24px}
   .zp-lgmark .velo-mark path{fill:#fff}
 
@@ -249,7 +250,6 @@
     <a class="zp-brand" href="https://velocityaipartners.ai" target="_blank" rel="noopener" aria-label="Velocity AI Partners">
       <svg class="velo-lockup" viewBox="0 0 600 150" aria-hidden="true"><g transform="translate(2,22) scale(0.945)"><path class="vm" d="M45,1 L123,1 L116,14 L37,14 Z"/><path class="vm" d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path class="vm" d="M27,57 L49,57 L38,80 Z"/></g><text class="vw" x="140" y="99" font-size="78" letter-spacing="0.5">VELOCITY</text><text class="vp" x="144" y="130" font-size="20.5" letter-spacing="8.2">AI PARTNERS</text></svg>
     </a>
-    <span class="zp-hdiv" aria-hidden="true"></span>
     <b class="zp-client">Synergy FX Strength &amp; Wellness Lab</b>
     <span class="zp-crumb" aria-hidden="true">&rsaquo;</span>
     <span class="zp-page-title" id="zpTitle">Appointments</span>
