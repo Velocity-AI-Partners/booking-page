@@ -380,7 +380,10 @@
       else if(p.type==='Ex-member') exmems.push({id:'x'+ix, name:p.name, status:p.status||'Alumni', ex:true, phone:p.phone, email:p.email, booked:p.booked||null});
       else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date, booked:p.booked||null});
     });
-    leads.sort(function(a,b){return ts(b.date)-ts(a.date);});
+    // Blank-date leads are the RECENTLY-CREATED merge rows (no inquiry date exists in
+    // Studio for them); sort them first, not last - ts('')=0 would bury the newest
+    // people at the bottom of 700+ rows.
+    leads.sort(function(a,b){var ta=a.date?ts(a.date):9e15, tb=b.date?ts(b.date):9e15; return tb-ta;});
     mems.sort(function(a,b){return a.name<b.name?-1:1;});
     exmems.sort(function(a,b){return a.name<b.name?-1:1;});
     DATA.inquiry=inq; DATA.lead=leads; DATA.member=mems; DATA.exmember=exmems;
@@ -450,7 +453,7 @@
     var bpill=function(i){return i.booked?'<span class="zp-pill confirmed">Booked</span>':'<span class="zp-pill upcoming">Not booked</span>';};
     var bsnip=function(i,fallback){return i.booked?('Booked: '+fmtDay(i.booked.date)+' &middot; '+i.booked.time+(i.booked.isConsult?' (Consultation)':'')):fallback;};
     if(state.view==='inquiry') return {snip:bsnip(i,(i.interest?('Interest: '+i.interest):(i.source||'Inquiry'))), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'+bpill(i)};
-    if(state.view==='lead') return {snip:bsnip(i,(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet')), time:i.date, foot:'<span class="zp-tp lead">Lead</span>'+bpill(i)};
+    if(state.view==='lead') return {snip:bsnip(i,(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet')), time:i.date||'New', foot:'<span class="zp-tp lead">Lead</span>'+bpill(i)};
     // Member / Ex-member rows carry no type/status pill: the section (and the
     // Members/Ex-members toggle) already says which they are, so a per-row
     // "Member CURRENT" / "Ex-member Alumni" is redundant on every line.
