@@ -87,6 +87,12 @@
   .zp-search svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--faint)}
   .zp-search input{width:100%; padding:8px 10px 8px 32px; font-size:13px; color:var(--ink); border:1px solid var(--border); border-radius:9px; background:var(--input-bg); outline:none}
   .zp-search input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
+  .zp-filter{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap}
+  .zp-filter:empty{display:none}
+  .zp-fchip{font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:999px; border:1px solid var(--border); background:var(--input-bg); color:var(--muted); cursor:pointer; white-space:nowrap; line-height:1.1}
+  .zp-fchip:hover{border-color:var(--accent)}
+  .zp-fchip.on{background:var(--accent); border-color:var(--accent); color:#fff}
+  .zp-fchip b{font-weight:700; opacity:.7; margin-left:5px; font-variant-numeric:tabular-nums}
   .zp-rows{flex:1 1 auto; overflow-y:auto; min-height:0}
   .zp-row{width:100%; text-align:left; border:0; background:transparent; cursor:pointer; display:flex; gap:11px; padding:12px 14px; border-bottom:1px solid var(--border-soft); border-left:3px solid transparent}
   .zp-row:hover{background:var(--row-hover)}
@@ -274,6 +280,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
           <input id="zpSearch" type="text" placeholder="Search by name..." aria-label="Search">
         </div>
+        <div class="zp-filter" id="zpFilter"></div>
       </div>
       <div class="zp-rows" id="zpRows"></div>
     </section>
@@ -295,8 +302,8 @@
 <script>
 (function(){
   var API='https://vap-zp-staff.fly.dev/inbox';
-  var PW=null, state={view:'appt', search:'', active:null};
-  var DATA={inquiry:[], appt:[], lead:[], member:[]}, apptReady=false, apptWindow=7;
+  var PW=null, state={view:'appt', search:'', active:null, bookedFilter:'all', memberFilter:'member'};
+  var DATA={inquiry:[], appt:[], lead:[], member:[], exmember:[]}, apptReady=false, apptWindow=7;
   var WEEKS={}, curWeek=null; // curWeek=null -> rolling current week; else 'YYYY-MM-DD'
   function fmtYMD(t){var d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   function weekKey(){return curWeek||'current';}
@@ -359,14 +366,16 @@
       var name=((q['FIRST NAME']||'')+' '+(q['LAST NAME']||'')).trim()||'(no name)';
       return {id:'q'+ix, name:name, phone:q.PHONE||'', source:q.SOURCE||'', interest:q.INTEREST||'', date:q['INQUIRY DATE']||'', booked:q._booked||null};
     }).sort(function(a,b){return ts(b.date)-ts(a.date);});
-    var leads=[], mems=[];
+    var leads=[], mems=[], exmems=[];
     (d.people||[]).forEach(function(p,ix){
-      if(p.type==='Member') mems.push({id:'m'+ix, name:p.name, status:p.status, plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate});
+      if(p.type==='Member') mems.push({id:'m'+ix, name:p.name, status:p.status, plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate, phone:p.phone, email:p.email, booked:p.booked||null});
+      else if(p.type==='Ex-member') exmems.push({id:'x'+ix, name:p.name, status:p.status||'Alumni', ex:true, phone:p.phone, email:p.email, booked:p.booked||null});
       else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date, booked:p.booked||null});
     });
     leads.sort(function(a,b){return ts(b.date)-ts(a.date);});
     mems.sort(function(a,b){return a.name<b.name?-1:1;});
-    DATA.inquiry=inq; DATA.lead=leads; DATA.member=mems;
+    exmems.sort(function(a,b){return a.name<b.name?-1:1;});
+    DATA.inquiry=inq; DATA.lead=leads; DATA.member=mems; DATA.exmember=exmems;
     document.getElementById('nInq').textContent=inq.length;
     document.getElementById('nLead').textContent=leads.length;
     document.getElementById('nMem').textContent=mems.length;
@@ -383,9 +392,50 @@
     if((key||'current')==='current') document.getElementById('nAppt').textContent=sorted.length;
   }
 
-  function visible(){
-    return DATA[state.view].filter(function(i){
+  // Members view swaps between current members and ex-members (alumni) via the toggle.
+  function curDataset(){
+    if(state.view==='member') return state.memberFilter==='ex'?DATA.exmember:DATA.member;
+    return DATA[state.view]||[];
+  }
+  function searchBase(){
+    return curDataset().filter(function(i){
       return !state.search || i.name.toLowerCase().indexOf(state.search)>=0;
+    });
+  }
+  function visible(){
+    var base=searchBase();
+    if((state.view==='lead'||state.view==='inquiry') && state.bookedFilter!=='all'){
+      var want=state.bookedFilter==='booked';
+      base=base.filter(function(i){return !!i.booked===want;});
+    }
+    return base;
+  }
+  function fchip(val,label,count,on){
+    return '<button class="zp-fchip'+(on?' on':'')+'" data-f="'+val+'">'+esc(label)+(count!=null?'<b>'+count+'</b>':'')+'</button>';
+  }
+  // Booked/Not booked toggle on Leads + Inquiries; Members/Ex-members toggle on Members.
+  function renderFilter(){
+    var el=document.getElementById('zpFilter'); if(!el) return;
+    var chips='';
+    if(state.view==='member'){
+      chips+=fchip('member','Members',DATA.member.length,state.memberFilter==='member');
+      chips+=fchip('ex','Ex-members',DATA.exmember.length,state.memberFilter==='ex');
+    } else if(state.view==='lead'||state.view==='inquiry'){
+      var base=searchBase(), nb=0;
+      base.forEach(function(i){if(i.booked)nb++;});
+      chips+=fchip('all','All',base.length,state.bookedFilter==='all');
+      chips+=fchip('booked','Booked',nb,state.bookedFilter==='booked');
+      chips+=fchip('notbooked','Not booked',base.length-nb,state.bookedFilter==='notbooked');
+    } else { el.innerHTML=''; return; }
+    el.innerHTML=chips;
+    [].forEach.call(el.querySelectorAll('.zp-fchip'),function(c){
+      c.onclick=function(){
+        var v=c.getAttribute('data-f');
+        if(state.view==='member') state.memberFilter=v; else state.bookedFilter=v;
+        var vis=visible(); state.active=vis.length?vis[0].id:null;
+        shell.classList.remove('detail-open');
+        renderList(); renderDetail();
+      };
     });
   }
   function rowMeta(i){
@@ -393,9 +443,11 @@
     var bsnip=function(i,fallback){return i.booked?('Booked: '+fmtDay(i.booked.date)+' &middot; '+i.booked.time+(i.booked.isConsult?' (Consultation)':'')):fallback;};
     if(state.view==='inquiry') return {snip:bsnip(i,(i.interest?('Interest: '+i.interest):(i.source||'Inquiry'))), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'+bpill(i)};
     if(state.view==='lead') return {snip:bsnip(i,(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet')), time:i.date, foot:'<span class="zp-tp lead">Lead</span>'+bpill(i)};
+    if(i.ex) return {snip:'Former member', time:'', foot:'<span class="zp-tp lead">Ex-member</span><span class="zp-pill cancelled">Alumni</span>'};
     return {snip:i.plan||'Member', time:i.beginDate, foot:'<span class="zp-tp member">Member</span>'+(i.status?'<span class="zp-pill confirmed">'+esc(i.status)+'</span>':'')};
   }
   function renderList(){
+    renderFilter();
     var v=visible(); rows.innerHTML='';
     if(!v.length){rows.innerHTML='<div class="zp-empty">Nothing here yet.</div>';return;}
     v.forEach(function(i){
@@ -421,7 +473,7 @@
     return '<div class="zp-kvcard">'+h+'</div>';
   }
   function renderDetail(){
-    var i=DATA[state.view].filter(function(x){return x.id===state.active;})[0];
+    var i=curDataset().filter(function(x){return x.id===state.active;})[0];
     if(!i){detail.innerHTML='<div class="zp-empty">Select someone to view the details.</div>';return;}
     var contacts=(i.phone?'<span class="zp-contact">'+phoneSvg()+esc(i.phone)+'</span>':'')+(i.email?'<span class="zp-contact">'+mailSvg()+esc(i.email)+'</span>':'');
     if(state.view==='inquiry'){
@@ -439,6 +491,11 @@
         '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
         kvCard([['Name',i.name],['Submitted',i.date],['Source',i.source],['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
         bookedCard+moreBox()+'</div>';
+      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
+    } else if(i.ex){
+      detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Ex-member</span> <span class="zp-pill cancelled">Alumni</span>',contacts)+
+        '<div class="zp-scroll"><p class="zp-sec">Former member</p>'+
+        kvCard([['Name',i.name],['Phone',i.phone],['Email',i.email]])+moreBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else {
       detail.innerHTML=headHTML(i,'<span class="zp-tp member">Member</span>'+(i.status?' <span class="zp-pill confirmed">'+esc(i.status)+'</span>':''),'')+
@@ -550,7 +607,7 @@
 
   document.getElementById('zpNav').addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b||!b.hasAttribute('data-v')) return;
-    state.view=b.getAttribute('data-v'); state.search=''; document.getElementById('zpSearch').value='';
+    state.view=b.getAttribute('data-v'); state.search=''; state.bookedFilter='all'; state.memberFilter='member'; document.getElementById('zpSearch').value='';
     [].forEach.call(this.children,function(c){c.classList.toggle('on',c===b);});
     document.getElementById('zpTitle').textContent=TITLES[state.view];
     var _tn=document.getElementById('zpTabName'); if(_tn) _tn.textContent=TITLES[state.view];
