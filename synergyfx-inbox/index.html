@@ -344,7 +344,9 @@
   // remains, the whole section disappears rather than repeating known info.
   function loadPersonInfo(elId, params, skip){
     var key=(params.phone||'')+'|'+(params.email||'')+'|'+(params.name||'');
-    var el=document.getElementById(elId); if(!el) return;
+    // Proceed when EITHER target exists: members render info inline (no zpMoreInfo
+    // element) but still need this fetch for the Notes section.
+    var el=document.getElementById(elId); if(!el && !document.getElementById('zpNotesWrap')) return;
     var render=function(d){
       renderNotes(d);
       var box=document.getElementById(elId); if(!box) return;
