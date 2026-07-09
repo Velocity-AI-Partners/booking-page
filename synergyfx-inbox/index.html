@@ -443,8 +443,11 @@
     var bsnip=function(i,fallback){return i.booked?('Booked: '+fmtDay(i.booked.date)+' &middot; '+i.booked.time+(i.booked.isConsult?' (Consultation)':'')):fallback;};
     if(state.view==='inquiry') return {snip:bsnip(i,(i.interest?('Interest: '+i.interest):(i.source||'Inquiry'))), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'+bpill(i)};
     if(state.view==='lead') return {snip:bsnip(i,(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet')), time:i.date, foot:'<span class="zp-tp lead">Lead</span>'+bpill(i)};
-    if(i.ex) return {snip:'Former member', time:'', foot:'<span class="zp-tp lead">Ex-member</span><span class="zp-pill cancelled">Alumni</span>'};
-    return {snip:i.plan||'Member', time:i.beginDate, foot:'<span class="zp-tp member">Member</span>'+(i.status?'<span class="zp-pill confirmed">'+esc(i.status)+'</span>':'')};
+    // Member / Ex-member rows carry no type/status pill: the section (and the
+    // Members/Ex-members toggle) already says which they are, so a per-row
+    // "Member CURRENT" / "Ex-member Alumni" is redundant on every line.
+    if(i.ex) return {snip:i.email||'Former member', time:'', foot:''};
+    return {snip:i.plan||'Member', time:i.beginDate, foot:''};
   }
   function renderList(){
     renderFilter();
@@ -456,7 +459,7 @@
       b.className='zp-row'+(i.id===state.active?' on':'');
       b.innerHTML='<div class="zp-av" style="background:'+color(i.name)+'">'+esc(initials(i.name))+'</div>'+
         '<div class="zp-row-main"><div class="zp-row-top"><span class="zp-row-name">'+esc(i.name)+'</span><span class="zp-row-time">'+esc(m.time)+'</span></div>'+
-        '<div class="zp-row-snip">'+esc(m.snip)+'</div><div class="zp-row-foot">'+m.foot+'</div></div>';
+        '<div class="zp-row-snip">'+esc(m.snip)+'</div>'+(m.foot?'<div class="zp-row-foot">'+m.foot+'</div>':'')+'</div>';
       b.onclick=function(){state.active=i.id; shell.classList.add('detail-open'); renderList(); renderDetail();};
       rows.appendChild(b);
     });
@@ -493,12 +496,12 @@
         bookedCard+moreBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else if(i.ex){
-      detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Ex-member</span> <span class="zp-pill cancelled">Alumni</span>',contacts)+
+      detail.innerHTML=headHTML(i,'',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Former member</p>'+
         kvCard([['Name',i.name],['Phone',i.phone],['Email',i.email]])+moreBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else {
-      detail.innerHTML=headHTML(i,'<span class="zp-tp member">Member</span>'+(i.status?' <span class="zp-pill confirmed">'+esc(i.status)+'</span>':''),'')+
+      detail.innerHTML=headHTML(i,'',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Membership</p>'+
         kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+moreBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name},['status']);
