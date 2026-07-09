@@ -116,6 +116,9 @@
   .zp-pill.confirmed{color:var(--confirmed); background:var(--confirmed-bg)}
   .zp-pill.upcoming{color:var(--upcoming); background:var(--upcoming-bg)}
   .zp-pill.cancelled{color:var(--cancelled); background:var(--cancelled-bg)}
+  .zp-note{border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:var(--input-bg)}
+  .zp-note-h{font-size:11px; color:var(--faint); margin-bottom:4px; font-weight:600}
+  .zp-note-t{font-size:12.5px; color:var(--ink); white-space:pre-wrap; word-break:break-word; line-height:1.45}
 
   .zp-cal{flex:1 1 auto; display:none; min-width:0; min-height:0; overflow:auto; background:var(--bg); padding:16px}
   .zp-cal-grid{display:grid; grid-template-columns:repeat(7, minmax(150px,1fr)); gap:10px; min-width:1080px}
@@ -343,6 +346,7 @@
     var key=(params.phone||'')+'|'+(params.email||'')+'|'+(params.name||'');
     var el=document.getElementById(elId); if(!el) return;
     var render=function(d){
+      renderNotes(d);
       var box=document.getElementById(elId); if(!box) return;
       var wrap=document.getElementById(elId+'Wrap')||box;
       var rows=(d && d.found)?personRowsHTML(d.person, skip):'';
@@ -354,9 +358,24 @@
     fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW,section:'person',name:params.name||'',phone:params.phone||'',email:params.email||''})})
       .then(function(r){return r.json();})
       .then(function(d){ PINFO[key]=d; render(d); })
-      .catch(function(){ var box=document.getElementById(elId); var wrap=document.getElementById(elId+'Wrap'); if(wrap) wrap.style.display='none'; else if(box) box.style.display='none'; });
+      .catch(function(){ var box=document.getElementById(elId); if(box){ var wrap=document.getElementById(elId+'Wrap'); (wrap||box).style.display='none'; } });
   }
   function moreBox(){ return '<div id="zpMoreInfoWrap"><p class="zp-sec" style="margin-top:16px">From Zen Planner</p><div class="zp-kvcard" id="zpMoreInfo"><div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Loading&hellip;</span></div></div></div>'; }
+  // CRM notes (Zen Planner staff-logged notes). Section stays hidden when a person
+  // has none; a failed lookup says so instead of pretending there are no notes.
+  function notesBox(){ return '<div id="zpNotesWrap" style="display:none"><p class="zp-sec" style="margin-top:16px">Notes</p><div id="zpNotes"></div></div>'; }
+  function renderNotes(d){
+    var wrap=document.getElementById('zpNotesWrap'); if(!wrap) return;
+    var box=document.getElementById('zpNotes');
+    if(d && d.notesError){ wrap.style.display=''; box.innerHTML='<div class="zp-note"><div class="zp-note-t">Notes could not be loaded right now.</div></div>'; return; }
+    var ns=(d && d.notes)||[];
+    if(!ns.length){ wrap.style.display='none'; return; }
+    wrap.style.display='';
+    box.innerHTML=ns.map(function(n){
+      var head=[n.category, n.date?fmtISO(n.date):''].filter(Boolean).join(' - ');
+      return '<div class="zp-note">'+(head?'<div class="zp-note-h">'+esc(head)+'</div>':'')+'<div class="zp-note-t">'+esc(String(n.message).replace(/\r\n/g,'\n'))+'</div></div>';
+    }).join('');
+  }
   // Pre-filled "From Zen Planner" card from data already baked into the roster (member
   // backfill), so no per-open fetch. Returns '' when nothing new remains to show.
   function moreBoxInline(info, skip){
@@ -495,7 +514,7 @@
       detail.innerHTML=headHTML(i,'<span class="zp-tp inquiry">Inquiry</span> '+(i.booked?'<span class="zp-pill confirmed">Booked</span> ':'')+interest,contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Inquiry details</p>'+
         kvCard([['Name',i.name],['Received',i.date],['Source',i.source],['Interest',i.interest],['Phone',i.phone],
-                ['Booked',i.booked?(fmtDay(i.booked.date)+' '+i.booked.time):'']])+moreBox()+'</div>';
+                ['Booked',i.booked?(fmtDay(i.booked.date)+' '+i.booked.time):'']])+moreBox()+notesBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone},['status','phone','email']);
     } else if(state.view==='lead'){
       var bookedCard=i.booked
@@ -504,21 +523,22 @@
       detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> '+(i.booked?'<span class="zp-pill confirmed">Booked</span>':'<span class="zp-pill upcoming">Not booked</span>'),contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
         kvCard([['Name',i.name],['Submitted',i.date],['Source',i.source],['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
-        bookedCard+moreBox()+'</div>';
+        bookedCard+moreBox()+notesBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else if(i.ex){
       detail.innerHTML=headHTML(i,'',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Former member</p>'+
-        kvCard([['Name',i.name],['Phone',i.phone],['Email',i.email]])+moreBox()+'</div>';
+        kvCard([['Name',i.name],['Phone',i.phone],['Email',i.email]])+moreBox()+notesBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else {
       // Contact + personal info is backfilled server-side (i.info); render it inline.
-      // Fall back to the lazy fetch only if this member didn't resolve in the index.
+      // The lazy fetch still runs for NOTES (and as info fallback when this member
+      // didn't resolve in the index - then zpMoreInfo exists and gets filled too).
       var moreInline=moreBoxInline(i.info,['status','phone','email']);
       detail.innerHTML=headHTML(i,'',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Membership</p>'+
-        kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+(moreInline||moreBox())+'</div>';
-      if(!moreInline) loadPersonInfo('zpMoreInfo',{name:i.name},['status']);
+        kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+(moreInline||moreBox())+notesBox()+'</div>';
+      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status']);
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
