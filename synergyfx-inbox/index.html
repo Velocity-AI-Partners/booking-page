@@ -15,16 +15,31 @@
 -->
 <style>
   :root{
-    --accent:#155eef; --accent-600:#1149c0; --accent-050:#eaf1ff;
+    --accent:#314AAE; --accent-600:#26397f; --accent-050:#eef1fb;
     --ink:#101828; --muted:#667085; --faint:#98a2b3;
     --bg:#f4f6fb; --panel:#ffffff; --border:#e6e9f1; --border-soft:#eef1f7;
     --showed:#067647; --showed-bg:#e7f6ec;
-    --confirmed:#155eef; --confirmed-bg:#eaf1ff;
+    --confirmed:#314AAE; --confirmed-bg:#eef1fb;
     --upcoming:#b25e00; --upcoming-bg:#fff4e3;
     --cancelled:#b42318; --cancelled-bg:#fee4e2;
     --consult:#0e7490; --consult-bg:#e0f2fe;
     --member:#067647; --member-bg:#e7f6ec;
+    --input-bg:#fbfcfe; --row-hover:#fafbfe; --overlay:rgba(16,24,40,.45);
+    --logo-mark:#314AAE; --logo-word:#0F172A;
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  html[data-theme="dark"]{
+    --accent:#6E8AEC; --accent-600:#8ba1f0; --accent-050:#1e2740;
+    --ink:#e8ebf3; --muted:#9aa4bd; --faint:#6b7488;
+    --bg:#0b1020; --panel:#141a2e; --border:#28324c; --border-soft:#1e2740;
+    --showed:#4ade80; --showed-bg:#0f2a1d;
+    --confirmed:#8ba1f0; --confirmed-bg:#1e2740;
+    --upcoming:#fbbf24; --upcoming-bg:#33240e;
+    --cancelled:#f87171; --cancelled-bg:#3a1614;
+    --consult:#38bdf8; --consult-bg:#0c2a33;
+    --member:#4ade80; --member-bg:#0f2a1d;
+    --input-bg:#0f1526; --row-hover:#182038; --overlay:rgba(0,0,0,.6);
+    --logo-mark:#8ba1f0; --logo-word:#ffffff;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -37,7 +52,7 @@
   .zp-card h1{font-size:19px; font-weight:680; text-align:center; margin:0 0 24px}
   .zp-field{margin-bottom:13px}
   .zp-field label{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px}
-  .zp-field input{width:100%; padding:10px 12px; font-size:14px; color:var(--ink); border:1px solid var(--border); border-radius:10px; background:#fbfcfe; outline:none}
+  .zp-field input{width:100%; padding:10px 12px; font-size:14px; color:var(--ink); border:1px solid var(--border); border-radius:10px; background:var(--input-bg); outline:none}
   .zp-field input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
   .zp-signin{width:100%; padding:11px; font-size:14px; font-weight:650; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; margin-top:8px}
   .zp-signin:hover{background:var(--accent-600)}
@@ -68,11 +83,11 @@
   .zp-list-head h2{margin:0 0 11px; font-size:15px; font-weight:650}
   .zp-search{position:relative; margin-bottom:12px}
   .zp-search svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--faint)}
-  .zp-search input{width:100%; padding:8px 10px 8px 32px; font-size:13px; color:var(--ink); border:1px solid var(--border); border-radius:9px; background:#fbfcfe; outline:none}
+  .zp-search input{width:100%; padding:8px 10px 8px 32px; font-size:13px; color:var(--ink); border:1px solid var(--border); border-radius:9px; background:var(--input-bg); outline:none}
   .zp-search input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
   .zp-rows{flex:1 1 auto; overflow-y:auto; min-height:0}
   .zp-row{width:100%; text-align:left; border:0; background:transparent; cursor:pointer; display:flex; gap:11px; padding:12px 14px; border-bottom:1px solid var(--border-soft); border-left:3px solid transparent}
-  .zp-row:hover{background:#fafbfe}
+  .zp-row:hover{background:var(--row-hover)}
   .zp-row.on{background:var(--accent-050); border-left-color:var(--accent)}
   .zp-av{width:36px; height:36px; flex:0 0 auto; border-radius:50%; display:grid; place-items:center; font-size:13px; font-weight:650; color:#fff}
   .zp-row-main{flex:1 1 auto; min-width:0}
@@ -102,7 +117,7 @@
   .zp-cal-dhead span{display:block; font-size:10.5px; font-weight:600; color:var(--faint); margin-top:1px}
   .zp-cal-day.today .zp-cal-dhead{color:var(--accent-600)}
   .zp-cal-items{padding:8px; display:flex; flex-direction:column; gap:6px}
-  .zp-cal-it{border:1px solid var(--border-soft); border-left:3px solid var(--confirmed); border-radius:8px; padding:7px 9px; background:#fbfcfe}
+  .zp-cal-it{border:1px solid var(--border-soft); border-left:3px solid var(--confirmed); border-radius:8px; padding:7px 9px; background:var(--input-bg)}
   .zp-cal-it.consult{border-left-color:var(--consult); background:var(--consult-bg)}
   .zp-cal-t{font-size:11px; font-weight:700; color:var(--muted); font-variant-numeric:tabular-nums}
   .zp-cal-n{font-size:12.5px; font-weight:600; margin-top:2px}
@@ -116,7 +131,7 @@
   .zp-wk button:hover{border-color:var(--accent); color:var(--accent-600)}
   .zp-wk .zp-wk-label{font-size:13.5px; font-weight:650}
   .zp-wk .zp-wk-cur{margin-left:2px; font-size:12px; color:var(--accent-600); background:var(--accent-050); border-color:var(--accent-050)}
-  .zp-modal{position:fixed; inset:0; background:rgba(16,24,40,.45); display:flex; align-items:center; justify-content:center; z-index:60; padding:20px}
+  .zp-modal{position:fixed; inset:0; background:var(--overlay); display:flex; align-items:center; justify-content:center; z-index:60; padding:20px}
   .zp-modal-card{background:var(--panel); border-radius:14px; width:100%; max-width:420px; box-shadow:0 18px 60px rgba(16,24,40,.25); overflow:hidden}
   .zp-modal-head{display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid var(--border)}
   .zp-modal-head b{font-size:15.5px}
@@ -172,14 +187,47 @@
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
   .zp-row:focus-visible,.zp-nav button:focus-visible,.zp-signin:focus-visible,.zp-search input:focus-visible,.zp-field input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* --- Velocity logo (inline SVG, theme-aware) --- */
+  .velo-mark{display:block; width:auto}
+  .velo-mark path{fill:var(--logo-mark)}
+  .velo-lockup{display:block; width:auto; height:30px}
+  .velo-lockup .vm{fill:var(--logo-mark)}
+  .velo-lockup .vw{fill:var(--logo-word); font-family:var(--sans); font-weight:800}
+  .velo-lockup .vp{fill:var(--logo-mark); font-family:var(--sans); font-weight:700}
+  .zp-velomark{display:flex; align-items:center; flex:0 0 auto}
+  .zp-velomark .velo-mark{height:24px}
+  .zp-brand{margin-left:auto; display:flex; align-items:center; text-decoration:none; padding-left:14px}
+  .zp-lgmark .velo-mark{height:24px}
+  .zp-lgmark .velo-mark path{fill:#fff}
+
+  /* --- List head: constant client name + active-tab chip --- */
+  .zp-list-titlerow{display:flex; align-items:baseline; gap:10px; justify-content:space-between; margin:0 0 11px}
+  .zp-list-titlerow h2{margin:0; font-size:14.5px; font-weight:680; line-height:1.25}
+  .zp-tabname{flex:0 0 auto; font-size:11px; font-weight:650; color:var(--accent-600); background:var(--accent-050); padding:3px 10px; border-radius:999px; white-space:nowrap}
+
+  /* --- Footer action bar --- */
+  .zp-foot{flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:0 16px; min-height:48px; background:var(--panel); border-top:1px solid var(--border); flex-wrap:wrap}
+  .zp-foot .zp-asof{margin-left:0}
+  .zp-foot-actions{margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 0}
+  .zp-fbtn{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border); background:var(--panel); color:var(--muted); font-size:12.5px; font-weight:600; padding:7px 12px; border-radius:9px; cursor:pointer}
+  .zp-fbtn:hover{border-color:var(--accent); color:var(--accent-600)}
+  .zp-fbtn svg{width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto}
+  .zp-fbtn-out:hover{border-color:var(--cancelled); color:var(--cancelled)}
+  .zp-fbtn.spin svg{animation:zpspin .8s linear infinite}
+  @keyframes zpspin{to{transform:rotate(360deg)}}
+  .zp-fbtn .ic-sun{display:none}
+  html[data-theme="dark"] .zp-fbtn .ic-moon{display:none}
+  html[data-theme="dark"] .zp-fbtn .ic-sun{display:inline}
 </style>
+<script>(function(){try{var t=localStorage.getItem('sfxtheme');if(t!=='dark'&&t!=='light')t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
 
 <div class="zp-login" id="zpLogin">
   <form class="zp-card" id="zpLoginForm" autocomplete="on">
-    <div class="zp-lgmark">SF</div>
-    <h1>SynergyFx</h1>
+    <div class="zp-lgmark"><svg class="velo-mark" viewBox="0 0 123 110" aria-hidden="true"><path d="M45,1 L123,1 L116,14 L37,14 Z"/><path d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path d="M27,57 L49,57 L38,80 Z"/></svg></div>
+    <h1>Synergy FX Strength &amp; Wellness Lab</h1>
     <div class="zp-field"><label for="lgPass">Team password</label><input id="lgPass" type="password" autocomplete="current-password"></div>
     <button class="zp-signin" id="lgBtn" type="submit">Sign in</button>
     <div class="zp-err" id="lgErr"></div>
@@ -189,11 +237,13 @@
 <div class="zp-shell" id="zpShell">
   <header class="zp-top">
     <div class="zp-loc">
-      <div class="zp-mark">SF</div>
-      <div><b>SynergyFx</b><span>Strength &amp; Wellness Lab</span></div>
+      <span class="zp-velomark"><svg class="velo-mark" viewBox="0 0 123 110" aria-hidden="true"><path d="M45,1 L123,1 L116,14 L37,14 Z"/><path d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path d="M27,57 L49,57 L38,80 Z"/></svg></span>
+      <div><b>Synergy FX</b><span>Strength &amp; Wellness Lab</span></div>
     </div>
     <div class="zp-page-title" id="zpTitle">Appointments</div>
-    <div class="zp-asof"><span class="zp-dot"></span><span id="zpAsOf"></span></div>
+    <a class="zp-brand" href="https://velocityaipartners.ai" target="_blank" rel="noopener" aria-label="Velocity AI Partners">
+      <svg class="velo-lockup" viewBox="0 0 600 150" aria-hidden="true"><g transform="translate(2,22) scale(0.945)"><path class="vm" d="M45,1 L123,1 L116,14 L37,14 Z"/><path class="vm" d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path class="vm" d="M27,57 L49,57 L38,80 Z"/></g><text class="vw" x="140" y="99" font-size="78" letter-spacing="0.5">VELOCITY</text><text class="vp" x="144" y="130" font-size="20.5" letter-spacing="8.2">AI PARTNERS</text></svg>
+    </a>
   </header>
   <div class="zp-body">
     <nav class="zp-nav" id="zpNav">
@@ -205,7 +255,7 @@
     </nav>
     <section class="zp-list">
       <div class="zp-list-head">
-        <h2 id="zpListTitle">Appointments</h2>
+        <div class="zp-list-titlerow"><h2 id="zpListTitle">Synergy FX Strength &amp; Wellness Lab</h2><span class="zp-tabname" id="zpTabName">Appointments</span></div>
         <div class="zp-search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
           <input id="zpSearch" type="text" placeholder="Search by name..." aria-label="Search">
@@ -226,6 +276,14 @@
       </div>
     </section>
   </div>
+  <footer class="zp-foot">
+    <div class="zp-asof"><span class="zp-dot"></span><span id="zpAsOf">Loading&hellip;</span></div>
+    <div class="zp-foot-actions">
+      <button class="zp-fbtn" id="zpRefresh" type="button" title="Refresh all data"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Refresh</button>
+      <button class="zp-fbtn" id="zpTheme" type="button" title="Toggle dark / light mode"><svg class="ic-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.2 17.2 18.6 18.6M18.6 5.4 17.2 6.8M6.8 17.2 5.4 18.6"/></svg><span id="zpThemeLabel">Dark mode</span></button>
+      <button class="zp-fbtn zp-fbtn-out" id="zpSignout" type="button" title="Sign out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
+    </div>
+  </footer>
 </div>
 
 <script>
@@ -236,7 +294,7 @@
   var WEEKS={}, curWeek=null; // curWeek=null -> rolling current week; else 'YYYY-MM-DD'
   function fmtYMD(t){var d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   function weekKey(){return curWeek||'current';}
-  var AV=['#155eef','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
+  var AV=['#314AAE','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
   function color(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AV[s%AV.length];}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function initials(n){return n.split(/\s+/).slice(0,2).map(function(w){return w.charAt(0);}).join('').toUpperCase()||'?';}
@@ -483,12 +541,41 @@
     state.view=b.getAttribute('data-v'); state.search=''; document.getElementById('zpSearch').value='';
     [].forEach.call(this.children,function(c){c.classList.toggle('on',c===b);});
     document.getElementById('zpTitle').textContent=TITLES[state.view];
-    document.getElementById('zpListTitle').textContent=TITLES[state.view];
+    var _tn=document.getElementById('zpTabName'); if(_tn) _tn.textContent=TITLES[state.view];
     var v=(state.view==='appt'||state.view==='forms')?[]:visible(); state.active=v.length?v[0].id:null;
     shell.classList.remove('detail-open');
     renderAll();
   });
   document.getElementById('zpSearch').addEventListener('input',function(e){state.search=e.target.value.toLowerCase().trim(); renderList();});
+
+  // ---- Footer controls: refresh-all, dark/light theme, sign-out ----
+  function refreshAll(btn){
+    if(btn) btn.classList.add('spin');
+    var stop=function(){ if(btn) setTimeout(function(){btn.classList.remove('spin');},500); };
+    // Re-pull the roster AND force a fresh rebuild of every cached week of appointments.
+    WEEKS={}; apptReady=false; apptFirstPoll=Date.now();
+    if(state.view==='appt') renderCal();
+    fetchAppts();
+    Promise.resolve(refresh()).then(stop, stop);
+  }
+  (function wireFooter(){
+    var rb=document.getElementById('zpRefresh');
+    if(rb) rb.onclick=function(){ refreshAll(rb); };
+    var sb=document.getElementById('zpSignout');
+    if(sb) sb.onclick=function(){ try{sessionStorage.removeItem('sfxpw');}catch(e){} PW=null; location.reload(); };
+    var tb=document.getElementById('zpTheme');
+    function syncThemeLabel(){
+      var dark=document.documentElement.getAttribute('data-theme')==='dark';
+      var l=document.getElementById('zpThemeLabel'); if(l) l.textContent=dark?'Light mode':'Dark mode';
+    }
+    if(tb) tb.onclick=function(){
+      var nx=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',nx);
+      try{localStorage.setItem('sfxtheme',nx);}catch(e){}
+      syncThemeLabel();
+    };
+    syncThemeLabel();
+  })();
 
   function fetchRoster(){
     return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW})});
