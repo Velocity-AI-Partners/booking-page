@@ -15,16 +15,33 @@
 -->
 <style>
   :root{
-    --accent:#155eef; --accent-600:#1149c0; --accent-050:#eaf1ff;
-    --ink:#101828; --muted:#667085; --faint:#98a2b3;
-    --bg:#f4f6fb; --panel:#ffffff; --border:#e6e9f1; --border-soft:#eef1f7;
+    --accent:#314AAE; --accent-600:#26397f; --accent-050:#eef1fb;
+    --ink:#111827; --muted:#5b6472; --faint:#9aa1ac;
+    --bg:#f6f7f8; --panel:#ffffff; --border:#e5e7eb; --border-soft:#eef0f2;
     --showed:#067647; --showed-bg:#e7f6ec;
-    --confirmed:#155eef; --confirmed-bg:#eaf1ff;
+    --confirmed:#314AAE; --confirmed-bg:#eef1fb;
     --upcoming:#b25e00; --upcoming-bg:#fff4e3;
     --cancelled:#b42318; --cancelled-bg:#fee4e2;
     --consult:#0e7490; --consult-bg:#e0f2fe;
     --member:#067647; --member-bg:#e7f6ec;
+    --input-bg:#fbfcfd; --row-hover:#f6f7f8; --overlay:rgba(17,24,39,.45);
+    --logo-mark:#314AAE; --logo-word:#0F172A;
+    --nav-w:190px; /* shared: sidebar width AND header logo-cell width, so their divider lines up */
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  html[data-theme="dark"]{
+    /* Neutral black/grey surfaces (no navy). Blue kept only as an accent + on the logo. */
+    --accent:#7c93ef; --accent-600:#9db0f4; --accent-050:#26262b;
+    --ink:#f4f4f5; --muted:#a1a1aa; --faint:#71717a;
+    --bg:#0a0a0b; --panel:#161618; --border:#2c2c31; --border-soft:#232327;
+    --showed:#4ade80; --showed-bg:#12261a;
+    --confirmed:#9db0f4; --confirmed-bg:#26262b;
+    --upcoming:#fbbf24; --upcoming-bg:#2a2410;
+    --cancelled:#f87171; --cancelled-bg:#2e1615;
+    --consult:#38bdf8; --consult-bg:#0e2530;
+    --member:#4ade80; --member-bg:#12261a;
+    --input-bg:#121214; --row-hover:#1d1d20; --overlay:rgba(0,0,0,.65);
+    --logo-mark:#9db0f4; --logo-word:#ffffff;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -37,7 +54,7 @@
   .zp-card h1{font-size:19px; font-weight:680; text-align:center; margin:0 0 24px}
   .zp-field{margin-bottom:13px}
   .zp-field label{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px}
-  .zp-field input{width:100%; padding:10px 12px; font-size:14px; color:var(--ink); border:1px solid var(--border); border-radius:10px; background:#fbfcfe; outline:none}
+  .zp-field input{width:100%; padding:10px 12px; font-size:14px; color:var(--ink); border:1px solid var(--border); border-radius:10px; background:var(--input-bg); outline:none}
   .zp-field input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
   .zp-signin{width:100%; padding:11px; font-size:14px; font-weight:650; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; margin-top:8px}
   .zp-signin:hover{background:var(--accent-600)}
@@ -45,18 +62,18 @@
   .zp-err{font-size:12.5px; color:var(--cancelled); text-align:center; min-height:16px; margin-top:12px}
 
   .zp-shell{height:100vh; min-height:100dvh; display:none; flex-direction:column; overflow:hidden}
-  .zp-top{flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:0 16px; height:56px; background:var(--panel); border-bottom:1px solid var(--border)}
+  .zp-top{flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:0; height:56px; background:var(--panel); border-bottom:1px solid var(--border)}
   .zp-loc{display:flex; align-items:center; gap:10px; padding-right:14px; border-right:1px solid var(--border-soft)}
   .zp-mark{width:30px; height:30px; border-radius:8px; flex:0 0 auto; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:13px}
   .zp-loc b{font-size:14px; font-weight:650; line-height:1.1}
   .zp-loc span{display:block; font-size:11px; color:var(--muted); margin-top:1px}
-  .zp-page-title{font-size:14px; font-weight:600}
+  .zp-page-title{flex:0 0 auto; font-size:14px; font-weight:600; color:var(--muted); white-space:nowrap}
   .zp-asof{margin-left:auto; font-size:11px; color:var(--faint); font-weight:500; display:flex; align-items:center; gap:6px}
   .zp-dot{width:6px; height:6px; border-radius:50%; background:var(--showed); display:inline-block}
 
   .zp-body{flex:1 1 auto; display:flex; min-height:0}
 
-  .zp-nav{flex:0 0 190px; background:var(--panel); border-right:1px solid var(--border); padding:14px 10px; display:flex; flex-direction:column; gap:4px}
+  .zp-nav{flex:0 0 var(--nav-w); background:var(--panel); border-right:1px solid var(--border); padding:14px 10px; display:flex; flex-direction:column; gap:4px}
   .zp-nav button{display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:0; background:transparent; cursor:pointer; padding:9px 12px; border-radius:9px; font-size:13px; font-weight:600; color:var(--muted)}
   .zp-nav button:hover{background:var(--bg); color:var(--ink)}
   .zp-nav button.on{background:var(--accent-050); color:var(--accent-600)}
@@ -68,11 +85,11 @@
   .zp-list-head h2{margin:0 0 11px; font-size:15px; font-weight:650}
   .zp-search{position:relative; margin-bottom:12px}
   .zp-search svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--faint)}
-  .zp-search input{width:100%; padding:8px 10px 8px 32px; font-size:13px; color:var(--ink); border:1px solid var(--border); border-radius:9px; background:#fbfcfe; outline:none}
+  .zp-search input{width:100%; padding:8px 10px 8px 32px; font-size:13px; color:var(--ink); border:1px solid var(--border); border-radius:9px; background:var(--input-bg); outline:none}
   .zp-search input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
   .zp-rows{flex:1 1 auto; overflow-y:auto; min-height:0}
   .zp-row{width:100%; text-align:left; border:0; background:transparent; cursor:pointer; display:flex; gap:11px; padding:12px 14px; border-bottom:1px solid var(--border-soft); border-left:3px solid transparent}
-  .zp-row:hover{background:#fafbfe}
+  .zp-row:hover{background:var(--row-hover)}
   .zp-row.on{background:var(--accent-050); border-left-color:var(--accent)}
   .zp-av{width:36px; height:36px; flex:0 0 auto; border-radius:50%; display:grid; place-items:center; font-size:13px; font-weight:650; color:#fff}
   .zp-row-main{flex:1 1 auto; min-width:0}
@@ -102,7 +119,7 @@
   .zp-cal-dhead span{display:block; font-size:10.5px; font-weight:600; color:var(--faint); margin-top:1px}
   .zp-cal-day.today .zp-cal-dhead{color:var(--accent-600)}
   .zp-cal-items{padding:8px; display:flex; flex-direction:column; gap:6px}
-  .zp-cal-it{border:1px solid var(--border-soft); border-left:3px solid var(--confirmed); border-radius:8px; padding:7px 9px; background:#fbfcfe}
+  .zp-cal-it{border:1px solid var(--border-soft); border-left:3px solid var(--confirmed); border-radius:8px; padding:7px 9px; background:var(--input-bg)}
   .zp-cal-it.consult{border-left-color:var(--consult); background:var(--consult-bg)}
   .zp-cal-t{font-size:11px; font-weight:700; color:var(--muted); font-variant-numeric:tabular-nums}
   .zp-cal-n{font-size:12.5px; font-weight:600; margin-top:2px}
@@ -116,7 +133,7 @@
   .zp-wk button:hover{border-color:var(--accent); color:var(--accent-600)}
   .zp-wk .zp-wk-label{font-size:13.5px; font-weight:650}
   .zp-wk .zp-wk-cur{margin-left:2px; font-size:12px; color:var(--accent-600); background:var(--accent-050); border-color:var(--accent-050)}
-  .zp-modal{position:fixed; inset:0; background:rgba(16,24,40,.45); display:flex; align-items:center; justify-content:center; z-index:60; padding:20px}
+  .zp-modal{position:fixed; inset:0; background:var(--overlay); display:flex; align-items:center; justify-content:center; z-index:60; padding:20px}
   .zp-modal-card{background:var(--panel); border-radius:14px; width:100%; max-width:420px; box-shadow:0 18px 60px rgba(16,24,40,.25); overflow:hidden}
   .zp-modal-head{display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid var(--border)}
   .zp-modal-head b{font-size:15.5px}
@@ -172,14 +189,56 @@
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
   .zp-row:focus-visible,.zp-nav button:focus-visible,.zp-signin:focus-visible,.zp-search input:focus-visible,.zp-field input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* --- Velocity logo (inline SVG, theme-aware) --- */
+  .velo-mark{display:block; width:auto}
+  .velo-mark path{fill:var(--logo-mark)}
+  .velo-lockup{display:block; width:auto; height:30px}
+  .velo-lockup .vm{fill:var(--logo-mark)}
+  .velo-lockup .vw{fill:var(--logo-word); font-family:var(--sans); font-weight:800}
+  .velo-lockup .vp{fill:var(--logo-mark); font-family:var(--sans); font-weight:700}
+  .zp-brand{flex:0 0 var(--nav-w); box-sizing:border-box; display:flex; align-items:center; height:100%; padding-left:20px; padding-right:12px; border-right:1px solid var(--border); text-decoration:none}
+  .zp-brand .velo-lockup{height:28px}
+  .zp-client{flex:0 1 auto; min-width:0; font-size:14px; font-weight:680; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .zp-crumb{flex:0 0 auto; color:var(--faint); font-size:15px}
+  @media (max-width:900px){ .zp-brand{flex:0 0 auto; width:auto; padding-left:14px} }
+  .zp-lgmark .velo-mark{height:24px}
+  .zp-lgmark .velo-mark path{fill:#fff}
+
+  /* --- List head: constant client name + active-tab chip --- */
+  .zp-list-titlerow{display:flex; align-items:baseline; gap:10px; justify-content:space-between; margin:0 0 11px}
+  .zp-list-titlerow h2{margin:0; font-size:14.5px; font-weight:680; line-height:1.25}
+  .zp-tabname{flex:0 0 auto; font-size:11px; font-weight:650; color:var(--accent-600); background:var(--accent-050); padding:3px 10px; border-radius:999px; white-space:nowrap}
+
+  /* --- Sidebar action stack (pinned bottom-left, never past the sidebar) --- */
+  .zp-nav-foot{margin-top:auto; display:flex; flex-direction:column; gap:6px; padding-top:12px; border-top:1px solid var(--border-soft)}
+  .zp-nav-foot .zp-fbtn{width:100%; justify-content:flex-start; border:1px solid var(--border); background:var(--panel); color:var(--muted); padding:8px 11px; border-radius:9px; font-size:12.5px; font-weight:600}
+  .zp-nav-foot .zp-fbtn:hover{background:var(--bg); border-color:var(--accent); color:var(--accent-600)}
+  .zp-nav-foot .zp-fbtn-out:hover{border-color:var(--cancelled); color:var(--cancelled)}
+  .zp-nav-foot .zp-asof{margin:8px 4px 2px; font-size:11px}
+  @media (max-width:900px){
+    .zp-nav-foot{margin-top:0; flex-direction:row; align-items:center; padding-top:0; border-top:0; border-left:1px solid var(--border-soft); margin-left:6px; padding-left:10px}
+    .zp-nav-foot .zp-fbtn{width:auto}
+    .zp-nav-foot .zp-asof{display:none}
+  }
+  .zp-fbtn{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border); background:var(--panel); color:var(--muted); font-size:12.5px; font-weight:600; padding:7px 12px; border-radius:9px; cursor:pointer}
+  .zp-fbtn:hover{border-color:var(--accent); color:var(--accent-600)}
+  .zp-fbtn svg{width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto}
+  .zp-fbtn-out:hover{border-color:var(--cancelled); color:var(--cancelled)}
+  .zp-fbtn.spin svg{animation:zpspin .8s linear infinite}
+  @keyframes zpspin{to{transform:rotate(360deg)}}
+  .zp-fbtn .ic-sun{display:none}
+  html[data-theme="dark"] .zp-fbtn .ic-moon{display:none}
+  html[data-theme="dark"] .zp-fbtn .ic-sun{display:inline}
 </style>
+<script>(function(){try{var t=localStorage.getItem('sfxtheme');if(t!=='dark'&&t!=='light')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
 
 <div class="zp-login" id="zpLogin">
   <form class="zp-card" id="zpLoginForm" autocomplete="on">
-    <div class="zp-lgmark">SF</div>
-    <h1>SynergyFx</h1>
+    <div class="zp-lgmark"><svg class="velo-mark" viewBox="0 0 123 110" aria-hidden="true"><path d="M45,1 L123,1 L116,14 L37,14 Z"/><path d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path d="M27,57 L49,57 L38,80 Z"/></svg></div>
+    <h1>Synergy FX Strength &amp; Wellness Lab</h1>
     <div class="zp-field"><label for="lgPass">Team password</label><input id="lgPass" type="password" autocomplete="current-password"></div>
     <button class="zp-signin" id="lgBtn" type="submit">Sign in</button>
     <div class="zp-err" id="lgErr"></div>
@@ -188,12 +247,12 @@
 
 <div class="zp-shell" id="zpShell">
   <header class="zp-top">
-    <div class="zp-loc">
-      <div class="zp-mark">SF</div>
-      <div><b>SynergyFx</b><span>Strength &amp; Wellness Lab</span></div>
-    </div>
-    <div class="zp-page-title" id="zpTitle">Appointments</div>
-    <div class="zp-asof"><span class="zp-dot"></span><span id="zpAsOf"></span></div>
+    <a class="zp-brand" href="https://velocityaipartners.ai" target="_blank" rel="noopener" aria-label="Velocity AI Partners">
+      <svg class="velo-lockup" viewBox="0 0 600 150" aria-hidden="true"><g transform="translate(2,22) scale(0.945)"><path class="vm" d="M45,1 L123,1 L116,14 L37,14 Z"/><path class="vm" d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path class="vm" d="M27,57 L49,57 L38,80 Z"/></g><text class="vw" x="140" y="99" font-size="78" letter-spacing="0.5">VELOCITY</text><text class="vp" x="144" y="130" font-size="20.5" letter-spacing="8.2">AI PARTNERS</text></svg>
+    </a>
+    <b class="zp-client">Synergy FX Strength &amp; Wellness Lab</b>
+    <span class="zp-crumb" aria-hidden="true">&rsaquo;</span>
+    <span class="zp-page-title" id="zpTitle">Appointments</span>
   </header>
   <div class="zp-body">
     <nav class="zp-nav" id="zpNav">
@@ -202,10 +261,15 @@
       <button data-v="lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Leads<b id="nLead">0</b></button>
       <button data-v="member"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0M15 5a3.2 3.2 0 0 1 0 6M17 13a6 6 0 0 1 4 6"/></svg>Members<b id="nMem">0</b></button>
       <button data-v="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Forms</button>
+      <div class="zp-nav-foot">
+        <button class="zp-fbtn zp-fbtn-out" id="zpSignout" type="button" title="Sign out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
+        <button class="zp-fbtn" id="zpTheme" type="button" title="Toggle dark / light mode"><svg class="ic-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.2 17.2 18.6 18.6M18.6 5.4 17.2 6.8M6.8 17.2 5.4 18.6"/></svg><span id="zpThemeLabel">Dark mode</span></button>
+        <button class="zp-fbtn" id="zpRefresh" type="button" title="Refresh all data"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>Refresh</button>
+        <div class="zp-asof"><span class="zp-dot"></span><span id="zpAsOf">Loading&hellip;</span></div>
+      </div>
     </nav>
     <section class="zp-list">
       <div class="zp-list-head">
-        <h2 id="zpListTitle">Appointments</h2>
         <div class="zp-search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
           <input id="zpSearch" type="text" placeholder="Search by name..." aria-label="Search">
@@ -236,7 +300,7 @@
   var WEEKS={}, curWeek=null; // curWeek=null -> rolling current week; else 'YYYY-MM-DD'
   function fmtYMD(t){var d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   function weekKey(){return curWeek||'current';}
-  var AV=['#155eef','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
+  var AV=['#314AAE','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
   function color(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AV[s%AV.length];}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function initials(n){return n.split(/\s+/).slice(0,2).map(function(w){return w.charAt(0);}).join('').toUpperCase()||'?';}
@@ -479,16 +543,45 @@
   function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else if(state.view!=='forms'){renderList(); renderDetail();} }
 
   document.getElementById('zpNav').addEventListener('click',function(e){
-    var b=e.target.closest('button'); if(!b) return;
+    var b=e.target.closest('button'); if(!b||!b.hasAttribute('data-v')) return;
     state.view=b.getAttribute('data-v'); state.search=''; document.getElementById('zpSearch').value='';
     [].forEach.call(this.children,function(c){c.classList.toggle('on',c===b);});
     document.getElementById('zpTitle').textContent=TITLES[state.view];
-    document.getElementById('zpListTitle').textContent=TITLES[state.view];
+    var _tn=document.getElementById('zpTabName'); if(_tn) _tn.textContent=TITLES[state.view];
     var v=(state.view==='appt'||state.view==='forms')?[]:visible(); state.active=v.length?v[0].id:null;
     shell.classList.remove('detail-open');
     renderAll();
   });
   document.getElementById('zpSearch').addEventListener('input',function(e){state.search=e.target.value.toLowerCase().trim(); renderList();});
+
+  // ---- Footer controls: refresh-all, dark/light theme, sign-out ----
+  function refreshAll(btn){
+    if(btn) btn.classList.add('spin');
+    var stop=function(){ if(btn) setTimeout(function(){btn.classList.remove('spin');},500); };
+    // Re-pull the roster AND force a fresh rebuild of every cached week of appointments.
+    WEEKS={}; apptReady=false; apptFirstPoll=Date.now();
+    if(state.view==='appt') renderCal();
+    fetchAppts();
+    Promise.resolve(refresh()).then(stop, stop);
+  }
+  (function wireFooter(){
+    var rb=document.getElementById('zpRefresh');
+    if(rb) rb.onclick=function(){ refreshAll(rb); };
+    var sb=document.getElementById('zpSignout');
+    if(sb) sb.onclick=function(){ try{sessionStorage.removeItem('sfxpw');}catch(e){} PW=null; location.reload(); };
+    var tb=document.getElementById('zpTheme');
+    function syncThemeLabel(){
+      var dark=document.documentElement.getAttribute('data-theme')==='dark';
+      var l=document.getElementById('zpThemeLabel'); if(l) l.textContent=dark?'Light mode':'Dark mode';
+    }
+    if(tb) tb.onclick=function(){
+      var nx=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',nx);
+      try{localStorage.setItem('sfxtheme',nx);}catch(e){}
+      syncThemeLabel();
+    };
+    syncThemeLabel();
+  })();
 
   function fetchRoster(){
     return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW})});
