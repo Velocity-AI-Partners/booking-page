@@ -357,12 +357,12 @@
   function applyRoster(d){
     var inq=(d.inquiries||[]).map(function(q,ix){
       var name=((q['FIRST NAME']||'')+' '+(q['LAST NAME']||'')).trim()||'(no name)';
-      return {id:'q'+ix, name:name, phone:q.PHONE||'', source:q.SOURCE||'', interest:q.INTEREST||'', date:q['INQUIRY DATE']||''};
+      return {id:'q'+ix, name:name, phone:q.PHONE||'', source:q.SOURCE||'', interest:q.INTEREST||'', date:q['INQUIRY DATE']||'', booked:q._booked||null};
     }).sort(function(a,b){return ts(b.date)-ts(a.date);});
     var leads=[], mems=[];
     (d.people||[]).forEach(function(p,ix){
       if(p.type==='Member') mems.push({id:'m'+ix, name:p.name, status:p.status, plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate});
-      else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date});
+      else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date, booked:p.booked||null});
     });
     leads.sort(function(a,b){return ts(b.date)-ts(a.date);});
     mems.sort(function(a,b){return a.name<b.name?-1:1;});
@@ -389,8 +389,10 @@
     });
   }
   function rowMeta(i){
-    if(state.view==='inquiry') return {snip:(i.interest?('Interest: '+i.interest):(i.source||'Inquiry')), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'};
-    if(state.view==='lead') return {snip:(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet'), time:i.date, foot:'<span class="zp-tp lead">Lead</span><span class="zp-pill upcoming">Not booked</span>'};
+    var bpill=function(i){return i.booked?'<span class="zp-pill confirmed">Booked</span>':'<span class="zp-pill upcoming">Not booked</span>';};
+    var bsnip=function(i,fallback){return i.booked?('Booked: '+fmtDay(i.booked.date)+' &middot; '+i.booked.time+(i.booked.isConsult?' (Consultation)':'')):fallback;};
+    if(state.view==='inquiry') return {snip:bsnip(i,(i.interest?('Interest: '+i.interest):(i.source||'Inquiry'))), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'+bpill(i)};
+    if(state.view==='lead') return {snip:bsnip(i,(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet')), time:i.date, foot:'<span class="zp-tp lead">Lead</span>'+bpill(i)};
     return {snip:i.plan||'Member', time:i.beginDate, foot:'<span class="zp-tp member">Member</span>'+(i.status?'<span class="zp-pill confirmed">'+esc(i.status)+'</span>':'')};
   }
   function renderList(){
@@ -424,15 +426,19 @@
     var contacts=(i.phone?'<span class="zp-contact">'+phoneSvg()+esc(i.phone)+'</span>':'')+(i.email?'<span class="zp-contact">'+mailSvg()+esc(i.email)+'</span>':'');
     if(state.view==='inquiry'){
       var interest=i.interest?'<span class="zp-interest">Interest: '+esc(i.interest)+'</span>':'';
-      detail.innerHTML=headHTML(i,'<span class="zp-tp inquiry">Inquiry</span> '+interest,contacts)+
+      detail.innerHTML=headHTML(i,'<span class="zp-tp inquiry">Inquiry</span> '+(i.booked?'<span class="zp-pill confirmed">Booked</span> ':'')+interest,contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Inquiry details</p>'+
-        kvCard([['Name',i.name],['Received',i.date],['Source',i.source],['Interest',i.interest],['Phone',i.phone]])+moreBox()+'</div>';
+        kvCard([['Name',i.name],['Received',i.date],['Source',i.source],['Interest',i.interest],['Phone',i.phone],
+                ['Booked',i.booked?(fmtDay(i.booked.date)+' '+i.booked.time):'']])+moreBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone},['status','phone','email']);
     } else if(state.view==='lead'){
-      detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> <span class="zp-pill upcoming">Not booked</span>',contacts)+
+      var bookedCard=i.booked
+        ?'<div class="zp-bk"><div class="zp-bk-ic">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">'+esc(fmtDay(i.booked.date))+' &middot; '+esc(i.booked.time)+'</div><div class="zp-bk-s">'+(i.booked.isConsult?'Consultation booked':'Appointment booked')+'</div></div><span class="zp-pill confirmed">Booked</span></div>'
+        :'<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div>';
+      detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> '+(i.booked?'<span class="zp-pill confirmed">Booked</span>':'<span class="zp-pill upcoming">Not booked</span>'),contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
         kvCard([['Name',i.name],['Submitted',i.date],['Source',i.source],['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
-        '<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div>'+moreBox()+'</div>';
+        bookedCard+moreBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else {
       detail.innerHTML=headHTML(i,'<span class="zp-tp member">Member</span>'+(i.status?' <span class="zp-pill confirmed">'+esc(i.status)+'</span>':''),'')+
