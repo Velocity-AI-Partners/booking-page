@@ -395,11 +395,24 @@
       var name=((q['FIRST NAME']||'')+' '+(q['LAST NAME']||'')).trim()||'(no name)';
       return {id:'q'+ix, name:name, phone:q.PHONE||'', source:q.SOURCE||'', interest:q.INTEREST||'', date:q['INQUIRY DATE']||'', booked:q._booked||null};
     }).sort(function(a,b){return ts(b.date)-ts(a.date);});
-    var leads=[], mems=[], exmems=[];
+    // Members collapse to ONE row per person: Studio's subscription report emits one
+    // row per plan (some members hold 8-9), so plans group under the person and render
+    // as separate cards in the detail pane.
+    var leads=[], mems=[], exmems=[], memByName={};
     (d.people||[]).forEach(function(p,ix){
-      if(p.type==='Member') mems.push({id:'m'+ix, name:p.name, status:p.status, plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate, phone:p.phone, email:p.email, info:p.info||null, booked:p.booked||null});
+      if(p.type==='Member'){
+        var m=memByName[p.name];
+        if(!m){ m={id:'m'+ix, name:p.name, status:p.status, plans:[], phone:p.phone||'', email:p.email||'', info:p.info||null, booked:p.booked||null}; memByName[p.name]=m; mems.push(m); }
+        m.plans.push({plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate});
+        if(!m.phone&&p.phone)m.phone=p.phone; if(!m.email&&p.email)m.email=p.email;
+        if(!m.info&&p.info)m.info=p.info; if(!m.booked&&p.booked)m.booked=p.booked;
+      }
       else if(p.type==='Ex-member') exmems.push({id:'x'+ix, name:p.name, status:p.status||'Alumni', ex:true, phone:p.phone, email:p.email, booked:p.booked||null});
       else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date, booked:p.booked||null});
+    });
+    mems.forEach(function(m){
+      m.plans.sort(function(a,b){return ts(b.beginDate)-ts(a.beginDate);});
+      m.beginDate=m.plans[0].beginDate;
     });
     // Blank-date leads are the RECENTLY-CREATED merge rows (no inquiry date exists in
     // Studio for them); sort them first, not last - ts('')=0 would bury the newest
@@ -479,7 +492,7 @@
     // Members/Ex-members toggle) already says which they are, so a per-row
     // "Member CURRENT" / "Ex-member Alumni" is redundant on every line.
     if(i.ex) return {snip:i.email||'Former member', time:'', foot:''};
-    return {snip:i.plan||'Member', time:i.beginDate, foot:''};
+    return {snip:i.plans.map(function(p){return p.plan;}).filter(Boolean).join(' + ')||'Member', time:i.beginDate, foot:''};
   }
   function renderList(){
     renderFilter();
@@ -537,9 +550,12 @@
       // The lazy fetch still runs for NOTES (and as info fallback when this member
       // didn't resolve in the index - then zpMoreInfo exists and gets filled too).
       var moreInline=moreBoxInline(i.info,['status','phone','email']);
+      var planCards=i.plans.map(function(pl){
+        return kvCard([['Plan',pl.plan],['Payment',pl.amount],['Autopay',pl.autopay],['Begins',pl.beginDate],['Ends',pl.endDate]]);
+      }).join('');
       detail.innerHTML=headHTML(i,'',contacts)+
-        '<div class="zp-scroll"><p class="zp-sec">Membership</p>'+
-        kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+(moreInline||moreBox())+notesBox()+'</div>';
+        '<div class="zp-scroll"><p class="zp-sec">Membership'+(i.plans.length>1?'s ('+i.plans.length+')':'')+'</p>'+
+        planCards+(moreInline||moreBox())+notesBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status']);
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
