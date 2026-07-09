@@ -357,6 +357,14 @@
       .catch(function(){ var box=document.getElementById(elId); var wrap=document.getElementById(elId+'Wrap'); if(wrap) wrap.style.display='none'; else if(box) box.style.display='none'; });
   }
   function moreBox(){ return '<div id="zpMoreInfoWrap"><p class="zp-sec" style="margin-top:16px">From Zen Planner</p><div class="zp-kvcard" id="zpMoreInfo"><div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Loading&hellip;</span></div></div></div>'; }
+  // Pre-filled "From Zen Planner" card from data already baked into the roster (member
+  // backfill), so no per-open fetch. Returns '' when nothing new remains to show.
+  function moreBoxInline(info, skip){
+    if(!info) return '';
+    var rows=personRowsHTML(info, skip);
+    if(!rows) return '';
+    return '<div id="zpMoreInfoWrap"><p class="zp-sec" style="margin-top:16px">From Zen Planner</p><div class="zp-kvcard">'+rows+'</div></div>';
+  }
 
   var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail'), shell=document.getElementById('zpShell');
   var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members', forms:'Forms'};
@@ -368,7 +376,7 @@
     }).sort(function(a,b){return ts(b.date)-ts(a.date);});
     var leads=[], mems=[], exmems=[];
     (d.people||[]).forEach(function(p,ix){
-      if(p.type==='Member') mems.push({id:'m'+ix, name:p.name, status:p.status, plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate, phone:p.phone, email:p.email, booked:p.booked||null});
+      if(p.type==='Member') mems.push({id:'m'+ix, name:p.name, status:p.status, plan:p.detail, amount:p.amount, autopay:p.autopay, beginDate:p.beginDate, endDate:p.endDate, phone:p.phone, email:p.email, info:p.info||null, booked:p.booked||null});
       else if(p.type==='Ex-member') exmems.push({id:'x'+ix, name:p.name, status:p.status||'Alumni', ex:true, phone:p.phone, email:p.email, booked:p.booked||null});
       else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date, booked:p.booked||null});
     });
@@ -501,10 +509,13 @@
         kvCard([['Name',i.name],['Phone',i.phone],['Email',i.email]])+moreBox()+'</div>';
       loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
     } else {
+      // Contact + personal info is backfilled server-side (i.info); render it inline.
+      // Fall back to the lazy fetch only if this member didn't resolve in the index.
+      var moreInline=moreBoxInline(i.info,['status','phone','email']);
       detail.innerHTML=headHTML(i,'',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Membership</p>'+
-        kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+moreBox()+'</div>';
-      loadPersonInfo('zpMoreInfo',{name:i.name},['status']);
+        kvCard([['Name',i.name],['Plan',i.plan],['Payment',i.amount],['Autopay',i.autopay],['Begins',i.beginDate],['Ends',i.endDate]])+(moreInline||moreBox())+'</div>';
+      if(!moreInline) loadPersonInfo('zpMoreInfo',{name:i.name},['status']);
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
