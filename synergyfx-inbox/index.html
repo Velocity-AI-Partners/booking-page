@@ -414,6 +414,26 @@
       m.plans.sort(function(a,b){return ts(b.beginDate)-ts(a.beginDate);});
       m.beginDate=m.plans[0].beginDate;
     });
+    // Studio holds duplicate person records for a few people (re-inquiries, typo'd
+    // emails). Collapse same-name rows: the newest-dated record fronts the person
+    // (blank date = recently created = newest), missing contact fields fill in from
+    // the older duplicate, and a booked flag on either survives.
+    function dedupeByName(arr){
+      var by={}, out=[];
+      arr.forEach(function(r){
+        var k=r.name.toLowerCase().trim();
+        var cur=by[k];
+        if(!cur){ by[k]=r; out.push(r); return; }
+        var tr=r.date?ts(r.date):9e15, tc=cur.date?ts(cur.date):9e15;
+        var keep=tr>tc?r:cur, drop=keep===r?cur:r;
+        ['phone','email','source','interest'].forEach(function(f){ if(!keep[f]&&drop[f]) keep[f]=drop[f]; });
+        if(!keep.booked&&drop.booked) keep.booked=drop.booked;
+        if(keep!==cur){ out[out.indexOf(cur)]=keep; by[k]=keep; }
+      });
+      return out;
+    }
+    leads=dedupeByName(leads);
+    exmems=dedupeByName(exmems);
     // Blank-date leads are the RECENTLY-CREATED merge rows (no inquiry date exists in
     // Studio for them); sort them first, not last - ts('')=0 would bury the newest
     // people at the bottom of 700+ rows.
