@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Booking Demo — Card on File / $25 No-Show Fee</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FF9900;
+      --primary-light: #FFF4E6;
+      --primary-hover: #E88B00;
+      --accent: #146EB4;
+      --accent-light: #E8F4FD;
+      --text: #0F1111;
+      --text-muted: #565959;
+      --text-light: #888C8C;
+      --bg: #ffffff;
+      --bg-subtle: #EAEDED;
+      --bg-warm: #0077B6;
+      --border: #D5D9D9;
+      --border-light: #EAEDED;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --transition: 0.2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-warm);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ========== DEMO BAR (not part of production page) ========== */
+    .demo-bar {
+      background: #0F1111;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+    .demo-bar .demo-tag {
+      background: var(--primary);
+      color: #0F1111;
+      font-weight: 800;
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      text-transform: uppercase;
+    }
+    .demo-bar .demo-note { color: rgba(255,255,255,0.75); font-weight: 500; }
+    .demo-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .demo-toggle button {
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .demo-toggle button.active { background: #fff; color: #0F1111; }
+    .demo-toggle button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+    .page-wrapper {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 0 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ========== HEADER ========== */
+    .page-header {
+      background: white;
+      padding: 28px 20px 36px;
+      border-radius: 0 0 24px 24px;
+      margin-bottom: -12px;
+      position: relative;
+    }
+    .header-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .header-logo {
+      width: 176px;
+      height: 176px;
+      border-radius: 24px;
+      object-fit: contain;
+      background: white;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .header-info h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .header-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+    .header-phone { color: var(--text-muted); font-size: 13px; font-weight: 600; letter-spacing: 0.3px; }
+    .header-address { color: var(--text-muted); font-size: 12px; font-weight: 500; }
+
+    /* ========== CONTENT ========== */
+    .content-area {
+      padding: 24px 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .greeting {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .greeting h2 { font-size: 22px; font-weight: 800; color: var(--text); }
+    .greeting p { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    /* ========== DATE CAROUSEL ========== */
+    .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .date-nav-label { font-size: 15px; font-weight: 700; color: var(--text); }
+    .date-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .date-scroll::-webkit-scrollbar { display: none; }
+    .date-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 64px;
+      padding: 10px 8px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border-light);
+      background: var(--bg-subtle);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      color: var(--text);
+    }
+    .date-item:hover { border-color: var(--accent); background: #f0f8ff; }
+    .date-item.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
+    }
+    .date-item.selected .date-day { color: rgba(255,255,255,0.85); }
+    .date-item.selected .date-month { color: rgba(255,255,255,0.7); }
+    .date-item.sunday { opacity: 0.4; pointer-events: none; }
+    .date-item .date-day { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .date-item .date-num { font-size: 20px; font-weight: 800; }
+    .date-item .date-month { font-size: 10px; font-weight: 600; color: var(--text-light); margin-top: 1px; }
+
+    /* ========== SLOTS ========== */
+    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 8px; }
+    .slot {
+      padding: 14px 10px;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      background: var(--bg-subtle);
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .slot:hover { border-color: var(--accent); background: #f0f8ff; }
+    .slot.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px rgba(20,110,180,0.3);
+    }
+    .slot.selected .slot-time { color: white; }
+    .slot.selected .slot-instructor { color: rgba(255,255,255,0.85); }
+    .slot-time { font-size: 16px; font-weight: 700; }
+    .slot-instructor { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .no-slots { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 14px; }
+
+    /* ========== SUMMARY ========== */
+    .selection-summary {
+      display: none;
+      background: white;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: var(--shadow);
+    }
+    .selection-summary.visible { display: block; }
+    .selection-summary h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .summary-row { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 4px; }
+    .summary-row .icon { font-size: 16px; flex-shrink: 0; width: 20px; }
+    .summary-row .label { color: var(--text-muted); min-width: 70px; font-size: 13px; }
+    .summary-row .value { font-weight: 700; }
+
+    .pricing-box {
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-top: 12px;
+      text-align: left;
+    }
+    .pricing-box .pricing-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pricing-box .pricing-note { font-size: 12px; color: var(--accent); font-weight: 600; }
+
+    .deposit-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-light);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .deposit-line .icon { font-size: 16px; flex-shrink: 0; width: 20px; }
+    .deposit-line strong { color: var(--text); }
+
+    /* ========== NEW: CARD-ON-FILE STEP ========== */
+    .deposit-card { display: none; }
+    .deposit-card.visible { display: block; }
+    .deposit-explain {
+      background: var(--accent-light);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .deposit-explain .de-headline {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .deposit-explain .de-body {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.55;
+    }
+    .deposit-explain .de-body strong { color: var(--text); }
+
+    .field-row { display: flex; gap: 8px; }
+    .field { flex: 1; min-width: 0; margin-bottom: 10px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 5px;
+    }
+    .field input {
+      width: 100%;
+      padding: 13px 12px;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: var(--bg-subtle);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      transition: var(--transition);
+      font-variant-numeric: tabular-nums;
+    }
+    .field input::placeholder { color: var(--text-light); font-weight: 500; }
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #fff;
+    }
+    .card-number-wrap { position: relative; }
+    .card-number-wrap .brand {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-light);
+      letter-spacing: 0.5px;
+    }
+
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 4px;
+      padding: 12px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .consent-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 1px;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .consent-row span { font-size: 12px; color: var(--text-muted); line-height: 1.55; }
+    .consent-row strong { color: var(--text); }
+
+    .secure-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+    .secure-row svg { flex-shrink: 0; }
+
+    /* ========== SUBMIT ========== */
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 14px rgba(255,153,0,0.3);
+    }
+    .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,153,0,0.4); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+    .submit-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .submit-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    /* ========== POPUP ========== */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .popup-overlay.visible { display: flex; }
+    .popup {
+      background: white;
+      border-radius: 20px;
+      padding: 36px 28px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: popupIn 0.3s ease;
+    }
+    @keyframes popupIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .popup { animation: none; }
+      .submit-btn:hover:not(:disabled) { transform: none; }
+    }
+    .popup-icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 36px;
+    }
+    .popup h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .popup .popup-detail { font-size: 15px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+    .popup .popup-detail strong { color: var(--text); }
+    .popup-deposit-note {
+      background: var(--accent-light);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: left;
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+    .popup-deposit-note strong { color: var(--accent); }
+    .popup-close {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .popup-close:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,153,0,0.3); }
+
+    .footer {
+      text-align: center;
+      padding: 24px 20px 8px;
+      margin-top: auto;
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+    }
+    .footer a { color: #fff; text-decoration: none; font-weight: 600; }
+
+    @media (max-width: 400px) {
+      .page-header { padding: 20px 16px 28px; }
+      .content-area { padding: 20px 12px 0; }
+      .greeting h2 { font-size: 20px; }
+      .slots-grid { grid-template-columns: 1fr 1fr; }
+      .date-item { min-width: 56px; padding: 8px 6px; }
+      .header-info h1 { font-size: 18px; }
+      .header-logo { width: 132px; height: 132px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-tag">Demo</span>
+  <span class="demo-note">Card-on-file concept &middot; SZ Santa Rosa + South Reno trial &middot; not connected to live booking</span>
+  <div class="demo-toggle" role="group" aria-label="Pricing model">
+    <button id="modeNoshow" class="active" onclick="setMode('noshow')">No-show fee</button>
+    <button id="modeDeposit" onclick="setMode('deposit')">Refundable deposit</button>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  <div class="page-header">
+    <div class="header-content">
+      <img class="header-logo" src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png" alt="Stretch Zone logo">
+      <div class="header-info">
+        <h1>Stretch Zone - South Reno NV</h1>
+        <p>Practitioner-assisted stretching</p>
+      </div>
+      <span class="header-phone">(775) 555-0182</span>
+      <span class="header-address">13981 S Virginia St, Reno, NV 89511</span>
+    </div>
+  </div>
+
+  <div class="content-area">
+
+    <div class="greeting">
+      <h2>Hi Sarah!</h2>
+      <p>Pick a date and time for your free first stretch.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Select a Date</div>
+      <div class="date-nav">
+        <span class="date-nav-label" id="dateNavLabel"></span>
+      </div>
+      <div class="date-scroll" id="dateScroll"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Available Times</div>
+      <div class="slots-grid" id="slotsGrid"></div>
+      <div class="no-slots" id="noSlots" style="display:none;">No available times on this day.<br>Try selecting another date.</div>
+    </div>
+
+    <div class="selection-summary" id="selectionSummary">
+      <h3>Your Selection</h3>
+      <div class="summary-row">
+        <span class="icon">&#128100;</span>
+        <span class="label">Client</span>
+        <span class="value">Sarah Mitchell</span>
+      </div>
+      <div class="summary-row">
+        <span class="icon">&#128197;</span>
+        <span class="label">Date</span>
+        <span class="value" id="summaryDate"></span>
+      </div>
+      <div class="summary-row">
+        <span class="icon">&#128336;</span>
+        <span class="label">Time</span>
+        <span class="value" id="summaryTime"></span>
+      </div>
+      <div class="pricing-box">
+        <div class="pricing-title">FREE First Stretch Assessment</div>
+        <div class="pricing-note">Includes consultation, 30-min stretch, and membership review</div>
+      </div>
+      <div class="deposit-line">
+        <span class="icon">&#128179;</span>
+        <span id="summaryDepositText"></span>
+      </div>
+    </div>
+
+    <!-- NEW STEP: card on file -->
+    <div class="card deposit-card" id="depositCard">
+      <div class="card-title" id="depositCardTitle">Secure Your Spot</div>
+
+      <div class="deposit-explain">
+        <div class="de-headline"><span>&#128274;</span><span id="explainHeadline"></span></div>
+        <div class="de-body" id="explainBody"></div>
+      </div>
+
+      <div class="field">
+        <label for="ccNum">Card number</label>
+        <div class="card-number-wrap">
+          <input id="ccNum" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNumber(this); validateForm();">
+          <span class="brand" id="ccBrand"></span>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="ccExp">Expiry</label>
+          <input id="ccExp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this); validateForm();">
+        </div>
+        <div class="field">
+          <label for="ccCvc">CVC</label>
+          <input id="ccCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4" oninput="digitsOnly(this); validateForm();">
+        </div>
+        <div class="field">
+          <label for="ccZip">ZIP</label>
+          <input id="ccZip" inputmode="numeric" autocomplete="postal-code" placeholder="89511" maxlength="5" oninput="digitsOnly(this); validateForm();">
+        </div>
+      </div>
+
+      <label class="consent-row" for="consentBox">
+        <input type="checkbox" id="consentBox" onchange="validateForm()">
+        <span id="consentText"></span>
+      </label>
+
+      <div class="secure-row">
+        <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M2 6V4a4 4 0 118 0v2h.5A1.5 1.5 0 0112 7.5v4A2.5 2.5 0 019.5 14h-7A2.5 2.5 0 010 11.5v-4A1.5 1.5 0 011.5 6H2zm1.5 0h5V4a2.5 2.5 0 00-5 0v2z" fill="#888C8C"/></svg>
+        <span>Card details are encrypted and processed by Stripe. Stretch Zone never sees your card number.</span>
+      </div>
+    </div>
+
+    <div class="card" id="formCard">
+      <button class="submit-btn" id="submitBtn" onclick="submitBooking()" disabled>
+        <span id="submitText">Confirm Booking</span>
+      </button>
+      <div class="submit-hint" id="submitHint"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Powered by <a href="https://velocity.ai/">Velocity AI</a>
+  </div>
+</div>
+
+<!-- Confirmation Popup -->
+<div id="popupOverlay" class="popup-overlay">
+  <div class="popup">
+    <div class="popup-icon">&#10003;</div>
+    <h2 id="popupTitle">Thank you, Sarah!</h2>
+    <p class="popup-detail" id="popupDetail"></p>
+    <div class="popup-deposit-note" id="popupDepositNote"></div>
+    <button class="popup-close" onclick="closePopup()">Done</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PRICING MODEL COPY (the piece under evaluation)
+// ============================================================
+var MODES = {
+  deposit: {
+    cardTitle: 'Secure Your Spot — $25 Refundable Deposit',
+    explainHeadline: 'Fully refunded when you attend',
+    explainBody: 'A <strong>$25 deposit</strong> reserves your session. It’s <strong>automatically refunded</strong> to your card right after your stretch — you pay nothing for showing up.',
+    summaryDeposit: '<strong>$25 refundable deposit</strong> — charged today, refunded automatically after your visit',
+    consent: 'I authorize a <strong>$25 deposit</strong> to be charged to my card today. I understand it will be <strong>refunded in full</strong> after I attend my session, or if I reschedule or cancel at least 4 hours in advance.',
+    submitLabel: 'Pay $25 Deposit &amp; Confirm',
+    submitHint: 'Refunded automatically after your visit',
+    popupNote: '<strong>Your $25 deposit is confirmed.</strong> It will be refunded to your Visa ending in ••4242 right after your session. Reschedule or cancel at least 4 hours ahead and it’s refunded too.',
+  },
+  noshow: {
+    cardTitle: 'Secure Your Spot — Card on File',
+    explainHeadline: 'Free to book — nothing charged today',
+    explainBody: 'We hold your spot with a card on file. <strong>You won’t be charged anything</strong> unless you miss your session without rescheduling — then a <strong>$25 no-show fee</strong> applies.',
+    summaryDeposit: '<strong>$0 due today</strong> — card on file; $25 only if you miss your session without rescheduling',
+    consent: 'I agree to keep a card on file to hold my reservation. <strong>Nothing is charged today.</strong> If I miss my session without rescheduling or canceling at least 4 hours in advance, my card will be charged a <strong>$25 no-show fee</strong>.',
+    submitLabel: 'Save Card &amp; Confirm Booking',
+    submitHint: 'Nothing charged today',
+    popupNote: '<strong>Your card is safely on file — nothing was charged.</strong> Show up (or reschedule at least 4 hours ahead) and it never will be. Miss the session and a $25 no-show fee applies.',
+  },
+};
+var currentMode = 'noshow';
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeDeposit').classList.toggle('active', mode === 'deposit');
+  document.getElementById('modeNoshow').classList.toggle('active', mode === 'noshow');
+  var m = MODES[mode];
+  document.getElementById('depositCardTitle').textContent = m.cardTitle;
+  document.getElementById('explainHeadline').textContent = m.explainHeadline;
+  document.getElementById('explainBody').innerHTML = m.explainBody;
+  document.getElementById('summaryDepositText').innerHTML = m.summaryDeposit;
+  document.getElementById('consentText').innerHTML = m.consent;
+  document.getElementById('submitHint').textContent = m.submitHint;
+  bookingCompleted = false;
+  updateSubmitButton();
+}
+
+// ============================================================
+// MOCK DATES & SLOTS
+// ============================================================
+var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var selectedDate = null;
+var selectedSlot = null;
+var bookingCompleted = false;
+
+// Deterministic mock availability so the demo always has slots
+function slotsFor(date) {
+  if (date.getDay() === 0) return [];
+  var seed = date.getDate();
+  var pract = ['Marcus', 'Jenna', 'Tyler', 'Priya'];
+  var all = [
+    { time: '9:00 AM' }, { time: '10:30 AM' }, { time: '11:30 AM' },
+    { time: '1:00 PM' }, { time: '2:30 PM' }, { time: '4:00 PM' }, { time: '5:30 PM' },
+  ];
+  return all.filter(function(s, i) { return (seed + i) % 3 !== 0; })
+    .map(function(s, i) { return { time: s.time, instructor: pract[(seed + i) % pract.length] }; });
+}
+
+function buildDates() {
+  var scroll = document.getElementById('dateScroll');
+  var today = new Date();
+  var first = null;
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(today);
+    d.setDate(today.getDate() + i);
+    var el = document.createElement('div');
+    el.className = 'date-item' + (d.getDay() === 0 ? ' sunday' : '');
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', d.getDay() === 0 ? '-1' : '0');
+    el.innerHTML = '<span class="date-day">' + DAY_NAMES[d.getDay()] + '</span>' +
+      '<span class="date-num">' + d.getDate() + '</span>' +
+      '<span class="date-month">' + MONTH_NAMES[d.getMonth()] + '</span>';
+    (function(dd, elem) {
+      elem.onclick = function() { selectDate(dd, elem); };
+      elem.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectDate(dd, elem); } };
+    })(d, el);
+    scroll.appendChild(el);
+    if (!first && d.getDay() !== 0) first = { d: d, el: el };
+  }
+  document.getElementById('dateNavLabel').textContent =
+    MONTH_NAMES[today.getMonth()] + ' ' + today.getFullYear();
+  if (first) selectDate(first.d, first.el);
+}
+
+function selectDate(d, el) {
+  selectedDate = d;
+  selectedSlot = null;
+  document.querySelectorAll('.date-item').forEach(function(x) { x.classList.remove('selected'); });
+  el.classList.add('selected');
+  renderSlots();
+  updateSummary();
+}
+
+function renderSlots() {
+  var grid = document.getElementById('slotsGrid');
+  var none = document.getElementById('noSlots');
+  grid.innerHTML = '';
+  var slots = slotsFor(selectedDate);
+  none.style.display = slots.length ? 'none' : 'block';
+  slots.forEach(function(s) {
+    var el = document.createElement('div');
+    el.className = 'slot';
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.innerHTML = '<span class="slot-time">' + s.time + '</span>' +
+      '<span class="slot-instructor">' + s.instructor + '</span>';
+    el.onclick = function() { selectSlot(s, el); };
+    el.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectSlot(s, el); } };
+    grid.appendChild(el);
+  });
+}
+
+function selectSlot(s, el) {
+  selectedSlot = s;
+  document.querySelectorAll('.slot').forEach(function(x) { x.classList.remove('selected'); });
+  el.classList.add('selected');
+  updateSummary();
+}
+
+function fmtDate(d) {
+  return DAY_NAMES[d.getDay()] + ', ' + MONTH_NAMES[d.getMonth()] + ' ' + d.getDate();
+}
+
+function updateSummary() {
+  var has = !!(selectedDate && selectedSlot);
+  document.getElementById('selectionSummary').classList.toggle('visible', has);
+  document.getElementById('depositCard').classList.toggle('visible', has);
+  if (has) {
+    document.getElementById('summaryDate').textContent = fmtDate(selectedDate);
+    document.getElementById('summaryTime').textContent = selectedSlot.time + ' with ' + selectedSlot.instructor;
+  }
+  validateForm();
+}
+
+// ============================================================
+// CARD FORM (visual mock — nothing is transmitted)
+// ============================================================
+function digitsOnly(input) { input.value = input.value.replace(/\D/g, ''); }
+
+function formatCardNumber(input) {
+  var v = input.value.replace(/\D/g, '').slice(0, 16);
+  input.value = v.replace(/(.{4})/g, '$1 ').trim();
+  var brand = '';
+  if (/^4/.test(v)) brand = 'VISA';
+  else if (/^5[1-5]/.test(v)) brand = 'MC';
+  else if (/^3[47]/.test(v)) brand = 'AMEX';
+  else if (/^6/.test(v)) brand = 'DISC';
+  document.getElementById('ccBrand').textContent = brand;
+}
+
+function formatExpiry(input) {
+  var v = input.value.replace(/\D/g, '').slice(0, 4);
+  input.value = v.length > 2 ? v.slice(0, 2) + ' / ' + v.slice(2) : v;
+}
+
+function cardComplete() {
+  return document.getElementById('ccNum').value.replace(/\D/g, '').length >= 15 &&
+    document.getElementById('ccExp').value.replace(/\D/g, '').length === 4 &&
+    document.getElementById('ccCvc').value.length >= 3 &&
+    document.getElementById('ccZip').value.length === 5;
+}
+
+function validateForm() {
+  var ready = !!(selectedDate && selectedSlot) && cardComplete() &&
+    document.getElementById('consentBox').checked;
+  var btn = document.getElementById('submitBtn');
+  if (!bookingCompleted) btn.disabled = !ready;
+  updateSubmitButton();
+}
+
+function updateSubmitButton() {
+  var btn = document.getElementById('submitBtn');
+  var txt = document.getElementById('submitText');
+  if (bookingCompleted) {
+    btn.disabled = true;
+    txt.textContent = 'Booking Confirmed';
+    return;
+  }
+  txt.innerHTML = MODES[currentMode].submitLabel;
+}
+
+// ============================================================
+// SUBMIT + CONFIRMATION
+// ============================================================
+function submitBooking() {
+  var btn = document.getElementById('submitBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  document.getElementById('submitText').textContent =
+    currentMode === 'deposit' ? 'Processing deposit...' : 'Saving card...';
+  setTimeout(function() {
+    var detail = 'Your stretch session is booked for <strong>' + fmtDate(selectedDate) +
+      '</strong> at <strong>' + selectedSlot.time + '</strong>.<br>Confirmation #: <strong>SZ-58291</strong>';
+    document.getElementById('popupDetail').innerHTML = detail;
+    document.getElementById('popupDepositNote').innerHTML = MODES[currentMode].popupNote;
+    document.getElementById('popupOverlay').classList.add('visible');
+    bookingCompleted = true;
+    updateSubmitButton();
+  }, 900);
+}
+
+function closePopup() {
+  document.getElementById('popupOverlay').classList.remove('visible');
+}
+
+// init
+setMode('noshow');
+buildDates();
+</script>
+</body>
+</html>
