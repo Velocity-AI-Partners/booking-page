@@ -64,27 +64,6 @@
       text-transform: uppercase;
     }
     .demo-bar .demo-note { color: rgba(255,255,255,0.75); font-weight: 500; }
-    .demo-toggle {
-      display: flex;
-      background: rgba(255,255,255,0.12);
-      border-radius: 8px;
-      padding: 3px;
-      gap: 3px;
-    }
-    .demo-toggle button {
-      border: none;
-      background: transparent;
-      color: rgba(255,255,255,0.7);
-      font-family: inherit;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 5px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .demo-toggle button.active { background: #fff; color: #0F1111; }
-    .demo-toggle button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 
     .page-wrapper {
       max-width: 520px;
@@ -141,6 +120,19 @@
       flex-direction: column;
       gap: 14px;
     }
+
+    .config-notice {
+      display: none;
+      background: #FEF3C7;
+      border: 2px solid #F59E0B;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #92400E;
+      line-height: 1.5;
+    }
+    .config-notice.visible { display: block; }
+    .config-notice strong { color: #78350F; }
 
     .greeting {
       background: white;
@@ -311,48 +303,6 @@
     }
     .deposit-explain .de-body strong { color: var(--text); }
 
-    .field-row { display: flex; gap: 8px; }
-    .field { flex: 1; min-width: 0; margin-bottom: 10px; }
-    .field label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 5px;
-    }
-    .field input {
-      width: 100%;
-      padding: 13px 12px;
-      border: 2px solid var(--border-light);
-      border-radius: var(--radius-sm);
-      background: var(--bg-subtle);
-      font-family: inherit;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      transition: var(--transition);
-      font-variant-numeric: tabular-nums;
-    }
-    .field input::placeholder { color: var(--text-light); font-weight: 500; }
-    .field input:focus {
-      outline: none;
-      border-color: var(--accent);
-      background: #fff;
-    }
-    .card-number-wrap { position: relative; }
-    .card-number-wrap .brand {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--text-light);
-      letter-spacing: 0.5px;
-    }
-
     .consent-row {
       display: flex;
       align-items: flex-start;
@@ -383,8 +333,18 @@
       font-size: 11px;
       font-weight: 600;
       color: var(--text-light);
+      text-align: left;
     }
     .secure-row svg { flex-shrink: 0; }
+
+    .testcard-hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-light);
+      text-align: center;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
 
     /* ========== SUBMIT ========== */
     .submit-btn {
@@ -409,6 +369,15 @@
     .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,153,0,0.4); }
     .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
     .submit-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .submit-btn .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .submit-hint {
       text-align: center;
       font-size: 12px;
@@ -447,6 +416,7 @@
     @media (prefers-reduced-motion: reduce) {
       .popup { animation: none; }
       .submit-btn:hover:not(:disabled) { transform: none; }
+      .submit-btn .spinner { animation-duration: 2s; }
     }
     .popup-icon {
       width: 72px;
@@ -470,9 +440,25 @@
       color: var(--text-muted);
       text-align: left;
       line-height: 1.55;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
     .popup-deposit-note strong { color: var(--accent); }
+    .attended-btn {
+      width: 100%;
+      padding: 12px;
+      background: white;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 10px;
+    }
+    .attended-btn:hover:not(:disabled) { background: var(--accent-light); }
+    .attended-btn:disabled { opacity: 0.6; cursor: default; }
     .popup-close {
       width: 100%;
       padding: 14px;
@@ -512,11 +498,7 @@
 
 <div class="demo-bar">
   <span class="demo-tag">Demo</span>
-  <span class="demo-note">Card-on-file concept &middot; SZ Santa Rosa + South Reno trial &middot; not connected to live booking</span>
-  <div class="demo-toggle" role="group" aria-label="Pricing model">
-    <button id="modeNoshow" class="active" onclick="setMode('noshow')">No-show fee</button>
-    <button id="modeDeposit" onclick="setMode('deposit')">Refundable deposit</button>
-  </div>
+  <span class="demo-note">Card on file / $25 no-show fee &middot; SZ Santa Rosa + South Reno trial &middot; live Stripe card vault, demo bookings only</span>
 </div>
 
 <div class="page-wrapper">
@@ -534,6 +516,10 @@
   </div>
 
   <div class="content-area">
+
+    <div class="config-notice" id="configNotice">
+      <strong>Stripe isn&rsquo;t connected yet.</strong> The flow below is fully wired (card vault &rarr; 7-day timer &rarr; $25 charge on no-show) and activates the moment <code>STRIPE_SECRET_KEY</code> is added to the Supabase edge function secrets.
+    </div>
 
     <div class="greeting">
       <h2>Hi Sarah!</h2>
@@ -577,57 +563,37 @@
       </div>
       <div class="deposit-line">
         <span class="icon">&#128179;</span>
-        <span id="summaryDepositText"></span>
+        <span><strong>$0 due today</strong> &mdash; card on file; $25 only if you miss your session without rescheduling</span>
       </div>
     </div>
 
     <!-- NEW STEP: card on file -->
     <div class="card deposit-card" id="depositCard">
-      <div class="card-title" id="depositCardTitle">Secure Your Spot</div>
+      <div class="card-title">Secure Your Spot &mdash; Card on File</div>
 
       <div class="deposit-explain">
-        <div class="de-headline"><span>&#128274;</span><span id="explainHeadline"></span></div>
-        <div class="de-body" id="explainBody"></div>
-      </div>
-
-      <div class="field">
-        <label for="ccNum">Card number</label>
-        <div class="card-number-wrap">
-          <input id="ccNum" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNumber(this); validateForm();">
-          <span class="brand" id="ccBrand"></span>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label for="ccExp">Expiry</label>
-          <input id="ccExp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this); validateForm();">
-        </div>
-        <div class="field">
-          <label for="ccCvc">CVC</label>
-          <input id="ccCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4" oninput="digitsOnly(this); validateForm();">
-        </div>
-        <div class="field">
-          <label for="ccZip">ZIP</label>
-          <input id="ccZip" inputmode="numeric" autocomplete="postal-code" placeholder="89511" maxlength="5" oninput="digitsOnly(this); validateForm();">
-        </div>
+        <div class="de-headline"><span>&#128274;</span><span>Free to book &mdash; nothing charged today</span></div>
+        <div class="de-body">We hold your spot with a card on file. <strong>You won&rsquo;t be charged anything</strong> unless you miss your session without rescheduling &mdash; then a <strong>$25 no-show fee</strong> applies. You&rsquo;ll add your card on Stripe&rsquo;s secure page in the next step.</div>
       </div>
 
       <label class="consent-row" for="consentBox">
         <input type="checkbox" id="consentBox" onchange="validateForm()">
-        <span id="consentText"></span>
+        <span>I agree to keep a card on file to hold my reservation. <strong>Nothing is charged today.</strong> If I miss my session without rescheduling or canceling at least 4 hours in advance, my card will be charged a <strong>$25 no-show fee</strong>.</span>
       </label>
 
       <div class="secure-row">
         <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M2 6V4a4 4 0 118 0v2h.5A1.5 1.5 0 0112 7.5v4A2.5 2.5 0 019.5 14h-7A2.5 2.5 0 010 11.5v-4A1.5 1.5 0 011.5 6H2zm1.5 0h5V4a2.5 2.5 0 00-5 0v2z" fill="#888C8C"/></svg>
-        <span>Card details are encrypted and processed by Stripe. Stretch Zone never sees your card number.</span>
+        <span>Card details are entered on Stripe&rsquo;s encrypted checkout. Stretch Zone never sees your card number.</span>
       </div>
+
+      <div class="testcard-hint">Team testing: with a Stripe <em>test</em> key, use card 4242&nbsp;4242&nbsp;4242&nbsp;4242, any future expiry, any CVC.</div>
     </div>
 
     <div class="card" id="formCard">
       <button class="submit-btn" id="submitBtn" onclick="submitBooking()" disabled>
-        <span id="submitText">Confirm Booking</span>
+        <span id="submitText">Save Card &amp; Confirm Booking</span>
       </button>
-      <div class="submit-hint" id="submitHint"></div>
+      <div class="submit-hint">Nothing charged today</div>
     </div>
 
   </div>
@@ -644,63 +610,45 @@
     <h2 id="popupTitle">Thank you, Sarah!</h2>
     <p class="popup-detail" id="popupDetail"></p>
     <div class="popup-deposit-note" id="popupDepositNote"></div>
+    <button class="attended-btn" id="attendedBtn" onclick="markAttended()">Simulate attended visit (demo) &mdash; releases the card</button>
     <button class="popup-close" onclick="closePopup()">Done</button>
   </div>
 </div>
 
 <script>
 // ============================================================
-// PRICING MODEL COPY (the piece under evaluation)
+// CONFIG — real backend, demo bookings
 // ============================================================
-var MODES = {
-  deposit: {
-    cardTitle: 'Secure Your Spot — $25 Refundable Deposit',
-    explainHeadline: 'Fully refunded when you attend',
-    explainBody: 'A <strong>$25 deposit</strong> reserves your session. It’s <strong>automatically refunded</strong> to your card right after your stretch — you pay nothing for showing up.',
-    summaryDeposit: '<strong>$25 refundable deposit</strong> — charged today, refunded automatically after your visit',
-    consent: 'I authorize a <strong>$25 deposit</strong> to be charged to my card today. I understand it will be <strong>refunded in full</strong> after I attend my session, or if I reschedule or cancel at least 4 hours in advance.',
-    submitLabel: 'Pay $25 Deposit &amp; Confirm',
-    submitHint: 'Refunded automatically after your visit',
-    popupNote: '<strong>Your $25 deposit is confirmed.</strong> It will be refunded to your Visa ending in ••4242 right after your session. Reschedule or cancel at least 4 hours ahead and it’s refunded too.',
-  },
-  noshow: {
-    cardTitle: 'Secure Your Spot — Card on File',
-    explainHeadline: 'Free to book — nothing charged today',
-    explainBody: 'We hold your spot with a card on file. <strong>You won’t be charged anything</strong> unless you miss your session without rescheduling — then a <strong>$25 no-show fee</strong> applies.',
-    summaryDeposit: '<strong>$0 due today</strong> — card on file; $25 only if you miss your session without rescheduling',
-    consent: 'I agree to keep a card on file to hold my reservation. <strong>Nothing is charged today.</strong> If I miss my session without rescheduling or canceling at least 4 hours in advance, my card will be charged a <strong>$25 no-show fee</strong>.',
-    submitLabel: 'Save Card &amp; Confirm Booking',
-    submitHint: 'Nothing charged today',
-    popupNote: '<strong>Your card is safely on file — nothing was charged.</strong> Show up (or reschedule at least 4 hours ahead) and it never will be. Miss the session and a $25 no-show fee applies.',
-  },
+var CONFIG = {
+  api: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/deposit-demo',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY2tvdHNyaHV4eGZ0d21kbHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MTU4ODUsImV4cCI6MjA4MzM5MTg4NX0.AAQSDK4gu7lDUrFFk540HHELQ85S0vyATNQT6up-pXE',
+  location: 'stretch-zone-south-reno-demo',
+  locationName: 'Stretch Zone - South Reno NV (DEMO)',
+  clientName: 'Sarah Mitchell',
 };
-var currentMode = 'noshow';
 
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById('modeDeposit').classList.toggle('active', mode === 'deposit');
-  document.getElementById('modeNoshow').classList.toggle('active', mode === 'noshow');
-  var m = MODES[mode];
-  document.getElementById('depositCardTitle').textContent = m.cardTitle;
-  document.getElementById('explainHeadline').textContent = m.explainHeadline;
-  document.getElementById('explainBody').innerHTML = m.explainBody;
-  document.getElementById('summaryDepositText').innerHTML = m.summaryDeposit;
-  document.getElementById('consentText').innerHTML = m.consent;
-  document.getElementById('submitHint').textContent = m.submitHint;
-  bookingCompleted = false;
-  updateSubmitButton();
+function apiCall(payload) {
+  return fetch(CONFIG.api, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + CONFIG.anonKey,
+      'apikey': CONFIG.anonKey,
+    },
+    body: JSON.stringify(payload),
+  }).then(function(r) { return r.json(); });
 }
 
 // ============================================================
-// MOCK DATES & SLOTS
+// MOCK DATES & SLOTS (booking side stays demo-only)
 // ============================================================
 var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var selectedDate = null;
 var selectedSlot = null;
 var bookingCompleted = false;
+var currentDepositId = null;
 
-// Deterministic mock availability so the demo always has slots
 function slotsFor(date) {
   if (date.getDay() === 0) return [];
   var seed = date.getDate();
@@ -789,71 +737,118 @@ function updateSummary() {
   validateForm();
 }
 
-// ============================================================
-// CARD FORM (visual mock — nothing is transmitted)
-// ============================================================
-function digitsOnly(input) { input.value = input.value.replace(/\D/g, ''); }
-
-function formatCardNumber(input) {
-  var v = input.value.replace(/\D/g, '').slice(0, 16);
-  input.value = v.replace(/(.{4})/g, '$1 ').trim();
-  var brand = '';
-  if (/^4/.test(v)) brand = 'VISA';
-  else if (/^5[1-5]/.test(v)) brand = 'MC';
-  else if (/^3[47]/.test(v)) brand = 'AMEX';
-  else if (/^6/.test(v)) brand = 'DISC';
-  document.getElementById('ccBrand').textContent = brand;
-}
-
-function formatExpiry(input) {
-  var v = input.value.replace(/\D/g, '').slice(0, 4);
-  input.value = v.length > 2 ? v.slice(0, 2) + ' / ' + v.slice(2) : v;
-}
-
-function cardComplete() {
-  return document.getElementById('ccNum').value.replace(/\D/g, '').length >= 15 &&
-    document.getElementById('ccExp').value.replace(/\D/g, '').length === 4 &&
-    document.getElementById('ccCvc').value.length >= 3 &&
-    document.getElementById('ccZip').value.length === 5;
-}
-
 function validateForm() {
-  var ready = !!(selectedDate && selectedSlot) && cardComplete() &&
-    document.getElementById('consentBox').checked;
-  var btn = document.getElementById('submitBtn');
-  if (!bookingCompleted) btn.disabled = !ready;
-  updateSubmitButton();
-}
-
-function updateSubmitButton() {
-  var btn = document.getElementById('submitBtn');
-  var txt = document.getElementById('submitText');
-  if (bookingCompleted) {
-    btn.disabled = true;
-    txt.textContent = 'Booking Confirmed';
-    return;
-  }
-  txt.innerHTML = MODES[currentMode].submitLabel;
+  if (bookingCompleted) return;
+  var ready = !!(selectedDate && selectedSlot) && document.getElementById('consentBox').checked;
+  document.getElementById('submitBtn').disabled = !ready;
 }
 
 // ============================================================
-// SUBMIT + CONFIRMATION
+// SUBMIT — creates a Stripe Checkout (setup mode) session and redirects
 // ============================================================
-function submitBooking() {
+async function submitBooking() {
   var btn = document.getElementById('submitBtn');
   if (btn.disabled) return;
   btn.disabled = true;
-  document.getElementById('submitText').textContent =
-    currentMode === 'deposit' ? 'Processing deposit...' : 'Saving card...';
-  setTimeout(function() {
-    var detail = 'Your stretch session is booked for <strong>' + fmtDate(selectedDate) +
-      '</strong> at <strong>' + selectedSlot.time + '</strong>.<br>Confirmation #: <strong>SZ-58291</strong>';
-    document.getElementById('popupDetail').innerHTML = detail;
-    document.getElementById('popupDepositNote').innerHTML = MODES[currentMode].popupNote;
-    document.getElementById('popupOverlay').classList.add('visible');
+  document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Opening secure checkout...';
+
+  var booking = {
+    date: fmtDate(selectedDate),
+    time: selectedSlot.time,
+    instructor: selectedSlot.instructor,
+  };
+  try { localStorage.setItem('szDemoBooking', JSON.stringify(booking)); } catch (e) {}
+
+  var returnUrl = window.location.origin + window.location.pathname;
+  try {
+    var resp = await apiCall({
+      action: 'create-setup-session',
+      location: CONFIG.location,
+      locationName: CONFIG.locationName,
+      name: CONFIG.clientName,
+      date: booking.date,
+      time: booking.time + ' with ' + booking.instructor,
+      returnUrl: returnUrl,
+    });
+    if (resp.url) {
+      window.location.href = resp.url;
+      return;
+    }
+    if (resp.error === 'stripe_not_configured') {
+      document.getElementById('configNotice').classList.add('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      alert('Could not start checkout: ' + (resp.message || resp.error || 'unknown error'));
+    }
+  } catch (err) {
+    alert('Could not start checkout: ' + err.message);
+  }
+  document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
+  validateForm();
+}
+
+// ============================================================
+// RETURN FROM STRIPE — finalize: persist card + start the 7-day timer
+// ============================================================
+async function finalizeSession(sessionId) {
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Confirming your booking...';
+  try {
+    var r = await apiCall({ action: 'finalize', sessionId: sessionId });
+    if (!r.ok) {
+      if (r.error === 'stripe_not_configured') {
+        document.getElementById('configNotice').classList.add('visible');
+      } else {
+        alert('Card was saved on Stripe but confirming the booking failed: ' + (r.message || r.error));
+      }
+      document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
+      validateForm();
+      return;
+    }
+    currentDepositId = r.depositId;
     bookingCompleted = true;
-    updateSubmitButton();
-  }, 900);
+
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem('szDemoBooking') || '{}'); } catch (e) {}
+    var when = saved.date ? ('<strong>' + saved.date + '</strong> at <strong>' + saved.time +
+      (saved.instructor ? ' with ' + saved.instructor : '') + '</strong>') : '<strong>your selected time</strong>';
+    document.getElementById('popupDetail').innerHTML =
+      'Your stretch session is booked for ' + when + '.<br>We&rsquo;ll see you there!';
+
+    var chargeDate = r.chargeAfter ? new Date(r.chargeAfter) : null;
+    var chargeStr = chargeDate ? (MONTH_NAMES[chargeDate.getMonth()] + ' ' + chargeDate.getDate()) : 'in 7 days';
+    var cardStr = r.brand && r.last4 ? (r.brand.toUpperCase() + ' &bull;&bull;' + r.last4) : 'your card';
+    document.getElementById('popupDepositNote').innerHTML =
+      '<strong>' + cardStr + ' is safely on file &mdash; nothing was charged.</strong> ' +
+      'Attend your session and it never will be. If the booking isn&rsquo;t marked attended, ' +
+      'a $25 no-show fee is charged automatically after ' + chargeStr + '.';
+
+    document.getElementById('popupOverlay').classList.add('visible');
+    document.getElementById('submitText').textContent = 'Booking Confirmed';
+    if (window.history && history.replaceState) history.replaceState({}, '', window.location.pathname);
+  } catch (err) {
+    alert('Confirming the booking failed: ' + err.message);
+    document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
+    validateForm();
+  }
+}
+
+// ============================================================
+// DEMO: simulate attendance -> deposit released, no charge ever
+// ============================================================
+async function markAttended() {
+  if (!currentDepositId) return;
+  var btn = document.getElementById('attendedBtn');
+  btn.disabled = true;
+  btn.textContent = 'Marking attended...';
+  try {
+    var r = await apiCall({ action: 'mark-attended', depositId: currentDepositId });
+    btn.textContent = r.ok ? 'Attended — card released, no charge' : 'Failed: ' + (r.message || r.error);
+  } catch (err) {
+    btn.textContent = 'Failed: ' + err.message;
+    btn.disabled = false;
+  }
 }
 
 function closePopup() {
@@ -861,8 +856,11 @@ function closePopup() {
 }
 
 // init
-setMode('noshow');
 buildDates();
+(function() {
+  var sid = new URLSearchParams(window.location.search).get('setup_session');
+  if (sid) finalizeSession(sid);
+})();
 </script>
 </body>
 </html>
