@@ -498,7 +498,6 @@
 
 <div class="demo-bar">
   <span class="demo-tag">Demo</span>
-  <span class="demo-note">Card on file / $25 no-show fee &middot; SZ Santa Rosa + South Reno trial &middot; live Stripe card vault, demo bookings only</span>
 </div>
 
 <div class="page-wrapper">
@@ -563,7 +562,7 @@
       </div>
       <div class="deposit-line">
         <span class="icon">&#128179;</span>
-        <span><strong>$0 due today</strong> &mdash; card on file; $25 only if you miss your session without rescheduling</span>
+        <span><strong>$0 due today</strong> &mdash; card on file; $25 only if you no-show or cancel less than 2 hours before your session</span>
       </div>
     </div>
 
@@ -573,12 +572,12 @@
 
       <div class="deposit-explain">
         <div class="de-headline"><span>&#128274;</span><span>Free to book &mdash; nothing charged today</span></div>
-        <div class="de-body">We hold your spot with a card on file. <strong>You won&rsquo;t be charged anything</strong> unless you miss your session without rescheduling &mdash; then a <strong>$25 no-show fee</strong> applies. You&rsquo;ll add your card on Stripe&rsquo;s secure page in the next step.</div>
+        <div class="de-body">We hold your spot with a card on file. <strong>You won&rsquo;t be charged anything</strong> as long as you attend, or reschedule or cancel <strong>at least 2 hours before</strong> your session. Miss it with less than 2 hours&rsquo; notice and a <strong>$25 no-show fee</strong> applies. You&rsquo;ll add your card on Stripe&rsquo;s secure page in the next step.</div>
       </div>
 
       <label class="consent-row" for="consentBox">
         <input type="checkbox" id="consentBox" onchange="validateForm()">
-        <span>I agree to keep a card on file to hold my reservation. <strong>Nothing is charged today.</strong> If I miss my session without rescheduling or canceling at least 4 hours in advance, my card will be charged a <strong>$25 no-show fee</strong>.</span>
+        <span>I agree to keep a card on file to hold my reservation. <strong>Nothing is charged today.</strong> If I miss my session without rescheduling or canceling <strong>at least 2 hours in advance</strong>, my card will be charged a <strong>$25 no-show fee</strong>.</span>
       </label>
 
       <div class="secure-row">
@@ -821,8 +820,8 @@ async function finalizeSession(sessionId) {
     var cardStr = r.brand && r.last4 ? (r.brand.toUpperCase() + ' &bull;&bull;' + r.last4) : 'your card';
     document.getElementById('popupDepositNote').innerHTML =
       '<strong>' + cardStr + ' is safely on file &mdash; nothing was charged.</strong> ' +
-      'Attend your session and it never will be. If the booking isn&rsquo;t marked attended, ' +
-      'a $25 no-show fee is charged automatically after ' + chargeStr + '.';
+      'Attend your session &mdash; or reschedule or cancel at least 2 hours ahead &mdash; and it never will be. ' +
+      'If the booking isn&rsquo;t marked attended, a $25 no-show fee is charged automatically after ' + chargeStr + '.';
 
     document.getElementById('popupOverlay').classList.add('visible');
     document.getElementById('submitText').textContent = 'Booking Confirmed';
