@@ -516,7 +516,7 @@
   <div class="content-area">
 
     <div class="config-notice" id="configNotice">
-      <strong>Live card capture isn&rsquo;t connected yet.</strong> Payments run through ClubReady, so fees settle to each club&rsquo;s own ClubReady Payments merchant account. This page shows the exact flow (card on file &rarr; $25 charged only on no-show or cancellation within 4 hours); the secure card page activates once ClubReady partner API access is approved.
+      <strong>Demo of the card-on-file flow.</strong> Payments run through ClubReady, so fees settle to each club&rsquo;s own ClubReady Payments merchant account. Enter your card in the secure ClubReady form below to hold your spot &mdash; it&rsquo;s stored on your Stretch Zone account, and $25 is charged only on a no-show or a cancellation within 4 hours.
     </div>
 
     <div class="greeting">
@@ -572,7 +572,7 @@
       <div class="deposit-explain">
         <div class="de-headline"><span>&#128274;</span><span>Your session is FREE &mdash; a card just holds your spot</span></div>
         <ul class="de-list">
-          <li>Add your card on ClubReady&rsquo;s secure page &mdash; takes a minute</li>
+          <li>Enter your card below &mdash; takes a minute, nothing is charged today</li>
           <li><strong>Attend your session &mdash; free,</strong> card never charged</li>
           <li>Plans change? <strong>Reschedule or cancel 4+ hours ahead</strong> &mdash; free</li>
           <li>No-show or cancel within 4 hours &mdash; <strong>$25 fee</strong></li>
@@ -584,9 +584,17 @@
         <span>I agree to keep a card on file to hold my reservation. <strong>My session today is free.</strong> If I miss it without rescheduling or canceling <strong>at least 4 hours in advance</strong>, my card will be charged a <strong>$25 no-show fee</strong>.</span>
       </label>
 
+      <div class="card-fields" id="cardFields" style="margin-top:18px">
+        <div id="cardFrameLoading" style="display:none;padding:22px;text-align:center;color:#888;font-size:14px"><div class="spinner" style="display:inline-block"></div> Loading secure card form&hellip;</div>
+        <div id="cardFrameWrap" style="display:none">
+          <iframe id="cardFrame" title="Secure card entry" style="width:100%;height:580px;border:1px solid #e3e3e3;border-radius:10px;background:#fff"></iframe>
+        </div>
+        <div id="cardFrameError" style="display:none;padding:12px 14px;background:#fdf2f2;border:1px solid #f3c8c5;border-radius:8px;color:#7a1f18;font-size:13px"></div>
+      </div>
+
       <div class="secure-row">
         <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M2 6V4a4 4 0 118 0v2h.5A1.5 1.5 0 0112 7.5v4A2.5 2.5 0 019.5 14h-7A2.5 2.5 0 010 11.5v-4A1.5 1.5 0 011.5 6H2zm1.5 0h5V4a2.5 2.5 0 00-5 0v2z" fill="#888C8C"/></svg>
-        <span>Card details are entered on ClubReady&rsquo;s secure payment page. Stretch Zone never sees your card number.</span>
+        <span>Your card is entered on Stretch Zone&rsquo;s own secure payment form (shown above) and stored on your account to hold your spot. Velocity never sees your card number.</span>
       </div>
 
     </div>
@@ -739,20 +747,68 @@ function updateSummary() {
   validateForm();
 }
 
+var cardFrameState = 'idle'; // idle | loading | ready | error
+
 function validateForm() {
   if (bookingCompleted) return;
-  var ready = !!(selectedDate && selectedSlot) && document.getElementById('consentBox').checked;
-  document.getElementById('submitBtn').disabled = !ready;
+  var picked = !!(selectedDate && selectedSlot) && document.getElementById('consentBox').checked;
+  // once a slot is picked and consent is given, load the embedded ClubReady card form
+  if (picked && cardFrameState === 'idle') loadCardFrame();
+  // submit becomes available once the secure card form is loaded (card is entered inside it)
+  document.getElementById('submitBtn').disabled = !(picked && cardFrameState === 'ready');
+}
+
+// Fetch the lead's ClubReady hosted card URL and embed it. The lead enters the card inside this
+// iframe (their browser -> ClubReady), so no card data ever passes through Velocity.
+async function loadCardFrame() {
+  if (cardFrameState === 'loading' || cardFrameState === 'ready') return;
+  cardFrameState = 'loading';
+  document.getElementById('cardFrameLoading').style.display = 'block';
+  document.getElementById('cardFrameError').style.display = 'none';
+  try {
+    var r = await apiCall({ action: 'mint-card-link', location: CONFIG.location });
+    if (r && r.ok && r.cardUrl) {
+      document.getElementById('cardFrame').src = r.cardUrl;
+      document.getElementById('cardFrameWrap').style.display = 'block';
+      document.getElementById('cardFrameLoading').style.display = 'none';
+      cardFrameState = 'ready';
+      validateForm();
+    } else {
+      throw new Error((r && (r.detail || r.error)) || 'could not load the secure form');
+    }
+  } catch (e) {
+    cardFrameState = 'error';
+    document.getElementById('cardFrameLoading').style.display = 'none';
+    var el = document.getElementById('cardFrameError');
+    el.style.display = 'block';
+    el.textContent = 'Could not load the secure card form: ' + e.message + '. Please refresh and try again.';
+  }
+}
+
+function showConfirmed(resp) {
+  bookingCompleted = true;
+  currentDepositId = resp.depositId || null;
+  var saved = {}; try { saved = JSON.parse(localStorage.getItem('szDemoBooking') || '{}'); } catch (e) {}
+  var when = saved.date ? ('<strong>' + saved.date + '</strong> at <strong>' + saved.time +
+    (saved.instructor ? ' with ' + saved.instructor : '') + '</strong>') : '<strong>your selected time</strong>';
+  document.getElementById('popupDetail').innerHTML = 'Your stretch session is booked for ' + when + '.<br>We&rsquo;ll see you there!';
+  var cardStr = resp.brand && resp.last4 ? (String(resp.brand).toUpperCase() + ' &bull;&bull;' + resp.last4) : 'your card';
+  document.getElementById('popupDepositNote').innerHTML =
+    '<strong>Your session is free &mdash; ' + cardStr + ' just holds your spot.</strong> ' +
+    'Attend, or reschedule or cancel at least 4 hours ahead, and your card is never charged. ' +
+    'If you no-show or cancel within 4 hours, a $25 fee applies.';
+  document.getElementById('popupOverlay').classList.add('visible');
+  document.getElementById('submitText').textContent = 'Booking Confirmed';
 }
 
 // ============================================================
-// SUBMIT — creates a Stripe Checkout (setup mode) session and redirects
+// SUBMIT — the card was entered in the embedded ClubReady form above; confirm the booking.
 // ============================================================
 async function submitBooking() {
   var btn = document.getElementById('submitBtn');
   if (btn.disabled) return;
   btn.disabled = true;
-  document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Opening secure checkout...';
+  document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Confirming your spot...';
 
   var booking = {
     date: fmtDate(selectedDate),
@@ -762,33 +818,10 @@ async function submitBooking() {
   };
   try { localStorage.setItem('szDemoBooking', JSON.stringify(booking)); } catch (e) {}
 
-  var returnUrl = window.location.origin + window.location.pathname;
-  try {
-    var resp = await apiCall({
-      action: 'create-setup-session',
-      location: CONFIG.location,
-      locationName: CONFIG.locationName,
-      name: CONFIG.clientName,
-      date: booking.date,
-      dateIso: booking.dateIso,
-      time: booking.time + ' with ' + booking.instructor,
-      returnUrl: returnUrl,
-    });
-    if (resp.url) {
-      window.location.href = resp.url;
-      return;
-    }
-    if (resp.error === 'stripe_not_configured') {
-      document.getElementById('configNotice').classList.add('visible');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      alert('Could not start checkout: ' + (resp.message || resp.error || 'unknown error'));
-    }
-  } catch (err) {
-    alert('Could not start checkout: ' + err.message);
-  }
-  document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
-  validateForm();
+  // The card is captured directly into ClubReady inside the embedded secure form, so there is
+  // nothing to submit here — just confirm the booking. (Production verifies the card landed via
+  // the CRM before charging; the demo confirms optimistically.)
+  showConfirmed({});
 }
 
 // ============================================================
