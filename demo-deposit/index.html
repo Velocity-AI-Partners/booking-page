@@ -516,7 +516,7 @@
   <div class="content-area">
 
     <div class="config-notice" id="configNotice">
-      <strong>This location&rsquo;s Stripe account isn&rsquo;t connected yet.</strong> Each location is paid into its own Stripe account. The flow below is fully wired (card vault &rarr; 7-day timer &rarr; $25 charge on no-show) and activates the moment this location&rsquo;s key is added as the <code>STRIPE_KEY_STRETCH_ZONE_SOUTH_RENO_DEMO</code> edge function secret.
+      <strong>Live card capture isn&rsquo;t connected yet.</strong> Payments run through ClubReady, so fees settle to each club&rsquo;s own ClubReady Payments merchant account. This page shows the exact flow (card on file &rarr; $25 charged only on no-show or cancellation within 4 hours); the secure card page activates once ClubReady partner API access is approved.
     </div>
 
     <div class="greeting">
@@ -572,7 +572,7 @@
       <div class="deposit-explain">
         <div class="de-headline"><span>&#128274;</span><span>Your session is FREE &mdash; a card just holds your spot</span></div>
         <ul class="de-list">
-          <li>Add your card on Stripe&rsquo;s secure page &mdash; takes a minute</li>
+          <li>Add your card on ClubReady&rsquo;s secure page &mdash; takes a minute</li>
           <li><strong>Attend your session &mdash; free,</strong> card never charged</li>
           <li>Plans change? <strong>Reschedule or cancel 4+ hours ahead</strong> &mdash; free</li>
           <li>No-show or cancel within 4 hours &mdash; <strong>$25 fee</strong></li>
@@ -586,7 +586,7 @@
 
       <div class="secure-row">
         <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M2 6V4a4 4 0 118 0v2h.5A1.5 1.5 0 0112 7.5v4A2.5 2.5 0 019.5 14h-7A2.5 2.5 0 010 11.5v-4A1.5 1.5 0 011.5 6H2zm1.5 0h5V4a2.5 2.5 0 00-5 0v2z" fill="#888C8C"/></svg>
-        <span>Card details are entered on Stripe&rsquo;s encrypted checkout. Stretch Zone never sees your card number.</span>
+        <span>Card details are entered on ClubReady&rsquo;s secure payment page. Stretch Zone never sees your card number.</span>
       </div>
 
     </div>
@@ -802,7 +802,7 @@ async function finalizeSession(sessionId) {
       if (r.error === 'stripe_not_configured') {
         document.getElementById('configNotice').classList.add('visible');
       } else {
-        alert('Card was saved on Stripe but confirming the booking failed: ' + (r.message || r.error));
+        alert('Card was saved but confirming the booking failed: ' + (r.message || r.error));
       }
       document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
       validateForm();
