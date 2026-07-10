@@ -518,7 +518,7 @@
   <div class="content-area">
 
     <div class="config-notice" id="configNotice">
-      <strong>Stripe isn&rsquo;t connected yet.</strong> The flow below is fully wired (card vault &rarr; 7-day timer &rarr; $25 charge on no-show) and activates the moment <code>STRIPE_SECRET_KEY</code> is added to the Supabase edge function secrets.
+      <strong>This location&rsquo;s Stripe account isn&rsquo;t connected yet.</strong> Each location is paid into its own Stripe account. The flow below is fully wired (card vault &rarr; 7-day timer &rarr; $25 charge on no-show) and activates the moment this location&rsquo;s key is added as the <code>STRIPE_KEY_STRETCH_ZONE_SOUTH_RENO_DEMO</code> edge function secret.
     </div>
 
     <div class="greeting">
@@ -795,7 +795,7 @@ async function finalizeSession(sessionId) {
   btn.disabled = true;
   document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Confirming your booking...';
   try {
-    var r = await apiCall({ action: 'finalize', sessionId: sessionId });
+    var r = await apiCall({ action: 'finalize', sessionId: sessionId, location: CONFIG.location });
     if (!r.ok) {
       if (r.error === 'stripe_not_configured') {
         document.getElementById('configNotice').classList.add('visible');
