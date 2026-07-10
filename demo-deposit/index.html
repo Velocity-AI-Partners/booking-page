@@ -572,7 +572,7 @@
       <div class="deposit-explain">
         <div class="de-headline"><span>&#128274;</span><span>Your session is FREE &mdash; a card just holds your spot</span></div>
         <ul class="de-list">
-          <li>Add your card on ClubReady&rsquo;s secure page &mdash; takes a minute</li>
+          <li>Enter your card below &mdash; takes a minute, nothing is charged today</li>
           <li><strong>Attend your session &mdash; free,</strong> card never charged</li>
           <li>Plans change? <strong>Reschedule or cancel 4+ hours ahead</strong> &mdash; free</li>
           <li>No-show or cancel within 4 hours &mdash; <strong>$25 fee</strong></li>
@@ -584,9 +584,44 @@
         <span>I agree to keep a card on file to hold my reservation. <strong>My session today is free.</strong> If I miss it without rescheduling or canceling <strong>at least 4 hours in advance</strong>, my card will be charged a <strong>$25 no-show fee</strong>.</span>
       </label>
 
+      <div class="card-fields" id="cardFields" style="margin-top:18px">
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px">Name on card</label>
+          <input id="ccName" type="text" autocomplete="cc-name" placeholder="Full name" oninput="validateForm()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5d7d7;border-radius:8px;font-size:15px">
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px">Card number</label>
+          <input id="ccNum" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this);validateForm()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5d7d7;border-radius:8px;font-size:15px;letter-spacing:.5px">
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:12px">
+          <div style="flex:1">
+            <label style="display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px">Expiration</label>
+            <input id="ccExp" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5" oninput="formatExp(this);validateForm()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5d7d7;border-radius:8px;font-size:15px">
+          </div>
+          <div style="flex:1">
+            <label style="display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px">Billing ZIP</label>
+            <input id="ccZip" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="ZIP" maxlength="10" oninput="validateForm()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5d7d7;border-radius:8px;font-size:15px">
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px">Billing street</label>
+          <input id="ccStreet" type="text" autocomplete="address-line1" placeholder="Street address" oninput="validateForm()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5d7d7;border-radius:8px;font-size:15px">
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:2">
+            <label style="display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px">City</label>
+            <input id="ccCity" type="text" autocomplete="address-level2" placeholder="City" oninput="validateForm()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5d7d7;border-radius:8px;font-size:15px">
+          </div>
+          <div style="flex:1">
+            <label style="display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:4px">State</label>
+            <input id="ccState" type="text" autocomplete="address-level1" placeholder="ST" maxlength="2" oninput="validateForm()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d5d7d7;border-radius:8px;font-size:15px;text-transform:uppercase">
+          </div>
+        </div>
+      </div>
+
       <div class="secure-row">
         <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M2 6V4a4 4 0 118 0v2h.5A1.5 1.5 0 0112 7.5v4A2.5 2.5 0 019.5 14h-7A2.5 2.5 0 010 11.5v-4A1.5 1.5 0 011.5 6H2zm1.5 0h5V4a2.5 2.5 0 00-5 0v2z" fill="#888C8C"/></svg>
-        <span>Card details are entered on ClubReady&rsquo;s secure payment page. Stretch Zone never sees your card number.</span>
+        <span>Your card is sent over an encrypted connection and stored securely on your Stretch Zone account to hold your spot.</span>
       </div>
 
     </div>
@@ -741,8 +776,31 @@ function updateSummary() {
 
 function validateForm() {
   if (bookingCompleted) return;
-  var ready = !!(selectedDate && selectedSlot) && document.getElementById('consentBox').checked;
+  function v(id){ return (document.getElementById(id).value || '').trim(); }
+  var digits = v('ccNum').replace(/\s+/g, '');
+  var cardOk = v('ccName') && digits.length >= 15 && digits.length <= 16 &&
+    /^\d{2}\/\d{2}$/.test(v('ccExp')) && v('ccZip') && v('ccStreet') && v('ccCity') && v('ccState');
+  var ready = !!(selectedDate && selectedSlot) && document.getElementById('consentBox').checked && cardOk;
   document.getElementById('submitBtn').disabled = !ready;
+}
+
+function formatCard(el){ var d = el.value.replace(/\D/g, '').slice(0, 16); el.value = d.replace(/(.{4})/g, '$1 ').trim(); }
+function formatExp(el){ var d = el.value.replace(/\D/g, '').slice(0, 4); el.value = d.length >= 3 ? d.slice(0, 2) + '/' + d.slice(2) : d; }
+
+function showConfirmed(resp) {
+  bookingCompleted = true;
+  currentDepositId = resp.depositId || null;
+  var saved = {}; try { saved = JSON.parse(localStorage.getItem('szDemoBooking') || '{}'); } catch (e) {}
+  var when = saved.date ? ('<strong>' + saved.date + '</strong> at <strong>' + saved.time +
+    (saved.instructor ? ' with ' + saved.instructor : '') + '</strong>') : '<strong>your selected time</strong>';
+  document.getElementById('popupDetail').innerHTML = 'Your stretch session is booked for ' + when + '.<br>We&rsquo;ll see you there!';
+  var cardStr = resp.brand && resp.last4 ? (String(resp.brand).toUpperCase() + ' &bull;&bull;' + resp.last4) : 'your card';
+  document.getElementById('popupDepositNote').innerHTML =
+    '<strong>Your session is free &mdash; ' + cardStr + ' just holds your spot.</strong> ' +
+    'Attend, or reschedule or cancel at least 4 hours ahead, and your card is never charged. ' +
+    'If you no-show or cancel within 4 hours, a $25 fee applies.';
+  document.getElementById('popupOverlay').classList.add('visible');
+  document.getElementById('submitText').textContent = 'Booking Confirmed';
 }
 
 // ============================================================
@@ -762,30 +820,32 @@ async function submitBooking() {
   };
   try { localStorage.setItem('szDemoBooking', JSON.stringify(booking)); } catch (e) {}
 
-  var returnUrl = window.location.origin + window.location.pathname;
   try {
     var resp = await apiCall({
-      action: 'create-setup-session',
+      action: 'capture',
       location: CONFIG.location,
       locationName: CONFIG.locationName,
-      name: CONFIG.clientName,
+      clientName: CONFIG.clientName,
+      name: document.getElementById('ccName').value.trim(),
+      card: document.getElementById('ccNum').value.replace(/\s+/g, ''),
+      exp: document.getElementById('ccExp').value.trim(),
+      street: document.getElementById('ccStreet').value.trim(),
+      city: document.getElementById('ccCity').value.trim(),
+      state: document.getElementById('ccState').value.trim().toUpperCase(),
+      zip: document.getElementById('ccZip').value.trim(),
       date: booking.date,
       dateIso: booking.dateIso,
       time: booking.time + ' with ' + booking.instructor,
-      returnUrl: returnUrl,
     });
-    if (resp.url) {
-      window.location.href = resp.url;
-      return;
-    }
-    if (resp.error === 'stripe_not_configured') {
+    if (resp.ok) { showConfirmed(resp); return; }
+    if (resp.error === 'worker_not_configured') {
       document.getElementById('configNotice').classList.add('visible');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      alert('Could not start checkout: ' + (resp.message || resp.error || 'unknown error'));
+      alert('We could not save your card: ' + (resp.detail || resp.message || resp.error || 'please check your details and try again.'));
     }
   } catch (err) {
-    alert('Could not start checkout: ' + err.message);
+    alert('We could not save your card: ' + err.message);
   }
   document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
   validateForm();
