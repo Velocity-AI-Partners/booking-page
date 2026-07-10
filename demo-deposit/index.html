@@ -570,7 +570,7 @@
       </div>
       <div class="deposit-line">
         <span class="icon">&#128179;</span>
-        <span><strong>Free today</strong> &mdash; card on file just holds your spot; $25 only if you no-show or cancel within 2 hours of your session</span>
+        <span><strong>Free today</strong> &mdash; card on file just holds your spot; $25 only if you no-show or cancel within 4 hours of your session</span>
       </div>
     </div>
 
@@ -583,14 +583,14 @@
         <ul class="de-list">
           <li>Add your card on Stripe&rsquo;s secure page &mdash; takes a minute</li>
           <li><strong>Attend your session &mdash; free,</strong> card never charged</li>
-          <li>Plans change? <strong>Reschedule or cancel 2+ hours ahead</strong> &mdash; free</li>
-          <li>No-show or cancel within 2 hours &mdash; <strong>$25 fee</strong></li>
+          <li>Plans change? <strong>Reschedule or cancel 4+ hours ahead</strong> &mdash; free</li>
+          <li>No-show or cancel within 4 hours &mdash; <strong>$25 fee</strong></li>
         </ul>
       </div>
 
       <label class="consent-row" for="consentBox">
         <input type="checkbox" id="consentBox" onchange="validateForm()">
-        <span>I agree to keep a card on file to hold my reservation. <strong>My session today is free.</strong> If I miss it without rescheduling or canceling <strong>at least 2 hours in advance</strong>, my card will be charged a <strong>$25 no-show fee</strong>.</span>
+        <span>I agree to keep a card on file to hold my reservation. <strong>My session today is free.</strong> If I miss it without rescheduling or canceling <strong>at least 4 hours in advance</strong>, my card will be charged a <strong>$25 no-show fee</strong>.</span>
       </label>
 
       <div class="secure-row">
@@ -833,7 +833,7 @@ async function finalizeSession(sessionId) {
     var cardStr = r.brand && r.last4 ? (r.brand.toUpperCase() + ' &bull;&bull;' + r.last4) : 'your card';
     document.getElementById('popupDepositNote').innerHTML =
       '<strong>Your session is free &mdash; ' + cardStr + ' just holds your spot.</strong> ' +
-      'Attend, or reschedule or cancel at least 2 hours ahead, and your card is never charged. ' +
+      'Attend, or reschedule or cancel at least 4 hours ahead, and your card is never charged. ' +
       'If the booking isn&rsquo;t marked attended, a $25 no-show fee is charged automatically after ' + chargeStr + '.';
 
     document.getElementById('popupOverlay').classList.add('visible');
