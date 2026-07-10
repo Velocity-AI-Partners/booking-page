@@ -756,6 +756,7 @@ async function submitBooking() {
 
   var booking = {
     date: fmtDate(selectedDate),
+    dateIso: selectedDate.getFullYear() + '-' + String(selectedDate.getMonth() + 1).padStart(2, '0') + '-' + String(selectedDate.getDate()).padStart(2, '0'),
     time: selectedSlot.time,
     instructor: selectedSlot.instructor,
   };
@@ -769,6 +770,7 @@ async function submitBooking() {
       locationName: CONFIG.locationName,
       name: CONFIG.clientName,
       date: booking.date,
+      dateIso: booking.dateIso,
       time: booking.time + ' with ' + booking.instructor,
       returnUrl: returnUrl,
     });
