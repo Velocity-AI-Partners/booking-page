@@ -302,6 +302,14 @@
       line-height: 1.55;
     }
     .deposit-explain .de-body strong { color: var(--text); }
+    .deposit-explain .de-list {
+      margin: 6px 0 0;
+      padding-left: 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .deposit-explain .de-list strong { color: var(--text); }
 
     .consent-row {
       display: flex;
@@ -562,7 +570,7 @@
       </div>
       <div class="deposit-line">
         <span class="icon">&#128179;</span>
-        <span><strong>$0 due today</strong> &mdash; card on file; $25 only if you no-show or cancel less than 2 hours before your session</span>
+        <span><strong>Free today</strong> &mdash; card on file just holds your spot; $25 only if you no-show or cancel within 2 hours of your session</span>
       </div>
     </div>
 
@@ -571,13 +579,18 @@
       <div class="card-title">Secure Your Spot &mdash; Card on File</div>
 
       <div class="deposit-explain">
-        <div class="de-headline"><span>&#128274;</span><span>Free to book &mdash; nothing charged today</span></div>
-        <div class="de-body">We hold your spot with a card on file. <strong>You won&rsquo;t be charged anything</strong> as long as you attend, or reschedule or cancel <strong>at least 2 hours before</strong> your session. Miss it with less than 2 hours&rsquo; notice and a <strong>$25 no-show fee</strong> applies. You&rsquo;ll add your card on Stripe&rsquo;s secure page in the next step.</div>
+        <div class="de-headline"><span>&#128274;</span><span>Your session is FREE &mdash; a card just holds your spot</span></div>
+        <ul class="de-list">
+          <li>Add your card on Stripe&rsquo;s secure page &mdash; takes a minute</li>
+          <li><strong>Attend your session &mdash; free,</strong> card never charged</li>
+          <li>Plans change? <strong>Reschedule or cancel 2+ hours ahead</strong> &mdash; free</li>
+          <li>No-show or cancel within 2 hours &mdash; <strong>$25 fee</strong></li>
+        </ul>
       </div>
 
       <label class="consent-row" for="consentBox">
         <input type="checkbox" id="consentBox" onchange="validateForm()">
-        <span>I agree to keep a card on file to hold my reservation. <strong>Nothing is charged today.</strong> If I miss my session without rescheduling or canceling <strong>at least 2 hours in advance</strong>, my card will be charged a <strong>$25 no-show fee</strong>.</span>
+        <span>I agree to keep a card on file to hold my reservation. <strong>My session today is free.</strong> If I miss it without rescheduling or canceling <strong>at least 2 hours in advance</strong>, my card will be charged a <strong>$25 no-show fee</strong>.</span>
       </label>
 
       <div class="secure-row">
@@ -592,7 +605,7 @@
       <button class="submit-btn" id="submitBtn" onclick="submitBooking()" disabled>
         <span id="submitText">Save Card &amp; Confirm Booking</span>
       </button>
-      <div class="submit-hint">Nothing charged today</div>
+      <div class="submit-hint">Free today &mdash; the card only holds your spot</div>
     </div>
 
   </div>
@@ -819,8 +832,8 @@ async function finalizeSession(sessionId) {
     var chargeStr = chargeDate ? (MONTH_NAMES[chargeDate.getMonth()] + ' ' + chargeDate.getDate()) : 'in 7 days';
     var cardStr = r.brand && r.last4 ? (r.brand.toUpperCase() + ' &bull;&bull;' + r.last4) : 'your card';
     document.getElementById('popupDepositNote').innerHTML =
-      '<strong>' + cardStr + ' is safely on file &mdash; nothing was charged.</strong> ' +
-      'Attend your session &mdash; or reschedule or cancel at least 2 hours ahead &mdash; and it never will be. ' +
+      '<strong>Your session is free &mdash; ' + cardStr + ' just holds your spot.</strong> ' +
+      'Attend, or reschedule or cancel at least 2 hours ahead, and your card is never charged. ' +
       'If the booking isn&rsquo;t marked attended, a $25 no-show fee is charged automatically after ' + chargeStr + '.';
 
     document.getElementById('popupOverlay').classList.add('visible');
