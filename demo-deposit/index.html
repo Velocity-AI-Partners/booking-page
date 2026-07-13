@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Booking Demo — Card on File / $25 No-Show Fee</title>
+  <title>Reserve Your Free Stretch — Stretch Zone South Reno</title>
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,30 +40,6 @@
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
-
-    /* ========== DEMO BAR (not part of production page) ========== */
-    .demo-bar {
-      background: #0F1111;
-      color: #fff;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      font-size: 12px;
-    }
-    .demo-bar .demo-tag {
-      background: var(--primary);
-      color: #0F1111;
-      font-weight: 800;
-      font-size: 10px;
-      letter-spacing: 1px;
-      padding: 3px 8px;
-      border-radius: 5px;
-      text-transform: uppercase;
-    }
-    .demo-bar .demo-note { color: rgba(255,255,255,0.75); font-weight: 500; }
 
     .page-wrapper {
       max-width: 520px;
@@ -495,10 +471,6 @@
 </head>
 <body>
 
-<div class="demo-bar">
-  <span class="demo-tag">Demo</span>
-</div>
-
 <div class="page-wrapper">
 
   <div class="page-header">
@@ -508,20 +480,20 @@
         <h1>Stretch Zone - South Reno NV</h1>
         <p>Practitioner-assisted stretching</p>
       </div>
-      <span class="header-phone">(775) 555-0182</span>
-      <span class="header-address">13981 S Virginia St, Reno, NV 89511</span>
+      <span class="header-phone">(775) 900-0274</span>
+      <span class="header-address">8175 S Virginia St, Suite B-350, Reno, NV 89511</span>
     </div>
   </div>
 
   <div class="content-area">
 
     <div class="config-notice" id="configNotice">
-      <strong>Demo of the card-on-file flow.</strong> Payments run through ClubReady, so fees settle to each club&rsquo;s own ClubReady Payments merchant account. Enter your card in the secure ClubReady form below to hold your spot &mdash; it&rsquo;s stored on your Stretch Zone account, and $25 is charged only on a no-show or a cancellation within 4 hours.
+      Enter your card in the secure ClubReady form below to hold your spot &mdash; it&rsquo;s stored on your Stretch Zone account, and $25 is charged only on a no-show or a cancellation within 4 hours.
     </div>
 
     <div class="greeting">
-      <h2>Hi Sarah!</h2>
-      <p>Pick a date and time for your free first stretch.</p>
+      <h2 id="greetingTitle">Book your free first stretch</h2>
+      <p>Pick a date and time below.</p>
     </div>
 
     <div class="card">
@@ -540,10 +512,10 @@
 
     <div class="selection-summary" id="selectionSummary">
       <h3>Your Selection</h3>
-      <div class="summary-row">
+      <div class="summary-row" id="clientRow" style="display:none;">
         <span class="icon">&#128100;</span>
         <span class="label">Client</span>
-        <span class="value">Sarah Mitchell</span>
+        <span class="value" id="summaryClient"></span>
       </div>
       <div class="summary-row">
         <span class="icon">&#128197;</span>
@@ -556,7 +528,7 @@
         <span class="value" id="summaryTime"></span>
       </div>
       <div class="pricing-box">
-        <div class="pricing-title">FREE First Stretch Assessment</div>
+        <div class="pricing-title">Complimentary First Stretch</div>
         <div class="pricing-note">Includes consultation, 30-min stretch, and membership review</div>
       </div>
       <div class="deposit-line">
@@ -617,25 +589,45 @@
 <div id="popupOverlay" class="popup-overlay">
   <div class="popup">
     <div class="popup-icon">&#10003;</div>
-    <h2 id="popupTitle">Thank you, Sarah!</h2>
+    <h2 id="popupTitle">Thank you!</h2>
     <p class="popup-detail" id="popupDetail"></p>
     <div class="popup-deposit-note" id="popupDepositNote"></div>
-    <button class="attended-btn" id="attendedBtn" onclick="markAttended()">Simulate attended visit (demo) &mdash; releases the card</button>
     <button class="popup-close" onclick="closePopup()">Done</button>
   </div>
 </div>
 
 <script>
 // ============================================================
-// CONFIG — real backend, demo bookings
+// CONFIG
 // ============================================================
+var QS = new URLSearchParams(window.location.search);
 var CONFIG = {
   api: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/deposit-demo',
+  bookingApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/book-session',
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY2tvdHNyaHV4eGZ0d21kbHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MTU4ODUsImV4cCI6MjA4MzM5MTg4NX0.AAQSDK4gu7lDUrFFk540HHELQ85S0vyATNQT6up-pXE',
+  // Card capture/verify uses the "-demo" alias so the edge fn resolves South Reno's CR staff creds;
+  // real availability + booking use the live location slug.
   location: 'stretch-zone-south-reno-demo',
-  locationName: 'Stretch Zone - South Reno NV (DEMO)',
-  clientName: 'Sarah Mitchell',
+  bookingLocation: 'stretch-zone-south-reno',
+  locationName: 'Stretch Zone - South Reno NV',
+  storeId: 12304,
+  // ARM SWITCH: while false, the page shows real availability, captures + verifies the card, and
+  // confirms — but does NOT create a real ClubReady appointment or a deposit record (safe to preview
+  // and publish). Flip to true AND point South Reno booking links here to go live.
+  live: false,
 };
+// Lead identity from the personalized booking link (same params the main booking page uses).
+var LEAD = {
+  memberId: QS.get('mid') || QS.get('memberId') || '',
+  leadId: QS.get('lid') || QS.get('leadId') || '',
+  name: QS.get('name') || '',
+  email: QS.get('email') || '',
+  phone: QS.get('phone') || '',
+};
+// The ClubReady member the card vaults onto: the lead's own id from the link, else the South Reno
+// test prospect for previews/demos (no real booking is created in preview).
+CONFIG.crUserId = LEAD.memberId || '131591199';
+CONFIG.clientName = LEAD.name || '';
 
 function apiCall(payload) {
   return fetch(CONFIG.api, {
@@ -659,16 +651,22 @@ var selectedSlot = null;
 var bookingCompleted = false;
 var currentDepositId = null;
 
-function slotsFor(date) {
-  if (date.getDay() === 0) return [];
-  var seed = date.getDate();
-  var pract = ['Marcus', 'Jenna', 'Tyler', 'Priya'];
-  var all = [
-    { time: '9:00 AM' }, { time: '10:30 AM' }, { time: '11:30 AM' },
-    { time: '1:00 PM' }, { time: '2:30 PM' }, { time: '4:00 PM' }, { time: '5:30 PM' },
-  ];
-  return all.filter(function(s, i) { return (seed + i) % 3 !== 0; })
-    .map(function(s, i) { return { time: s.time, instructor: pract[(seed + i) % pract.length] }; });
+function toIso(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// Real availability from the same backend + rules the main booking page uses (session types come
+// straight from ClubReady). Slot shape: { time, instructor, instructorId, type }.
+async function fetchSlotsFor(date) {
+  var iso = toIso(date);
+  try {
+    var resp = await fetch(CONFIG.bookingApi + '?action=get-slots&location=' + encodeURIComponent(CONFIG.bookingLocation) + '&date=' + encodeURIComponent(iso), {
+      headers: { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONFIG.anonKey },
+    });
+    if (!resp.ok) return [];
+    var data = await resp.json();
+    return Array.isArray(data) ? data : (data.slots || []);
+  } catch (e) { return []; }
 }
 
 function buildDates() {
@@ -679,9 +677,9 @@ function buildDates() {
     var d = new Date(today);
     d.setDate(today.getDate() + i);
     var el = document.createElement('div');
-    el.className = 'date-item' + (d.getDay() === 0 ? ' sunday' : '');
+    el.className = 'date-item';
     el.setAttribute('role', 'button');
-    el.setAttribute('tabindex', d.getDay() === 0 ? '-1' : '0');
+    el.setAttribute('tabindex', '0');
     el.innerHTML = '<span class="date-day">' + DAY_NAMES[d.getDay()] + '</span>' +
       '<span class="date-num">' + d.getDate() + '</span>' +
       '<span class="date-month">' + MONTH_NAMES[d.getMonth()] + '</span>';
@@ -690,7 +688,7 @@ function buildDates() {
       elem.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectDate(dd, elem); } };
     })(d, el);
     scroll.appendChild(el);
-    if (!first && d.getDay() !== 0) first = { d: d, el: el };
+    if (!first) first = { d: d, el: el };
   }
   document.getElementById('dateNavLabel').textContent =
     MONTH_NAMES[today.getMonth()] + ' ' + today.getFullYear();
@@ -706,11 +704,17 @@ function selectDate(d, el) {
   updateSummary();
 }
 
-function renderSlots() {
+var _slotReqId = 0;
+async function renderSlots() {
   var grid = document.getElementById('slotsGrid');
   var none = document.getElementById('noSlots');
+  var reqDate = selectedDate;
+  var myReq = ++_slotReqId;
+  none.style.display = 'none';
+  grid.innerHTML = '<div style="grid-column:1/-1;padding:16px;text-align:center;color:#888;font-size:14px"><span class="spinner" style="display:inline-block;vertical-align:middle"></span> Loading available times&hellip;</div>';
+  var slots = await fetchSlotsFor(reqDate);
+  if (myReq !== _slotReqId) return; // a newer date was picked; drop this stale response
   grid.innerHTML = '';
-  var slots = slotsFor(selectedDate);
   none.style.display = slots.length ? 'none' : 'block';
   slots.forEach(function(s) {
     var el = document.createElement('div');
@@ -718,7 +722,7 @@ function renderSlots() {
     el.setAttribute('role', 'button');
     el.setAttribute('tabindex', '0');
     el.innerHTML = '<span class="slot-time">' + s.time + '</span>' +
-      '<span class="slot-instructor">' + s.instructor + '</span>';
+      '<span class="slot-instructor">' + (s.instructor || '') + '</span>';
     el.onclick = function() { selectSlot(s, el); };
     el.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectSlot(s, el); } };
     grid.appendChild(el);
@@ -766,8 +770,9 @@ async function loadCardFrame() {
   document.getElementById('cardFrameLoading').style.display = 'block';
   document.getElementById('cardFrameError').style.display = 'none';
   try {
-    var r = await apiCall({ action: 'mint-card-link', location: CONFIG.location });
+    var r = await apiCall({ action: 'mint-card-link', location: CONFIG.location, crUserId: CONFIG.crUserId });
     if (r && r.ok && r.cardUrl) {
+      window.__crUserId = r.crUserId || CONFIG.crUserId || null; // the ClubReady member the card vaults onto (verified on submit)
       document.getElementById('cardFrame').src = r.cardUrl;
       document.getElementById('cardFrameWrap').style.display = 'block';
       document.getElementById('cardFrameLoading').style.display = 'none';
@@ -808,7 +813,7 @@ async function submitBooking() {
   var btn = document.getElementById('submitBtn');
   if (btn.disabled) return;
   btn.disabled = true;
-  document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Confirming your spot...';
+  document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Verifying your card...';
 
   var booking = {
     date: fmtDate(selectedDate),
@@ -818,10 +823,59 @@ async function submitBooking() {
   };
   try { localStorage.setItem('szDemoBooking', JSON.stringify(booking)); } catch (e) {}
 
-  // The card is captured directly into ClubReady inside the embedded secure form, so there is
-  // nothing to submit here — just confirm the booking. (Production verifies the card landed via
-  // the CRM before charging; the demo confirms optimistically.)
-  showConfirmed({});
+  // Gate: only confirm once a real card has actually vaulted into ClubReady. check-card fails
+  // closed, so a fake/declined card (or no card entered) returns hasCard:false and blocks booking.
+  var errEl = document.getElementById('cardFrameError');
+  try {
+    var chk = await apiCall({ action: 'check-card', location: CONFIG.location, crUserId: window.__crUserId || undefined });
+    if (!chk || !chk.ok || !chk.hasCard) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'We couldn’t find a card saved to your account yet. In the secure form above, click “New Payment Profile”, enter a valid card, and Save — then confirm again.';
+      document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
+      btn.disabled = false;
+      return;
+    }
+    errEl.style.display = 'none';
+    // Card verified in ClubReady. Create the real appointment + deposit record only when armed AND a
+    // real lead is present (from the link); otherwise this is a preview (confirmation only, no writes).
+    if (CONFIG.live && LEAD.memberId) {
+      document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Booking your session...';
+      var monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      var fd = monthFull[selectedDate.getMonth()] + ' ' + selectedDate.getDate() + ', ' + selectedDate.getFullYear();
+      var bres = await fetch(CONFIG.bookingApi, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONFIG.anonKey },
+        body: JSON.stringify({
+          location: CONFIG.bookingLocation, locationName: CONFIG.locationName, brand: 'Stretch Zone', crm: 'clubready',
+          storeId: CONFIG.storeId, memberId: LEAD.memberId, leadId: LEAD.leadId,
+          name: LEAD.name, email: LEAD.email, phone: LEAD.phone,
+          date: fd, time: selectedSlot.time, instructor: selectedSlot.instructor || '',
+          type: selectedSlot.type || 'Stretch Session', source: 'deposit_booking_page',
+        }),
+      }).then(function(r){ return r.json(); }).catch(function(){ return {}; });
+      if (!bres.success) {
+        errEl.style.display = 'block';
+        errEl.textContent = bres.message || 'We could not complete the booking. Your card is saved; please contact the studio.';
+        document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
+        btn.disabled = false;
+        return;
+      }
+      var rec = await apiCall({
+        action: 'record-deposit', location: CONFIG.location,
+        name: LEAD.name, email: LEAD.email, phone: LEAD.phone,
+        dateIso: booking.dateIso, time: selectedSlot.time + (selectedSlot.instructor ? ' with ' + selectedSlot.instructor : ''),
+        crUserId: CONFIG.crUserId, crStoreId: CONFIG.storeId, cardBrand: chk.brand, cardLast4: chk.last4,
+      });
+      showConfirmed({ brand: chk.brand, last4: chk.last4, depositId: rec && rec.depositId });
+      return;
+    }
+    showConfirmed({ brand: chk.brand, last4: chk.last4 });
+  } catch (e) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Could not verify your card: ' + e.message + '. Please try again.';
+    document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
+    btn.disabled = false;
+  }
 }
 
 // ============================================================
@@ -893,6 +947,16 @@ function closePopup() {
 }
 
 // init
+(function applyLead() {
+  var first = (CONFIG.clientName || '').trim().split(/\s+/)[0];
+  if (first) {
+    document.getElementById('greetingTitle').textContent = 'Hi ' + first + '!';
+    document.getElementById('popupTitle').textContent = 'Thank you, ' + first + '!';
+    var cr = document.getElementById('clientRow');
+    document.getElementById('summaryClient').textContent = CONFIG.clientName;
+    cr.style.display = '';
+  }
+})();
 buildDates();
 (function() {
   var sid = new URLSearchParams(window.location.search).get('setup_session');
