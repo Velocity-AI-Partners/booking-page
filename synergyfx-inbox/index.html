@@ -239,6 +239,8 @@
   .zp-fbtn .ic-sun{display:none}
   html[data-theme="dark"] .zp-fbtn .ic-moon{display:none}
   html[data-theme="dark"] .zp-fbtn .ic-sun{display:inline}
+  .zp-stale{margin:10px 16px 0;padding:9px 13px;border-radius:9px;background:rgba(245,158,11,.14);border:1px solid rgba(217,119,6,.45);color:#b45309;font-size:12.5px;font-weight:600;line-height:1.45}
+  html[data-theme="dark"] .zp-stale{color:#fbbf24;background:rgba(245,158,11,.10);border-color:rgba(251,191,36,.35)}
 </style>
 <script>(function(){try{var t=localStorage.getItem('sfxtheme');if(t!=='dark'&&t!=='light')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
@@ -263,6 +265,7 @@
     <span class="zp-crumb" aria-hidden="true">&rsaquo;</span>
     <span class="zp-page-title" id="zpTitle">Appointments</span>
   </header>
+  <div class="zp-stale" id="zpStale" style="display:none"></div>
   <div class="zp-body">
     <nav class="zp-nav" id="zpNav">
       <button data-v="inquiry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Inquiries<b id="nInq">0</b></button>
@@ -307,6 +310,9 @@
   var API='https://vap-zp-staff.fly.dev/inbox';
   var PW=null, state={view:'appt', search:'', active:null, bookedFilter:'all', memberFilter:'member'};
   var DATA={inquiry:[], appt:[], lead:[], member:[], exmember:[]}, apptReady=false, apptWindow=7;
+  // generatedAt of the payload currently on screen when the server flagged it
+  // stale (its Studio rebuilds are failing); null = data is fresh.
+  var STALE={roster:null, appt:null};
   var WEEKS={}, curWeek=null; // curWeek=null -> rolling current week; else 'YYYY-MM-DD'
   function fmtYMD(t){var d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   function weekKey(){return curWeek||'current';}
@@ -444,7 +450,10 @@
     document.getElementById('nInq').textContent=inq.length;
     document.getElementById('nLead').textContent=leads.length;
     document.getElementById('nMem').textContent=mems.length;
-    document.getElementById('zpAsOf').textContent='Updated '+new Date(d.generatedAt||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    STALE.roster=(d.stale&&d.generatedAt)?d.generatedAt:null;
+    document.getElementById('zpAsOf').textContent=STALE.roster
+      ?('Data as of '+fmtStaleAt(STALE.roster))
+      :('Updated '+new Date(d.generatedAt||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}));
     renderAll();
   }
   function applyAppts(d, key){
@@ -678,7 +687,14 @@
     var f=document.getElementById('zpForms');
     f.style.display=isForms?'flex':'none';
   }
-  function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else if(state.view!=='forms'){renderList(); renderDetail();} }
+  function fmtStaleAt(at){ return new Date(at).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+  function renderStale(){
+    var el=document.getElementById('zpStale'); if(!el) return;
+    var at=state.view==='appt'?STALE.appt:(state.view==='forms'?null:STALE.roster);
+    if(at){ el.textContent='Live connection to Zen Planner is interrupted - showing data saved '+fmtStaleAt(at)+'. Retrying in the background.'; el.style.display='block'; }
+    else { el.style.display='none'; }
+  }
+  function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else if(state.view!=='forms'){renderList(); renderDetail();} renderStale(); }
 
   document.getElementById('zpNav').addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b||!b.hasAttribute('data-v')) return;
@@ -736,7 +752,7 @@
       .then(function(d){
         // A stale payload still renders (better than an empty grid) while the
         // server rebuilds; keep polling until a fresh build lands.
-        if(d && d.appointments) applyAppts(d, key);
+        if(d && d.appointments){ applyAppts(d, key); if(key===weekKey()){ STALE.appt=(d.stale&&d.generatedAt)?d.generatedAt:null; renderStale(); } }
         if(d && d.building){ if(key===weekKey()){ apptTimer=setTimeout(fetchAppts,6000); if(!d.appointments && state.view==='appt') renderCal(); } return; }
       })
       .catch(function(){ if(key===weekKey()) apptTimer=setTimeout(fetchAppts,15000); });
