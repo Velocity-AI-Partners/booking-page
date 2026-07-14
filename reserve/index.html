@@ -624,9 +624,12 @@ var LEAD = {
   email: QS.get('email') || '',
   phone: QS.get('phone') || '',
 };
-// The ClubReady member the card vaults onto: the lead's own id from the link, else the South Reno
-// test prospect for previews/demos (no real booking is created in preview).
-CONFIG.crUserId = LEAD.memberId || '131591199';
+// The ClubReady member the card vaults onto. For SZ lead flows the link carries lid = the lead's
+// numeric ClubReady userId (book-session books onto exactly this id: customerId falls back to
+// leadId, then userId = parseInt(customerId)). So the card MUST vault onto the same id book-session
+// will book onto. Order: an explicit member id, else the lead's ClubReady userId (lid), else the
+// South Reno test prospect for previews/demos (no real booking is created in preview).
+CONFIG.crUserId = LEAD.memberId || LEAD.leadId || '131591199';
 CONFIG.clientName = LEAD.name || '';
 
 function apiCall(payload) {
@@ -838,7 +841,8 @@ async function submitBooking() {
     errEl.style.display = 'none';
     // Card verified in ClubReady. Create the real appointment + deposit record only when armed AND a
     // real lead is present (from the link); otherwise this is a preview (confirmation only, no writes).
-    if (CONFIG.live && LEAD.memberId) {
+    // A lead arrives with lid (their ClubReady userId); a member with mid. Either one means "real".
+    if (CONFIG.live && (LEAD.memberId || LEAD.leadId)) {
       document.getElementById('submitText').innerHTML = '<div class="spinner"></div> Booking your session...';
       var monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       var fd = monthFull[selectedDate.getMonth()] + ' ' + selectedDate.getDate() + ', ' + selectedDate.getFullYear();

@@ -2359,6 +2359,25 @@ async function submitBooking() {
 
     if (result.success) {
       showConfirmation(payload, result);
+      // SZ South Reno card-on-file trial: this page handles RESCHEDULES (first-time bookings go
+      // through /reserve/, which vaults the card). Moving a demo must move its deposit-tracking
+      // row too - the no-show notifier reads demo_deposits.booking_date, so a stale date would
+      // flag an attended reschedule as a $25 no-show. Fire-and-forget; server side is idempotent
+      // (no open deposit row -> no-op), so non-deposit bookings and other locations are unaffected.
+      if (currentLocationSlug === 'stretch-zone-south-reno' && (userInfo.memberId || userInfo.leadId)) {
+        try {
+          fetch('https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/deposit-demo', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, EDGE_HEADERS),
+            body: JSON.stringify({
+              action: 'reschedule',
+              crUserId: userInfo.memberId || userInfo.leadId,
+              dateIso: selectedDate,
+              time: (selectedSlot && selectedSlot.time ? selectedSlot.time : '') + (selectedSlot && selectedSlot.instructor ? ' with ' + selectedSlot.instructor : ''),
+            }),
+          }).catch(function () {});
+        } catch (e) { /* tracking only - never block the confirmation */ }
+      }
     } else if (result.noCredits) {
       showNoCreditsPopup();
     } else if (result.code === 'already_has_booking' || result.code === 'already_completed_demo') {
