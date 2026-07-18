@@ -1354,9 +1354,10 @@ var LOCATIONS = {
     uiMode: 'slots',
     timezone: 'America/Chicago',
     phone: '16156004044',
-    // TODO(beem): address unknown for Nashville Green Hills - do not invent
+    address: '3760 Hillsboro Pike, Nashville, TN 37215',
     crm: 'mindbody',
-    hours: null, // TODO(beem): real studio hours required before merge
+    // NOTE(beem): weekday uses widest span; exact hours: Mon-Thu 7:00-19:00, Fri 8:00-17:00
+    hours: { weekday: [7, 19], saturday: [8, 16], sunday: [10, 16] },
     daysAhead: 14,
     leadDaysAhead: 3,
     leadDaysAheadExpanded: 5,
@@ -1364,9 +1365,9 @@ var LOCATIONS = {
     pricing: {
       title: 'Monthly Membership Pricing',
       rows: [
-        ['Membership Tier 1', '$129/mo'],
-        ['Membership Tier 2', '$169/mo'],
-        ['Membership Tier 3', '$199/mo'],
+        ['4 Sessions/mo', '$129/mo'],
+        ['8 Sessions/mo', '$169/mo'],
+        ['Unlimited', '$199/mo'],
       ],
     },
   },
@@ -1381,7 +1382,7 @@ var LOCATIONS = {
     phone: '18437889288',
     address: '100 Gosling Way Suite B, Summerville, SC 29486',
     crm: 'mindbody',
-    hours: null, // TODO(beem): real studio hours required before merge
+    hours: { weekday: [8, 20], saturday: [11, 15], sunday: [11, 15] },
     daysAhead: 14,
     leadDaysAhead: 3,
     leadDaysAheadExpanded: 5,
@@ -1389,9 +1390,9 @@ var LOCATIONS = {
     pricing: {
       title: 'Monthly Membership Pricing',
       rows: [
-        ['Membership Tier 1', '$109/mo'],
-        ['Membership Tier 2', '$149/mo'],
-        ['Membership Tier 3', '$179/mo'],
+        ['4 Sessions/mo', '$109/mo'],
+        ['8 Sessions/mo', '$149/mo'],
+        ['Unlimited', '$179/mo'],
       ],
     },
   },
@@ -1406,7 +1407,8 @@ var LOCATIONS = {
     phone: '14693434991',
     address: '4041 S Custer Rd Unit 2150, McKinney, TX 75070',
     crm: 'mindbody',
-    hours: null, // TODO(beem): real studio hours required before merge
+    // NOTE(beem): weekday uses widest span; exact hours: Mon-Thu 8:00-20:00, Fri 8:00-17:00
+    hours: { weekday: [8, 20], saturday: [9, 15], sunday: [11, 16] },
     daysAhead: 14,
     leadDaysAhead: 3,
     leadDaysAheadExpanded: 5,
@@ -1414,9 +1416,9 @@ var LOCATIONS = {
     pricing: {
       title: 'Monthly Membership Pricing',
       rows: [
-        ['Membership Tier 1', '$109/mo'],
-        ['Membership Tier 2', '$149/mo'],
-        ['Membership Tier 3', '$179/mo'],
+        ['4 Sessions/mo', '$109/mo'],
+        ['8 Sessions/mo', '$149/mo'],
+        ['Unlimited', '$179/mo'],
       ],
     },
   },
@@ -2529,6 +2531,8 @@ async function fetchCalendarLinks(payload) {
     'ima-westborough': '227 Turnpike Rd Suite C, Westborough, MA 01581',
     'integrated-martial-arts-worcester': '342A W Boylston St, West Boylston, MA 01583',
     'ima-worcester': '342A W Boylston St, West Boylston, MA 01583',
+    'beem-nashville-green-hills': '3760 Hillsboro Pike, Nashville, TN 37215',
+    'beem-nashville': '3760 Hillsboro Pike, Nashville, TN 37215',
     'beem-summerville': '100 Gosling Way Suite B, Summerville, SC 29486',
     'beem-west-mckinney': '4041 S Custer Rd Unit 2150, McKinney, TX 75070',
     'beem-mckinney': '4041 S Custer Rd Unit 2150, McKinney, TX 75070',
@@ -2662,6 +2666,9 @@ function showNoCreditsPopup() {
     'stretch-zone-scottsdale-thomas': 'https://www.stretchzone.com/locations/scottsdale-thomas-az',
     'stretch-zone-santa-rosa': 'https://www.stretchzone.com/locations/santa-rosa-ca',
     'stretch-zone-south-reno': 'https://www.stretchzone.com/locations/south-reno-nv',
+    'beem-nashville-green-hills': 'https://www.beemlightsauna.com/location/nashville-green-hills',
+    'beem-summerville': 'https://www.beemlightsauna.com/location/summerville',
+    'beem-west-mckinney': 'https://www.beemlightsauna.com/studio/west-mckinney',
   };
   var PHONE_MAP = {
     'stretch-zone-westborough': '(508) 329-1134',
