@@ -1345,6 +1345,81 @@ var LOCATIONS = {
       ],
     },
   },
+  'beem-nashville-green-hills': {
+    name: 'beem Light Sauna',
+    displayName: 'beem Light Sauna - Nashville Green Hills',
+    brand: 'beem Light Sauna',
+    tagline: 'Infrared sauna and red light therapy',
+    sessionLabel: 'Sauna Session',
+    uiMode: 'slots',
+    timezone: 'America/Chicago',
+    phone: '16156004044',
+    // TODO(beem): address unknown for Nashville Green Hills - do not invent
+    crm: 'mindbody',
+    hours: null, // TODO(beem): real studio hours required before merge
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: '50% Off Your First Infrared Sauna Session', detail: '40-min Infrared Light Sauna session' },
+    pricing: {
+      title: 'Monthly Membership Pricing',
+      rows: [
+        ['Membership Tier 1', '$129/mo'],
+        ['Membership Tier 2', '$169/mo'],
+        ['Membership Tier 3', '$199/mo'],
+      ],
+    },
+  },
+  'beem-summerville': {
+    name: 'beem Light Sauna',
+    displayName: 'beem Light Sauna - Summerville SC',
+    brand: 'beem Light Sauna',
+    tagline: 'Infrared sauna and red light therapy',
+    sessionLabel: 'Sauna Session',
+    uiMode: 'slots',
+    timezone: 'America/New_York',
+    phone: '18437889288',
+    address: '100 Gosling Way Suite B, Summerville, SC 29486',
+    crm: 'mindbody',
+    hours: null, // TODO(beem): real studio hours required before merge
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'First 2 Infrared Sauna or Red Light Sessions Free', detail: '40-min Infrared Light Sauna or 15-min Red Light Therapy' },
+    pricing: {
+      title: 'Monthly Membership Pricing',
+      rows: [
+        ['Membership Tier 1', '$109/mo'],
+        ['Membership Tier 2', '$149/mo'],
+        ['Membership Tier 3', '$179/mo'],
+      ],
+    },
+  },
+  'beem-west-mckinney': {
+    name: 'beem Light Sauna',
+    displayName: 'beem Light Sauna - West McKinney TX',
+    brand: 'beem Light Sauna',
+    tagline: 'Infrared sauna and red light therapy',
+    sessionLabel: 'Sauna Session',
+    uiMode: 'slots',
+    timezone: 'America/Chicago',
+    phone: '14693434991',
+    address: '4041 S Custer Rd Unit 2150, McKinney, TX 75070',
+    crm: 'mindbody',
+    hours: null, // TODO(beem): real studio hours required before merge
+    daysAhead: 14,
+    leadDaysAhead: 3,
+    leadDaysAheadExpanded: 5,
+    leadOffer: { label: 'First 2 Sessions Free', detail: '40-min Infrared Light Sauna or 15-min Red Light Therapy' },
+    pricing: {
+      title: 'Monthly Membership Pricing',
+      rows: [
+        ['Membership Tier 1', '$109/mo'],
+        ['Membership Tier 2', '$149/mo'],
+        ['Membership Tier 3', '$179/mo'],
+      ],
+    },
+  },
 };
 
 // ============================================================
@@ -2454,6 +2529,9 @@ async function fetchCalendarLinks(payload) {
     'ima-westborough': '227 Turnpike Rd Suite C, Westborough, MA 01581',
     'integrated-martial-arts-worcester': '342A W Boylston St, West Boylston, MA 01583',
     'ima-worcester': '342A W Boylston St, West Boylston, MA 01583',
+    'beem-summerville': '100 Gosling Way Suite B, Summerville, SC 29486',
+    'beem-west-mckinney': '4041 S Custer Rd Unit 2150, McKinney, TX 75070',
+    'beem-mckinney': '4041 S Custer Rd Unit 2150, McKinney, TX 75070',
   };
   var PHONE_MAP = {
     'stretch-zone-westborough': '(508) 329-1134',
@@ -2481,6 +2559,11 @@ async function fetchCalendarLinks(payload) {
     'ima-westborough': '(774) 772-4759',
     'integrated-martial-arts-worcester': '(508) 251-9469',
     'ima-worcester': '(508) 251-9469',
+    'beem-nashville-green-hills': '(615) 600-4044',
+    'beem-nashville': '(615) 600-4044',
+    'beem-summerville': '(843) 788-9288',
+    'beem-west-mckinney': '(469) 343-4991',
+    'beem-mckinney': '(469) 343-4991',
   };
 
   var MONTHS_MAP = {January:'01',February:'02',March:'03',April:'04',May:'05',June:'06',July:'07',August:'08',September:'09',October:'10',November:'11',December:'12'};
@@ -2592,6 +2675,9 @@ function showNoCreditsPopup() {
     'stretch-zone-scottsdale-thomas': '(480) 866-8523',
     'stretch-zone-santa-rosa': '(707) 635-2667',
     'stretch-zone-south-reno': '(775) 900-0274',
+    'beem-nashville-green-hills': '(615) 600-4044',
+    'beem-summerville': '(843) 788-9288',
+    'beem-west-mckinney': '(469) 343-4991',
   };
   var slug = currentLocationSlug || '';
   var phone = PHONE_MAP[slug] || currentLocation.phone || '';
@@ -2709,6 +2795,9 @@ async function fetchMemberInfo(locationSlug, memberId) {
     'stretch-zone-scottsdale-thomas': 'sz-scottsdale-thomas',
     'stretch-zone-santa-rosa': 'sz-santa-rosa',
     'stretch-zone-south-reno': 'sz-south-reno',
+    'beem-nashville-green-hills': 'beem-nashville',
+    'beem-summerville': 'beem-summerville',
+    'beem-west-mckinney': 'beem-mckinney',
   };
   var apiSlug = slugMap[locationSlug] || locationSlug;
 
