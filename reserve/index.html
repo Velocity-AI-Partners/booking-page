@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Reserve Your Free Stretch — Stretch Zone South Reno</title>
+  <title>Reserve Your Free Stretch — Stretch Zone</title>
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -477,11 +477,11 @@
     <div class="header-content">
       <img class="header-logo" src="https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png" alt="Stretch Zone logo">
       <div class="header-info">
-        <h1>Stretch Zone - South Reno NV</h1>
+        <h1 id="hdrName">Stretch Zone</h1>
         <p>Practitioner-assisted stretching</p>
       </div>
-      <span class="header-phone">(775) 900-0274</span>
-      <span class="header-address">8175 S Virginia St, Suite B-350, Reno, NV 89511</span>
+      <span class="header-phone" id="hdrPhone"></span>
+      <span class="header-address" id="hdrAddress"></span>
     </div>
   </div>
 
@@ -601,21 +601,56 @@
 // CONFIG
 // ============================================================
 var QS = new URLSearchParams(window.location.search);
+// Per-location config, selected by the ?loc= param on the personalized link. The card
+// capture/verify actions use the "-demo" alias so the deposit-demo edge fn resolves that
+// store's ClubReady staff creds; real availability + booking use the live location slug.
+// South Reno is the default so pre-existing links (which all carry loc=stretch-zone-south-reno)
+// and bare previews behave exactly as before.
+var LOCATIONS = {
+  'stretch-zone-south-reno': {
+    location: 'stretch-zone-south-reno-demo',
+    bookingLocation: 'stretch-zone-south-reno',
+    locationName: 'Stretch Zone - South Reno NV',
+    storeId: 12304,
+    phone: '(775) 900-0274',
+    address: '8175 S Virginia St, Suite B-350, Reno, NV 89511',
+  },
+  'stretch-zone-santa-rosa': {
+    location: 'stretch-zone-santa-rosa-demo',
+    bookingLocation: 'stretch-zone-santa-rosa',
+    locationName: 'Stretch Zone - Santa Rosa',
+    storeId: 13665,
+    phone: '(707) 595-8400',
+    address: '52 Mission Circle, Unit 114, Santa Rosa, CA 95409',
+  },
+};
+var LOC_KEY = (function () {
+  var q = (QS.get('loc') || '').replace(/-demo$/, '');
+  return LOCATIONS[q] ? q : 'stretch-zone-south-reno';
+})();
+var LOC = LOCATIONS[LOC_KEY];
 var CONFIG = {
   api: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/deposit-demo',
   bookingApi: 'https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/book-session',
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqY2tvdHNyaHV4eGZ0d21kbHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4MTU4ODUsImV4cCI6MjA4MzM5MTg4NX0.AAQSDK4gu7lDUrFFk540HHELQ85S0vyATNQT6up-pXE',
-  // Card capture/verify uses the "-demo" alias so the edge fn resolves South Reno's CR staff creds;
-  // real availability + booking use the live location slug.
-  location: 'stretch-zone-south-reno-demo',
-  bookingLocation: 'stretch-zone-south-reno',
-  locationName: 'Stretch Zone - South Reno NV',
-  storeId: 12304,
+  location: LOC.location,
+  bookingLocation: LOC.bookingLocation,
+  locationName: LOC.locationName,
+  storeId: LOC.storeId,
   // ARM SWITCH: while false, the page shows real availability, captures + verifies the card, and
   // confirms — but does NOT create a real ClubReady appointment or a deposit record (safe to preview
   // and publish). ARMED 2026-07-14 (Denise approved): real bookings + deposit tracking are LIVE.
   live: true,
 };
+// Paint the location-specific header (name/phone/address) from the selected config.
+(function () {
+  try {
+    document.getElementById('hdrName').textContent = CONFIG.locationName;
+    document.getElementById('hdrPhone').textContent = LOC.phone;
+    document.getElementById('hdrAddress').textContent = LOC.address;
+    document.title = 'Reserve Your Free Stretch — ' + CONFIG.locationName;
+  } catch (e) {}
+})();
 // Lead identity from the personalized booking link (same params the main booking page uses).
 var LEAD = {
   memberId: QS.get('mid') || QS.get('memberId') || '',
