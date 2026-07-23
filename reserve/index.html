@@ -752,6 +752,7 @@ async function renderSlots() {
   grid.innerHTML = '<div style="grid-column:1/-1;padding:16px;text-align:center;color:#888;font-size:14px"><span class="spinner" style="display:inline-block;vertical-align:middle"></span> Loading available times&hellip;</div>';
   var slots = await fetchSlotsFor(reqDate);
   if (myReq !== _slotReqId) return; // a newer date was picked; drop this stale response
+  slotsFetchedAt = Date.now();
   grid.innerHTML = '';
   none.style.display = slots.length ? 'none' : 'block';
   slots.forEach(function(s) {
@@ -773,6 +774,37 @@ function selectSlot(s, el) {
   el.classList.add('selected');
   updateSummary();
 }
+
+// Phantom-slot guard (2026-07-23): a tab left open keeps showing the availability from page
+// load, so refresh the list whenever the page regains focus and the data is over a minute old.
+// If the picked time no longer exists after the refresh, clear it and say so; booking it would
+// only fail later with a confusing error.
+var slotsFetchedAt = 0;
+var refreshingSlots = false;
+async function refreshSlotsIfStale() {
+  if (refreshingSlots || bookingCompleted || !selectedDate) return;
+  if (Date.now() - slotsFetchedAt < 60000) return;
+  var keep = selectedSlot;
+  refreshingSlots = true;
+  try { await renderSlots(); } finally { refreshingSlots = false; }
+  if (!keep) return;
+  var match = null;
+  document.querySelectorAll('#slotsGrid .slot').forEach(function(el) {
+    var t = el.querySelector('.slot-time');
+    var i = el.querySelector('.slot-instructor');
+    if (!match && t && t.textContent === keep.time && i && i.textContent === (keep.instructor || '')) match = el;
+  });
+  if (match) {
+    selectedSlot = keep;
+    match.classList.add('selected');
+  } else {
+    selectedSlot = null;
+    updateSummary();
+    alert('Sorry, the ' + keep.time + ' time is no longer available. Please pick another time.');
+  }
+}
+document.addEventListener('visibilitychange', function() { if (!document.hidden) refreshSlotsIfStale(); });
+window.addEventListener('focus', function() { refreshSlotsIfStale(); });
 
 function fmtDate(d) {
   return DAY_NAMES[d.getDay()] + ', ' + MONTH_NAMES[d.getMonth()] + ' ' + d.getDate();

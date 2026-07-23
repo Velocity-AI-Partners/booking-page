@@ -1884,6 +1884,7 @@ async function fetchSlots(dateStr) {
     slotsLoading.classList.add('hidden');
     classLoading.classList.add('hidden');
     loadingIndicator.classList.add('hidden');
+    slotsFetchedAt = Date.now();
 
     if (availableSlots.length === 0) {
       classList.classList.add('hidden');
@@ -1917,6 +1918,7 @@ async function fetchSlots(dateStr) {
   slotsLoading.classList.add('hidden');
   classLoading.classList.add('hidden');
   loadingIndicator.classList.add('hidden');
+  slotsFetchedAt = Date.now();
 
   // Filter out past slots when viewing today
   var locationNow = getLocationNow();
@@ -2096,6 +2098,39 @@ function selectSlot(idx) {
     document.getElementById('selectionSummary').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, 100);
 }
+
+// Phantom-slot guard (2026-07-23): a tab left open keeps showing the availability from page
+// load, so refresh the list whenever the page regains focus and the data is over a minute old.
+// If the picked time no longer exists after the refresh, clear it and say so; booking it would
+// only fail later with a confusing error.
+var slotsFetchedAt = 0;
+var refreshingSlots = false;
+async function refreshSlotsIfStale() {
+  if (refreshingSlots || bookingCompleted || !selectedDate) return;
+  if (Date.now() - slotsFetchedAt < 60000) return;
+  var keep = selectedSlot;
+  refreshingSlots = true;
+  try { await fetchSlots(selectedDate); } finally { refreshingSlots = false; }
+  if (!keep) return;
+  var stillIdx = -1;
+  for (var i = 0; i < availableSlots.length; i++) {
+    var s = availableSlots[i];
+    if (s.time === keep.time && (s.instructor || '') === (keep.instructor || '') && (s.duration || null) === (keep.duration || null)) { stillIdx = i; break; }
+  }
+  if (stillIdx >= 0) {
+    selectedSlot = availableSlots[stillIdx];
+    document.querySelectorAll('.slot, .class-item').forEach(function(el) {
+      el.classList.toggle('selected', parseInt(el.dataset.index) === stillIdx);
+    });
+  } else {
+    selectedSlot = null;
+    updateSelectionSummary();
+    updateSubmitButton();
+    alert('Sorry, the ' + (keep.time || '') + ' time is no longer available. Please pick another time.');
+  }
+}
+document.addEventListener('visibilitychange', function() { if (!document.hidden) refreshSlotsIfStale(); });
+window.addEventListener('focus', function() { refreshSlotsIfStale(); });
 
 // ============================================================
 // SELECTION SUMMARY
