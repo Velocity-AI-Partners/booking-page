@@ -866,7 +866,7 @@ function showConfirmed(resp) {
   var saved = {}; try { saved = JSON.parse(localStorage.getItem('szDemoBooking') || '{}'); } catch (e) {}
   var when = saved.date ? ('<strong>' + saved.date + '</strong> at <strong>' + saved.time +
     (saved.instructor ? ' with ' + saved.instructor : '') + '</strong>') : '<strong>your selected time</strong>';
-  document.getElementById('popupDetail').innerHTML = 'Your stretch session is booked for ' + when + '.<br>We&rsquo;ll see you there!';
+  document.getElementById('popupDetail').innerHTML = 'Your stretch session is booked for ' + when + '.<br>Wear comfortable, stretchy clothing and bring a clean pair of socks &mdash; we&rsquo;ll see you there!';
   var cardStr = resp.brand && resp.last4 ? (String(resp.brand).toUpperCase() + ' &bull;&bull;' + resp.last4) : 'your card';
   document.getElementById('popupDepositNote').innerHTML =
     '<strong>Your session is free &mdash; ' + cardStr + ' just holds your spot.</strong> ' +
