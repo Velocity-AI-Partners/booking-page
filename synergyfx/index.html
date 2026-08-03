@@ -95,10 +95,7 @@
   .fld textarea{min-height:96px;resize:vertical}
   .fld input:focus,.fld textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(21,94,239,.13)}
   .fld input.err,.fld textarea.err{border-color:#f04438}
-  .fld .with-icon input{padding-left:40px}
-  .fld .ic{position:absolute;left:13px;color:var(--muted);pointer-events:none;display:flex}
-  .fld .flag{position:absolute;left:11px;display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
-  .fld .with-flag input{padding-left:62px}
+  .fld .hint{font-size:12px;color:var(--muted)}
   .err-msg{color:#f04438;font-size:12px;font-weight:500;display:none}
   .err-msg.show{display:block}
   .form-foot{display:flex;justify-content:flex-end;margin-top:26px}
@@ -151,39 +148,44 @@
    UX: faithful clone of the original scheduling widget (calendar + slot rail),
    Playwright-matched (#155EEF, Inter, circular day cells).
 
-   DATA: 100% Zen Planner STUDIO. Open times come from Studio's public scheduler
-   (proxied by the synergyfx-booking edge fn action "studio-slots" because the
-   scheduler HTML is CORS-closed). Picking a time hands off to Studio's own
-   scheduler-reserve page, so the booking itself (person record, confirmation,
-   notifications) is created natively by Studio. Zero HighLevel/Engage anywhere.
+   DATA: 100% Zen Planner STUDIO, and the WHOLE flow now happens here - the
+   visitor picks a time, enters their details, and is booked without ever
+   leaving synergyfxfit.com. There is no hand-off to Studio's own reserve page.
+
+   Availability comes from the synergyfx-booking edge fn action
+   "studio-availability", which unions open times across every instructor who
+   teaches the appointment type. That union matters: Studio's api2 returns only
+   the AUTHENTICATED user's slots when no instructor is named, which under-reports
+   availability (14 of 20 on a sampled day). Booking then re-checks the slot
+   server-side and assigns an instructor who is genuinely free.
+   Zero HighLevel/Engage anywhere.
    ------------------------------------------------------------------------- */
 const CALENDAR = {
-  templateId:"C60552FA-953E-4BD5-ADD1-A05D07B730BA", // In-Person Consultation
+  templateId:"c60552fa-953e-4bd5-add1-a05d07b730ba", // In-Person Consultation
   name:"In-Person Consultation", slotDurationMin:30, timezone:"America/New_York",
   tzLabel:"America/New_York (EDT)"
 };
-const SLOTS_ENDPOINT = "https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/synergyfx-booking";
-const RESERVE_BASE = "https://synergyfxfit.sites.zenplanner.com/scheduler-reserve.cfm";
+const ENDPOINT = "https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/synergyfx-booking";
+const STUDIO_PHONE = "(410) 964-9858";
+const STUDIO_ADDR = "8815 Columbia 100 Parkway, Suite 2, Columbia, MD 21045";
 
-/* Studio's public scheduler serves ONE week per request; fetch every week that
-   overlaps the viewed month in parallel and merge. Any failed week fails the
-   whole load (renderDateTime shows the retry message) - a silently missing week
-   would read as "no availability", which is worse than an honest error. */
+/* One request covers the whole viewed month. Availability failures are surfaced,
+   never rendered as an empty calendar - "no open times" and "the lookup broke"
+   must not look the same to a visitor. */
 async function fetchAvailability(y,m){
   const first=new Date(y,m,1), last=new Date(y,m+1,0);
-  const start=new Date(first); start.setDate(first.getDate()-first.getDay()); // back to Sunday
-  const reqs=[];
-  for(let d=new Date(start); d<=last; d.setDate(d.getDate()+7)){
-    reqs.push(fetch(SLOTS_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({action:"studio-slots",templateId:CALENDAR.templateId,date:ymd(d)})})
-      .then(r=>{ if(!r.ok) throw new Error("slots "+r.status); return r.json(); }));
-  }
+  const today=new Date(); today.setHours(0,0,0,0);
+  const start=(first<today)?today:first;
+  const r=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({action:"studio-availability",templateId:CALENDAR.templateId,
+      start:ymd(start),end:ymd(last)})});
+  if(!r.ok) throw new Error("availability "+r.status);
+  const d=await r.json();
+  if(d.error) throw new Error(d.error);
   const out={};
-  (await Promise.all(reqs)).forEach(w=>{
-    for(const [day,times] of Object.entries(w.days||{})){
-      if(times.length) out[day]=times.map(t=>day+"T"+t); // naive ET wall-clock strings
-    }
-  });
+  for(const [day,slots] of Object.entries(d.days||{})){
+    if(slots.length) out[day]=slots.map(s=>day+"T"+s.t); // naive ET wall-clock strings
+  }
   return out;
 }
 
@@ -204,9 +206,8 @@ const ic={
   globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>'
 };
 function ymd(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
-function pad(n){return String(n).padStart(2,"0");}
 // Slot strings are NAIVE Studio-local wall clock ("2026-07-10T07:00:00") straight
-// from the Studio scheduler, so format them by string math - no timezone parsing.
+// from Studio, so format them by string math - no timezone parsing.
 function fmtTime(s){const h=+s.slice(11,13), m=s.slice(14,16); return ((h%12)||12)+":"+m+" "+(h<12?"AM":"PM");}
 function endLabel(s){let h=+s.slice(11,13), m=+s.slice(14,16)+CALENDAR.slotDurationMin; h+=Math.floor(m/60); m%=60; return ((h%12)||12)+":"+String(m).padStart(2,"0")+" "+(h<12?"AM":"PM");}
 function fmtDateLong(dStr){const d=new Date(dStr+"T12:00:00");return `${DOWF[d.getDay()]}, ${MONS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;}
@@ -224,7 +225,7 @@ function renderMeta(){
 
 /* ---------------- step: date + time ---------------- */
 async function renderDateTime(notice){
-  backBtn.classList.remove("show");
+  backBtn.classList.remove("show"); backBtn.onclick=null;
   renderMeta();
   const y=view.getFullYear(), m=view.getMonth();
   const now=new Date(); const prevDisabled=(y===now.getFullYear()&&m===now.getMonth());
@@ -294,12 +295,173 @@ function paintRail(){
   }).join("");
   rail.querySelectorAll("[data-iso]").forEach(b=> b.onclick=()=>{ state.slot=b.dataset.iso; paintRail(); });
   const go=rail.querySelector("[data-go]"); if(go) go.onclick=()=>{
-    state.chosen=go.dataset.go; renderMeta();
-    // Hand off to Studio's own reserve page: it collects the client's details and
-    // creates the booking natively (person + confirmation + notifications).
-    // Query uses the same literal "+" separator Studio's own slot links use.
-    window.location.href=RESERVE_BASE+"?appointmentTemplateId="+CALENDAR.templateId+"&date="+state.chosen.replace("T","+");
+    state.chosen=go.dataset.go; renderMeta(); renderDetails();
   };
+}
+
+/* ---------------- step: details ----------------
+   Same fields Studio's own reserve page collects, minus the captcha. Nothing
+   here leaves the page: submit posts to our edge fn, which creates the person
+   and the appointment in Zen Planner. */
+function renderDetails(notice){
+  backBtn.classList.add("show");
+  backBtn.onclick=()=>{ state.chosen=null; renderMeta(); renderDateTime(); };
+  stage.innerHTML=`
+    <h2>Enter your details</h2>
+    ${notice?`<div class="form-notice err">${esc(notice)}</div>`:""}
+    <form id="detForm" novalidate>
+      <div class="form-grid">
+        <div class="fld">
+          <label for="fFirst">First name<span class="req">*</span></label>
+          <div class="inp"><input id="fFirst" name="firstName" type="text" autocomplete="given-name" /></div>
+          <div class="err-msg" data-for="fFirst">Please enter your first name.</div>
+        </div>
+        <div class="fld">
+          <label for="fLast">Last name<span class="req">*</span></label>
+          <div class="inp"><input id="fLast" name="lastName" type="text" autocomplete="family-name" /></div>
+          <div class="err-msg" data-for="fLast">Please enter your last name.</div>
+        </div>
+        <div class="fld">
+          <label for="fEmail">Email<span class="req">*</span></label>
+          <div class="inp"><input id="fEmail" name="email" type="email" autocomplete="email" /></div>
+          <div class="err-msg" data-for="fEmail">Please enter a valid email address.</div>
+        </div>
+        <div class="fld">
+          <label for="fPhone">Mobile phone<span class="req">*</span></label>
+          <div class="inp"><input id="fPhone" name="phone" type="tel" autocomplete="tel" placeholder="(410) 555-0123" /></div>
+          <div class="err-msg" data-for="fPhone">Please enter a 10-digit mobile number.</div>
+        </div>
+        <div class="fld full">
+          <label for="fDob">Date of birth</label>
+          <div class="inp"><input id="fDob" name="birthDate" type="date" /></div>
+          <div class="hint">Optional.</div>
+        </div>
+      </div>
+      <div class="form-foot"><button class="cta" id="submitBtn" type="submit">Confirm booking</button></div>
+    </form>`;
+
+  const form=stage.querySelector("#detForm");
+  const btn=stage.querySelector("#submitBtn");
+  const showErr=(id,on)=>{
+    const inp=stage.querySelector("#"+id);
+    const msg=stage.querySelector(`[data-for="${id}"]`);
+    if(inp) inp.classList.toggle("err",on);
+    if(msg) msg.classList.toggle("show",on);
+  };
+
+  form.onsubmit=async (ev)=>{
+    ev.preventDefault();
+    const v=(id)=>stage.querySelector("#"+id).value.trim();
+    const first=v("fFirst"), last=v("fLast"), email=v("fEmail"), phone=v("fPhone"), dob=v("fDob");
+    let bad=false;
+    const checks=[["fFirst",!first],["fLast",!last],
+      ["fEmail",!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)],
+      ["fPhone",phone.replace(/\D/g,"").length<10]];
+    checks.forEach(([id,isBad])=>{ showErr(id,isBad); if(isBad) bad=true; });
+    if(bad) return;
+
+    btn.disabled=true; btn.textContent="Booking...";
+    let data;
+    try{
+      const r=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"studio-book",templateId:CALENDAR.templateId,
+          date:state.date,time:state.chosen.slice(11),
+          durationMinutes:CALENDAR.slotDurationMin,
+          firstName:first,lastName:last,email,phone,birthDate:dob||undefined})});
+      data=await r.json();
+    }catch(e){
+      btn.disabled=false; btn.textContent="Confirm booking";
+      renderDetails("We couldn't reach the booking system. Please check your connection and try again.");
+      return;
+    }
+
+    if(data && data.code==="slot_taken"){
+      state.chosen=null; state.slot=null; renderMeta();
+      renderDateTime(data.message||"That time was just taken. Please pick another open time.");
+      return;
+    }
+    if(!data || (!data.booked && !data.preview)){
+      btn.disabled=false; btn.textContent="Confirm booking";
+      renderDetails((data&&(data.message||data.error))
+        ? "We couldn't complete that booking. Please try again, or call us at "+STUDIO_PHONE+"."
+        : "Something went wrong. Please try again, or call us at "+STUDIO_PHONE+".");
+      return;
+    }
+    renderConfirm(data,{first,email});
+  };
+}
+
+/* ---------------- step: confirmation ---------------- */
+function renderConfirm(data,who){
+  backBtn.classList.remove("show"); backBtn.onclick=null;
+  const when=`${fmtTime(state.chosen)} - ${endLabel(state.chosen)}, ${fmtDateLong(state.date)}`;
+  // Velocity sends the confirmation email. Three distinct states, and the visitor is
+  // told the truth in each: sent, deliberately not configured yet, or tried and failed.
+  // Never imply an email is coming when none is.
+  const conf = data.confirmation || {};
+  const mailed = !data.preview && !!conf.sent;
+  const emailOff = !data.preview && !conf.sent && conf.reason === "email_not_configured";
+  const note = data.preview
+    ? `<div class="note">Preview mode: nothing was written to Zen Planner.</div>`
+    : mailed ? ""
+    : emailOff
+      ? `<div class="note">Email confirmations aren't switched on yet, so please save these details or add them to your calendar below.</div>`
+      : `<div class="note">We couldn't send your confirmation email, but your appointment is booked. Call ${esc(STUDIO_PHONE)} if you'd like it re-sent.</div>`;
+
+  stage.innerHTML=`
+    <div class="confirm">
+      <div class="check">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h2>You're booked${who&&who.first?", "+esc(who.first):""}</h2>
+      <p>${mailed?`A confirmation is on its way to ${esc(who.email)}.`:`Your in-person consultation is confirmed.`}</p>
+      <div class="summary">
+        <div><div class="k">When</div><div class="v">${esc(when)}</div></div>
+        <div><div class="k">Where</div><div class="v">${esc(STUDIO_ADDR)}</div></div>
+        <div><div class="k">Questions</div><div class="v">${esc(STUDIO_PHONE)}</div></div>
+      </div>
+      ${note}
+      <div class="cal-btns">
+        <a class="cal-btn" id="gcal" target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+          Add to Google Calendar</a>
+        <button class="cal-btn" id="ics">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+          Download .ics</button>
+      </div>
+    </div>`;
+
+  // Build calendar links from the offset timestamp the server confirmed, so the
+  // event lands at the right absolute moment in any of the visitor's timezones.
+  const startIso = data.startsAt || `${state.date}T${state.chosen.slice(11)}-04:00`;
+  const startMs = Date.parse(startIso);
+  const endMs = startMs + CALENDAR.slotDurationMin*60000;
+  const z = (ms)=> new Date(ms).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+  const title="In-Person Consultation at SynergyFx";
+  const g=stage.querySelector("#gcal");
+  if(g && !Number.isNaN(startMs)){
+    g.href="https://calendar.google.com/calendar/render?action=TEMPLATE"+
+      "&text="+encodeURIComponent(title)+
+      "&dates="+z(startMs)+"/"+z(endMs)+
+      "&location="+encodeURIComponent(STUDIO_ADDR)+
+      "&details="+encodeURIComponent("Questions? Call "+STUDIO_PHONE);
+  } else if(g){ g.style.display="none"; }
+
+  const icsBtn=stage.querySelector("#ics");
+  if(icsBtn && !Number.isNaN(startMs)){
+    icsBtn.onclick=()=>{
+      const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//SynergyFx//Booking//EN","BEGIN:VEVENT",
+        "UID:"+(data.bookingId||("sfx-"+startMs))+"@synergyfxfit.com",
+        "DTSTAMP:"+z(Date.now()),"DTSTART:"+z(startMs),"DTEND:"+z(endMs),
+        "SUMMARY:"+title,"LOCATION:"+STUDIO_ADDR,
+        "DESCRIPTION:Questions? Call "+STUDIO_PHONE,
+        "END:VEVENT","END:VCALENDAR"].join("\r\n");
+      const url=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
+      const a=document.createElement("a"); a.href=url; a.download="synergyfx-consultation.ics";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+    };
+  } else if(icsBtn){ icsBtn.style.display="none"; }
 }
 
 renderDateTime();
