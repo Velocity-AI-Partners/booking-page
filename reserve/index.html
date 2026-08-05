@@ -822,6 +822,7 @@ function updateSummary() {
 }
 
 var cardFrameState = 'idle'; // idle | loading | ready | error
+var cardFrameAttempts = 0;   // mint auto-retry counter (transient ClubReady hiccups; live 502 2026-08-05)
 
 function validateForm() {
   if (bookingCompleted) return;
@@ -852,6 +853,15 @@ async function loadCardFrame() {
       throw new Error((r && (r.detail || r.error)) || 'could not load the secure form');
     }
   } catch (e) {
+    // The backend already retries the ClubReady login internally; if the whole call still fails
+    // (transient network hiccup), quietly retry twice more before asking the lead to do anything.
+    // The "Loading secure card form..." spinner stays up during retries.
+    if (cardFrameAttempts < 3) {
+      cardFrameAttempts++;
+      cardFrameState = 'idle';
+      setTimeout(function () { validateForm(); }, 2500);
+      return;
+    }
     cardFrameState = 'error';
     document.getElementById('cardFrameLoading').style.display = 'none';
     var el = document.getElementById('cardFrameError');
