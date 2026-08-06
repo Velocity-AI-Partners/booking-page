@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SynergyFx | Book an In-Person Consultation</title>
+<title>SynergyFx | Book a Consultation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -135,7 +135,7 @@
     <button class="backbtn" id="backBtn" title="Back" aria-label="Back">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
     </button>
-    <h1 class="svc-title">In-Person Consultation</h1>
+    <h1 class="svc-title">Consultation</h1>
     <div class="meta" id="meta"></div>
   </aside>
   <section class="stage" id="stage"></section>
@@ -143,7 +143,10 @@
 
 <script>
 /* =========================================================================
-   SynergyFx "In-Person Consultation" booking page.
+   SynergyFx consultation booking page. (Charmaine 2026-08-06: never show the
+   words "In-Person" to visitors; all their consultations are in person. The
+   Zen Planner appointment TYPE is still literally named "In-Person Consultation"
+   over in Studio, so ids/comments keep that name; display copy must not.)
 
    UX: faithful clone of the original scheduling widget (calendar + slot rail),
    Playwright-matched (#155EEF, Inter, circular day cells).
@@ -162,7 +165,7 @@
    ------------------------------------------------------------------------- */
 const CALENDAR = {
   templateId:"c60552fa-953e-4bd5-add1-a05d07b730ba", // In-Person Consultation
-  name:"In-Person Consultation", slotDurationMin:30, timezone:"America/New_York",
+  name:"Consultation", slotDurationMin:30, timezone:"America/New_York",
   tzLabel:"America/New_York (EDT)"
 };
 const ENDPOINT = "https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/synergyfx-booking";
@@ -414,7 +417,7 @@ function renderConfirm(data,who){
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
       <h2>You're booked${who&&who.first?", "+esc(who.first):""}</h2>
-      <p>${mailed?`A confirmation is on its way to ${esc(who.email)}.`:`Your in-person consultation is confirmed.`}</p>
+      <p>${mailed?`A confirmation is on its way to ${esc(who.email)}.`:`Your consultation is confirmed.`}</p>
       <div class="summary">
         <div><div class="k">When</div><div class="v">${esc(when)}</div></div>
         <div><div class="k">Where</div><div class="v">${esc(STUDIO_ADDR)}</div></div>
@@ -437,7 +440,7 @@ function renderConfirm(data,who){
   const startMs = Date.parse(startIso);
   const endMs = startMs + CALENDAR.slotDurationMin*60000;
   const z = (ms)=> new Date(ms).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
-  const title="In-Person Consultation at SynergyFx";
+  const title="Consultation at SynergyFx";
   const g=stage.querySelector("#gcal");
   if(g && !Number.isNaN(startMs)){
     g.href="https://calendar.google.com/calendar/render?action=TEMPLATE"+
