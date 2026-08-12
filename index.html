@@ -2096,6 +2096,7 @@ async function fetchSlots(dateStr) {
   // For ClubReady locations, fetch from edge function
   try {
     var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
+    if (userInfo.memberId) slotsUrl += '&memberId=' + encodeURIComponent(userInfo.memberId);
     var response = await fetch(slotsUrl, { headers: EDGE_HEADERS });
     // Drop the response if the user has since picked a different date.
     if (selectedDate !== requestedDate) return;
