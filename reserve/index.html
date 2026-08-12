@@ -651,14 +651,35 @@ var CONFIG = {
     document.title = 'Reserve Your Free Stretch — ' + CONFIG.locationName;
   } catch (e) {}
 })();
+// ClubReady ids are numeric, but the SMS that carries this link is written by the AI agent, which
+// injects the raw URL mid-sentence and then punctuates it — so lid arrives as "132333208." or
+// "132333208," about a third of the time. That is not cosmetic: deposit-demo passes the id straight
+// into payprefs-PaymentProfiles.asp?id=..., ClubReady answers 500, mint-card-link throws
+// "gateway link not found", and the lead sees "Could not load the secure card form" and cannot book.
+// Verified against prod 2026-08-11: id "131591199" -> ok:true with a gateway URL; "131591199." ->
+// mint_failed / status 500. Measured at the time of the fix: 23 of 68 sent links corrupted
+// (13 of 15 at Santa Rosa, 10 of 53 at South Reno), plus 2 more ending in a comma.
+// Taking the leading digit run matches what book-session already does downstream (parseInt), so a
+// value that does not survive this was never bookable in the first place. Keep the raw value for
+// telemetry so we can watch the upstream n8n prompt fix land.
+function crId(v) {
+  var m = String(v == null ? '' : v).match(/\d+/);
+  return m ? m[0] : '';
+}
 // Lead identity from the personalized booking link (same params the main booking page uses).
-var LEAD = {
+var LEAD_RAW = {
   memberId: QS.get('mid') || QS.get('memberId') || '',
   leadId: QS.get('lid') || QS.get('leadId') || '',
+};
+var LEAD = {
+  memberId: crId(LEAD_RAW.memberId),
+  leadId: crId(LEAD_RAW.leadId),
   name: QS.get('name') || '',
   email: QS.get('email') || '',
   phone: QS.get('phone') || '',
 };
+// True when the link we were handed carried a malformed id that we just repaired.
+var LEAD_ID_REPAIRED = (LEAD_RAW.memberId !== LEAD.memberId) || (LEAD_RAW.leadId !== LEAD.leadId);
 // The ClubReady member the card vaults onto. For SZ lead flows the link carries lid = the lead's
 // numeric ClubReady userId (book-session books onto exactly this id: customerId falls back to
 // leadId, then userId = parseInt(customerId)). So the card MUST vault onto the same id book-session
@@ -666,6 +687,46 @@ var LEAD = {
 // South Reno test prospect for previews/demos (no real booking is created in preview).
 CONFIG.crUserId = LEAD.memberId || LEAD.leadId || '131591199';
 CONFIG.clientName = LEAD.name || '';
+
+// ============================================================
+// FUNNEL TELEMETRY
+// ============================================================
+// This page previously emitted nothing at all, so the dashboard could see links sent and cards
+// on file and nothing in between. Same fire-and-forget shape as the page_visits block on the
+// main booking page: wrapped in try/catch AND .catch(), so a telemetry failure can never break
+// or slow a booking. Writes go to an append-only table -- anon can insert, anon cannot read back.
+// Never send card data here (no PAN, no last4, no brand).
+var SESSION_KEY = (function () {
+  try {
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  } catch (e) { return null; }
+})();
+function trackStage(stage, extra) {
+  try {
+    fetch('https://jjckotsrhuxxftwmdlwc.supabase.co/rest/v1/reserve_funnel_events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': CONFIG.anonKey,
+        'Authorization': 'Bearer ' + CONFIG.anonKey,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        // The real slug, never CONFIG.location's '-demo' alias -- that alias is why
+        // demo_deposits rows will not join to locations.slug. A CHECK constraint rejects it.
+        location_slug: CONFIG.bookingLocation,
+        stage: stage,
+        // Only a genuine lead id. A bare preview falls back to the test prospect for booking
+        // purposes, but must not be counted as a real lead in the funnel.
+        cr_user_id: LEAD.memberId || LEAD.leadId || null,
+        session_key: SESSION_KEY,
+        lid_repaired: LEAD_ID_REPAIRED,
+        meta: extra || {},
+      }),
+    }).catch(function () {});
+  } catch (e) {}
+}
+trackStage('visit', LEAD_ID_REPAIRED ? { repaired_from: LEAD_RAW.leadId || LEAD_RAW.memberId } : {});
 
 function apiCall(payload) {
   return fetch(CONFIG.api, {
@@ -769,10 +830,13 @@ async function renderSlots() {
 }
 
 function selectSlot(s, el) {
+  var firstPick = !selectedSlot;
   selectedSlot = s;
   document.querySelectorAll('.slot').forEach(function(x) { x.classList.remove('selected'); });
   el.classList.add('selected');
   updateSummary();
+  // Only the first pick counts as a funnel stage; re-picking a different time is not a new lead.
+  if (firstPick) trackStage('slot_selected');
 }
 
 // Phantom-slot guard (2026-07-23): a tab left open keeps showing the availability from page
@@ -848,6 +912,7 @@ async function loadCardFrame() {
       document.getElementById('cardFrameWrap').style.display = 'block';
       document.getElementById('cardFrameLoading').style.display = 'none';
       cardFrameState = 'ready';
+      trackStage('card_form_opened', cardFrameAttempts ? { attempts: cardFrameAttempts + 1 } : {});
       validateForm();
     } else {
       throw new Error((r && (r.detail || r.error)) || 'could not load the secure form');
@@ -863,6 +928,10 @@ async function loadCardFrame() {
       return;
     }
     cardFrameState = 'error';
+    // Terminal failure only -- the transient-retry path above returns before reaching here, so
+    // this counts leads who genuinely could not get a card form, not momentary blips. This is the
+    // exact branch a punctuation-corrupted lid used to land on (ClubReady 500 -> mint_failed).
+    trackStage('card_form_failed', { detail: String(e && e.message || '').slice(0, 200), attempts: cardFrameAttempts + 1 });
     document.getElementById('cardFrameLoading').style.display = 'none';
     var el = document.getElementById('cardFrameError');
     el.style.display = 'block';
@@ -909,12 +978,17 @@ async function submitBooking() {
   try {
     var chk = await apiCall({ action: 'check-card', location: CONFIG.location, crUserId: window.__crUserId || undefined });
     if (!chk || !chk.ok || !chk.hasCard) {
+      // check-card fails closed, so this covers three different situations we care about telling
+      // apart later: the lead never entered a card, the card was rejected by the gateway, or the
+      // ClubReady lookup itself errored. chk.ok distinguishes the last one.
+      trackStage('card_declined', { lookup_ok: !!(chk && chk.ok), detail: String((chk && (chk.detail || chk.error)) || '').slice(0, 200) });
       errEl.style.display = 'block';
       errEl.textContent = 'We couldn’t find a card saved to your account yet. In the secure form above, click “New Payment Profile”, enter a valid card, and Save — then confirm again.';
       document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
       btn.disabled = false;
       return;
     }
+    trackStage('card_verified');
     errEl.style.display = 'none';
     // Card verified in ClubReady. Create the real appointment + deposit record only when armed AND a
     // real lead is present (from the link); otherwise this is a preview (confirmation only, no writes).
@@ -935,6 +1009,9 @@ async function submitBooking() {
         }),
       }).then(function(r){ return r.json(); }).catch(function(){ return {}; });
       if (!bres.success) {
+        // The worst outcome in the whole flow: the card IS vaulted but no appointment exists, so
+        // the lead is left holding a card-on-file with nothing booked. Worth its own stage.
+        trackStage('book_failed', { detail: String(bres.message || '').slice(0, 200) });
         errEl.style.display = 'block';
         errEl.textContent = bres.message || 'We could not complete the booking. Your card is saved; please contact the studio.';
         document.getElementById('submitText').innerHTML = 'Save Card &amp; Confirm Booking';
@@ -947,6 +1024,10 @@ async function submitBooking() {
         dateIso: booking.dateIso, time: selectedSlot.time + (selectedSlot.instructor ? ' with ' + selectedSlot.instructor : ''),
         crUserId: CONFIG.crUserId, crStoreId: CONFIG.storeId, cardBrand: chk.brand, cardLast4: chk.last4,
       });
+      // Only the armed, real-lead path books. record-deposit writes demo_deposits, whose location
+      // column still carries the '-demo' alias; carrying the deposit id here is what lets the
+      // dashboard join the two without depending on that alias.
+      trackStage('booked', { deposit_id: (rec && rec.depositId) || null });
       showConfirmed({ brand: chk.brand, last4: chk.last4, depositId: rec && rec.depositId });
       return;
     }
