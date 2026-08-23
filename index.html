@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Discourage long-lived browser caching of this shell. GitHub Pages already sends
+       cache-control: max-age=600, but some desktop browsers hold the HTML far longer via
+       heuristic/disk caching. See the PAGE_VERSION self-heal check further down, which is
+       the actual mechanism that pulls a stale tab onto the current build. -->
+  <meta http-equiv="Cache-Control" content="no-cache">
   <title>Book Your Session</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -866,8 +871,8 @@
           <div class="slots-grid hidden" id="slotsGrid"></div>
           <div class="class-list hidden" id="classList"></div>
           <div class="no-slots hidden" id="noSlots">
-            <div class="no-slots-icon">&#128197;</div>
-            <p>No available times on this day.<br>Try selecting another date.</p>
+            <div class="no-slots-icon" id="noSlotsIcon">&#128197;</div>
+            <p id="noSlotsText">No available times on this day.<br>Try selecting another date.</p>
           </div>
         </div>
       </div>
@@ -982,6 +987,57 @@ var CONFIG = {
   daysAhead: 30,
 };
 var EDGE_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONFIG.anonKey };
+
+// ============================================================
+// BUILD VERSION + STALE-CACHE SELF-HEAL
+// ------------------------------------------------------------
+// Bump PAGE_VERSION and version.json together on every deploy that changes
+// page behaviour. On load we compare this baked-in constant against
+// version.json (fetched with no-store, so it never comes from cache). A
+// mismatch means this tab is running a stale cached shell, so we reload once
+// to pick up the current build.
+//
+// Guard rails: at most one reload per version per tab session (sessionStorage
+// key), and every failure path is silent - a missing or unreachable
+// version.json must never block booking.
+//
+// Known limit: builds already cached in the wild predate this checker, so they
+// cannot self-heal. This only prevents future stale-build episodes.
+// ============================================================
+var PAGE_VERSION = '2026-08-23-1';
+
+(function selfHealStaleBuild() {
+  try {
+    fetch('version.json?_=' + Date.now(), { cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.version || data.version === PAGE_VERSION) return;
+        var key = 'vap_booking_reloaded_' + data.version;
+        if (sessionStorage.getItem(key)) return;   // already tried; do not loop
+        sessionStorage.setItem(key, '1');
+        console.warn('[booking] stale build ' + PAGE_VERSION + ' -> reloading for ' + data.version);
+        location.reload();
+      })
+      .catch(function() { /* offline or blocked: keep serving this build */ });
+  } catch (e) { /* no fetch/sessionStorage: keep serving this build */ }
+})();
+
+// Tracks whether the last get-slots call actually failed, so an API error is
+// shown as an error instead of being rendered as genuine empty availability.
+var slotsLoadFailed = false;
+
+function setNoSlotsMessage(isError) {
+  var icon = document.getElementById('noSlotsIcon');
+  var text = document.getElementById('noSlotsText');
+  if (!icon || !text) return;
+  if (isError) {
+    icon.innerHTML = '&#9888;&#65039;';
+    text.innerHTML = 'We could not load the schedule.<br>Please refresh the page, or call us and we will book you in.';
+  } else {
+    icon.innerHTML = '&#128197;';
+    text.innerHTML = 'No available times on this day.<br>Try selecting another date.';
+  }
+}
 
 // ============================================================
 // LOCATION DATABASE
@@ -1968,11 +2024,15 @@ async function checkLeadSlotExpansion() {
   }
 
   try {
+    var probeFailed = false;
     var requests = dates.map(function(dateStr) {
-      var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
-      return fetch(slotsUrl, { headers: EDGE_HEADERS })
-        .then(function(r) { return r.ok ? r.json() : []; })
-        .catch(function() { return []; });
+      var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr) + '&_v=' + encodeURIComponent(PAGE_VERSION);
+      return fetch(slotsUrl, { headers: EDGE_HEADERS, cache: 'no-store' })
+        .then(function(r) {
+          if (!r.ok) { probeFailed = true; return []; }
+          return r.json();
+        })
+        .catch(function() { probeFailed = true; return []; });
     });
 
     var results = await Promise.all(requests);
@@ -1982,7 +2042,12 @@ async function checkLeadSlotExpansion() {
       totalSlots += slots.length;
     });
 
-    if (totalSlots <= 2) {
+    // If any probe call errored, the low total is an artifact of the failure
+    // rather than genuinely thin availability - do not widen the lead window
+    // off bad data.
+    if (probeFailed) {
+      console.warn('Lead slot expansion check skipped: one or more get-slots calls failed');
+    } else if (totalSlots <= 2) {
       currentLocation.leadDaysAhead = currentLocation.leadDaysAheadExpanded;
       dateOffset = 0;
     }
@@ -2084,6 +2149,9 @@ async function fetchSlots(dateStr) {
 
     if (availableSlots.length === 0) {
       classList.classList.add('hidden');
+      // Class schedules are embedded in the page, so an empty day here is
+      // always genuinely empty - never an API failure.
+      setNoSlotsMessage(false);
       noSlots.classList.remove('hidden');
     } else {
       noSlots.classList.add('hidden');
@@ -2095,9 +2163,9 @@ async function fetchSlots(dateStr) {
 
   // For ClubReady locations, fetch from edge function
   try {
-    var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr);
+    var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr) + '&_v=' + encodeURIComponent(PAGE_VERSION);
     if (userInfo.memberId) slotsUrl += '&memberId=' + encodeURIComponent(userInfo.memberId);
-    var response = await fetch(slotsUrl, { headers: EDGE_HEADERS });
+    var response = await fetch(slotsUrl, { headers: EDGE_HEADERS, cache: 'no-store' });
     // Drop the response if the user has since picked a different date.
     if (selectedDate !== requestedDate) return;
 
@@ -2106,9 +2174,13 @@ async function fetchSlots(dateStr) {
     var data = await response.json();
     if (selectedDate !== requestedDate) return;
     availableSlots = Array.isArray(data) ? data : (data.slots || []);
+    slotsLoadFailed = false;
   } catch (err) {
     if (selectedDate !== requestedDate) return;
     console.warn('Availability webhook unavailable:', err.message);
+    // Do NOT let a failed call masquerade as real "no times available" - that
+    // reads to the customer as a fully booked studio and they leave.
+    slotsLoadFailed = true;
     availableSlots = [];
   }
 
@@ -2136,6 +2208,7 @@ async function fetchSlots(dateStr) {
 
   if (availableSlots.length === 0) {
     grid.classList.add('hidden');
+    setNoSlotsMessage(slotsLoadFailed);
     noSlots.classList.remove('hidden');
   } else {
     noSlots.classList.add('hidden');
