@@ -642,6 +642,57 @@ var CONFIG = {
   // and publish). ARMED 2026-07-14 (Denise approved): real bookings + deposit tracking are LIVE.
   live: true,
 };
+// ============================================================
+// BUILD VERSION + STALE-CACHE SELF-HEAL
+// ------------------------------------------------------------
+// Same mechanism as the main booking page: PAGE_VERSION is baked into this
+// build and compared against ../version.json (fetched no-store), on load, on
+// tab focus, and before each availability fetch - the last two throttled. A
+// mismatch means this tab is running a stale cached shell and reloads once.
+//
+// Extra care here: this page carries a card-capture flow, so we never reload
+// out from under someone who is mid-booking (a slot picked, or the booking
+// already done). Every failure path is silent.
+// ============================================================
+var PAGE_VERSION = '2026-08-25-1';
+var VERSION_CHECK_INTERVAL_MS = 10 * 60 * 1000;
+var lastVersionCheckAt = 0;
+
+function reloadOntoCurrentBuild(reason) {
+  // Do not interrupt a booking already in progress.
+  if (typeof bookingCompleted !== 'undefined' && bookingCompleted) return false;
+  if (typeof selectedSlot !== 'undefined' && selectedSlot) return false;
+  try {
+    var key = 'vap_reserve_reloaded_' + reason;
+    if (sessionStorage.getItem(key)) return false;   // already tried; do not loop
+    sessionStorage.setItem(key, '1');
+    console.warn('[reserve] stale build ' + PAGE_VERSION + ' (' + reason + ') -> reloading');
+    location.reload();
+    return true;
+  } catch (e) {
+    // No sessionStorage means no loop guard - leave this tab alone.
+    return false;
+  }
+}
+
+function checkBuildVersion(force) {
+  try {
+    var now = Date.now();
+    if (!force && now - lastVersionCheckAt < VERSION_CHECK_INTERVAL_MS) return;
+    lastVersionCheckAt = now;
+    fetch('../version.json?_=' + now, { cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data || !data.version || data.version === PAGE_VERSION) return;
+        reloadOntoCurrentBuild('version ' + data.version);
+      })
+      .catch(function() { /* offline or blocked: keep serving this build */ });
+  } catch (e) { /* no fetch: keep serving this build */ }
+}
+
+checkBuildVersion(true);
+document.addEventListener('visibilitychange', function() { if (!document.hidden) checkBuildVersion(); });
+
 // Paint the location-specific header (name/phone/address) from the selected config.
 (function () {
   try {
@@ -756,12 +807,21 @@ function toIso(d) {
 
 // Real availability from the same backend + rules the main booking page uses (session types come
 // straight from ClubReady). Slot shape: { time, instructor, instructorId, type }.
+// Set when get-slots answered 401/403, i.e. the request went out without a
+// usable anon key - the signature of a stale cached bundle rather than an outage.
+var slotsAuthFailed = false;
 async function fetchSlotsFor(date) {
   var iso = toIso(date);
+  // Throttled: catches a tab that has been sitting here since before the
+  // current build shipped.
+  checkBuildVersion();
+  slotsAuthFailed = false;
   try {
-    var resp = await fetch(CONFIG.bookingApi + '?action=get-slots&location=' + encodeURIComponent(CONFIG.bookingLocation) + '&date=' + encodeURIComponent(iso), {
+    var resp = await fetch(CONFIG.bookingApi + '?action=get-slots&location=' + encodeURIComponent(CONFIG.bookingLocation) + '&date=' + encodeURIComponent(iso) + '&_v=' + encodeURIComponent(PAGE_VERSION), {
       headers: { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONFIG.anonKey },
+      cache: 'no-store',
     });
+    if (resp.status === 401 || resp.status === 403) slotsAuthFailed = true;
     if (!resp.ok) return [];
     var data = await resp.json();
     return Array.isArray(data) ? data : (data.slots || []);
@@ -815,6 +875,16 @@ async function renderSlots() {
   if (myReq !== _slotReqId) return; // a newer date was picked; drop this stale response
   slotsFetchedAt = Date.now();
   grid.innerHTML = '';
+  // A 401/403 is a stale-bundle symptom, not a fully booked day: say so and
+  // pull the tab onto the current build (once per tab session) instead of
+  // showing the ordinary "no available times" copy.
+  if (slotsAuthFailed && !slots.length) {
+    none.innerHTML = reloadOntoCurrentBuild('get-slots auth failure')
+      ? 'This page is out of date, so the schedule could not load.<br>Updating to the latest version now&hellip;'
+      : 'We could not load the schedule.<br>Please refresh the page, or call us and we will book you in.';
+  } else {
+    none.innerHTML = 'No available times on this day.<br>Try selecting another date.';
+  }
   none.style.display = slots.length ? 'none' : 'block';
   slots.forEach(function(s) {
     var el = document.createElement('div');

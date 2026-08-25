@@ -992,45 +992,80 @@ var EDGE_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONF
 // BUILD VERSION + STALE-CACHE SELF-HEAL
 // ------------------------------------------------------------
 // Bump PAGE_VERSION and version.json together on every deploy that changes
-// page behaviour. On load we compare this baked-in constant against
-// version.json (fetched with no-store, so it never comes from cache). A
-// mismatch means this tab is running a stale cached shell, so we reload once
-// to pick up the current build.
+// page behaviour. We compare this baked-in constant against version.json
+// (fetched with no-store, so it never comes from cache). A mismatch means this
+// tab is running a stale cached shell, so we reload once to pick up the
+// current build.
 //
-// Guard rails: at most one reload per version per tab session (sessionStorage
+// Checked on load, whenever the tab becomes visible again, and before each
+// availability fetch - the last two throttled to one network check per
+// VERSION_CHECK_INTERVAL_MS. A load-only check is not enough: the tabs that
+// get stranded on an old build are precisely the long-lived ones that are
+// never reloaded.
+//
+// Guard rails: at most one reload per reason per tab session (sessionStorage
 // key), and every failure path is silent - a missing or unreachable
 // version.json must never block booking.
 //
 // Known limit: builds already cached in the wild predate this checker, so they
 // cannot self-heal. This only prevents future stale-build episodes.
 // ============================================================
-var PAGE_VERSION = '2026-08-23-1';
+var PAGE_VERSION = '2026-08-25-1';
+var VERSION_CHECK_INTERVAL_MS = 10 * 60 * 1000;
+var lastVersionCheckAt = 0;
 
-(function selfHealStaleBuild() {
+// Reload this tab exactly once for a given reason. Returns true when a reload
+// was actually started, so callers can word their message accordingly.
+function reloadOntoCurrentBuild(reason) {
   try {
-    fetch('version.json?_=' + Date.now(), { cache: 'no-store' })
+    var key = 'vap_booking_reloaded_' + reason;
+    if (sessionStorage.getItem(key)) return false;   // already tried; do not loop
+    sessionStorage.setItem(key, '1');
+    console.warn('[booking] stale build ' + PAGE_VERSION + ' (' + reason + ') -> reloading');
+    location.reload();
+    return true;
+  } catch (e) {
+    // Without sessionStorage there is no loop guard, and a reload loop is far
+    // worse than a stale page - leave this tab alone.
+    return false;
+  }
+}
+
+function checkBuildVersion(force) {
+  try {
+    var now = Date.now();
+    if (!force && now - lastVersionCheckAt < VERSION_CHECK_INTERVAL_MS) return;
+    lastVersionCheckAt = now;
+    fetch('version.json?_=' + now, { cache: 'no-store' })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
         if (!data || !data.version || data.version === PAGE_VERSION) return;
-        var key = 'vap_booking_reloaded_' + data.version;
-        if (sessionStorage.getItem(key)) return;   // already tried; do not loop
-        sessionStorage.setItem(key, '1');
-        console.warn('[booking] stale build ' + PAGE_VERSION + ' -> reloading for ' + data.version);
-        location.reload();
+        reloadOntoCurrentBuild('version ' + data.version);
       })
       .catch(function() { /* offline or blocked: keep serving this build */ });
-  } catch (e) { /* no fetch/sessionStorage: keep serving this build */ }
-})();
+  } catch (e) { /* no fetch: keep serving this build */ }
+}
+
+checkBuildVersion(true);
+document.addEventListener('visibilitychange', function() { if (!document.hidden) checkBuildVersion(); });
 
 // Tracks whether the last get-slots call actually failed, so an API error is
 // shown as an error instead of being rendered as genuine empty availability.
 var slotsLoadFailed = false;
+// Set when get-slots answered 401/403, which means this tab sent the request
+// without a usable anon key - i.e. it is running a pre-auth-header build.
+var slotsAuthFailed = false;
 
-function setNoSlotsMessage(isError) {
+// mode: 'empty' (the day really has no times), 'error' (the call failed), or
+// 'stale' (this page copy is out of date and is reloading itself).
+function setNoSlotsMessage(mode) {
   var icon = document.getElementById('noSlotsIcon');
   var text = document.getElementById('noSlotsText');
   if (!icon || !text) return;
-  if (isError) {
+  if (mode === 'stale') {
+    icon.innerHTML = '&#128260;';
+    text.innerHTML = 'This page is out of date, so the schedule could not load.<br>Updating to the latest version now&hellip;';
+  } else if (mode === 'error') {
     icon.innerHTML = '&#9888;&#65039;';
     text.innerHTML = 'We could not load the schedule.<br>Please refresh the page, or call us and we will book you in.';
   } else {
@@ -2098,6 +2133,10 @@ async function fetchSlots(dateStr) {
   // from earlier fetches resolving after the user has picked a different date.
   var requestedDate = dateStr;
 
+  // Throttled: catches a tab that has been sitting on the date picker since
+  // before the current build shipped.
+  checkBuildVersion();
+
   var grid = document.getElementById('slotsGrid');
   var classList = document.getElementById('classList');
   var slotsLoading = document.getElementById('slotsLoading');
@@ -2151,7 +2190,7 @@ async function fetchSlots(dateStr) {
       classList.classList.add('hidden');
       // Class schedules are embedded in the page, so an empty day here is
       // always genuinely empty - never an API failure.
-      setNoSlotsMessage(false);
+      setNoSlotsMessage('empty');
       noSlots.classList.remove('hidden');
     } else {
       noSlots.classList.add('hidden');
@@ -2165,9 +2204,17 @@ async function fetchSlots(dateStr) {
   try {
     var slotsUrl = CONFIG.availabilityApi + '?action=get-slots&location=' + encodeURIComponent(currentLocationSlug) + '&date=' + encodeURIComponent(dateStr) + '&_v=' + encodeURIComponent(PAGE_VERSION);
     if (userInfo.memberId) slotsUrl += '&memberId=' + encodeURIComponent(userInfo.memberId);
+    slotsAuthFailed = false;
     var response = await fetch(slotsUrl, { headers: EDGE_HEADERS, cache: 'no-store' });
     // Drop the response if the user has since picked a different date.
     if (selectedDate !== requestedDate) return;
+
+    // 401/403 means the request reached the edge function without a usable
+    // anon key. The live page always sends one, so this tab is running an old
+    // cached bundle from before the auth headers were added - every call it
+    // makes will fail the same way. Flag it so we reload instead of drawing an
+    // empty day the customer reads as "fully booked".
+    if (response.status === 401 || response.status === 403) slotsAuthFailed = true;
 
     if (!response.ok) throw new Error('Availability API returned ' + response.status);
 
@@ -2208,7 +2255,12 @@ async function fetchSlots(dateStr) {
 
   if (availableSlots.length === 0) {
     grid.classList.add('hidden');
-    setNoSlotsMessage(slotsLoadFailed);
+    // An auth failure is a stale-bundle symptom, not an outage: pull the tab
+    // onto the current build rather than leaving the customer retrying a
+    // schedule that can never load. Once per tab session; if we have already
+    // spent that reload, fall back to the plain error message.
+    var reloading = slotsAuthFailed && reloadOntoCurrentBuild('get-slots auth failure');
+    setNoSlotsMessage(reloading ? 'stale' : (slotsLoadFailed ? 'error' : 'empty'));
     noSlots.classList.remove('hidden');
   } else {
     noSlots.classList.add('hidden');
