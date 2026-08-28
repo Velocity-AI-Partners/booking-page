@@ -1010,7 +1010,7 @@ var EDGE_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONF
 // Known limit: builds already cached in the wild predate this checker, so they
 // cannot self-heal. This only prevents future stale-build episodes.
 // ============================================================
-var PAGE_VERSION = '2026-08-25-1';
+var PAGE_VERSION = '2026-08-28-1';
 var VERSION_CHECK_INTERVAL_MS = 10 * 60 * 1000;
 var lastVersionCheckAt = 0;
 
@@ -1602,6 +1602,28 @@ var LOCATIONS = {
         ['Drop-in', '$85/session'],
       ],
     },
+  },
+  'stretch-zone-reston': {
+    // 2026-08-28 (Robert Koh flag, Monica Rosenberg): Reston books months in advance and has
+    // NO booking-window restriction by studio policy - so no leadDaysAhead / expansion caps
+    // here, and a 30-day carousel. Trade-off accepted by the studio: no-show and cancellation
+    // rates rise for demos booked further out.
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Reston VA',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/New_York',
+    phone: '17038225296',
+    email: 'reston@stretchzone.com',
+    address: '1468 North Point Village Drive, Reston, VA 20194',
+    clubreadyStoreId: 12762,
+    crm: 'clubready',
+    hours: { weekday: [8, 19], saturday: [10, 16], sunday: [10, 16] },
+    daysAhead: 30,
+    leadOffer: { label: 'Complimentary Stretching Consultation', detail: '60-minute one-on-one consultation and assisted stretch' },
   },
   'stretchlab-del-mar': {
     name: 'StretchLab',
