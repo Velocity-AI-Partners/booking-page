@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Reserve Your Free Stretch — Stretch Zone</title>
   <meta name="robots" content="noindex">
+  <!-- 2026-09-10: the card-on-file hold is OFF at every studio that used this page (South Reno +
+       Santa Rosa, studio owner's request 9/9). Anyone still holding an old /reserve/ link (texts sent
+       before the switch) is sent straight to the regular booking page with the same loc + lid.
+       The rest of this file is kept intact for a future re-arm: delete this script to bring it back. -->
+  <script>
+    (function () {
+      try {
+        var q = window.location.search || '';
+        window.location.replace('../' + q + (q ? '&' : '?') + 'from=reserve');
+      } catch (e) { window.location.href = '../'; }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -654,7 +666,7 @@ var CONFIG = {
 // out from under someone who is mid-booking (a slot picked, or the booking
 // already done). Every failure path is silent.
 // ============================================================
-var PAGE_VERSION = '2026-09-09-1';
+var PAGE_VERSION = '2026-09-10-1';
 var VERSION_CHECK_INTERVAL_MS = 10 * 60 * 1000;
 var lastVersionCheckAt = 0;
 
