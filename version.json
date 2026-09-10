@@ -1,4 +1,4 @@
 {
-  "version": "2026-08-28-1",
+  "version": "2026-09-09-1",
   "note": "Bump this together with PAGE_VERSION in index.html and reserve/index.html on every behavioural deploy. Stale cached tabs poll this file (on load, on tab focus, and before each availability fetch) and reload once when it no longer matches their baked-in PAGE_VERSION."
 }
