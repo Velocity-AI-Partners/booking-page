@@ -51,6 +51,8 @@
   .info .foot{margin-top:auto;padding-top:28px;font-size:12px;color:var(--muted)}
   .stage{padding:30px 34px;min-width:0;display:flex;flex-direction:column}
   .stage .hd{font-size:15px;font-weight:600;color:var(--ink);text-align:center;margin:0 0 20px}
+  .stage .consent{font-size:12.5px;line-height:1.55;color:var(--muted);text-align:center;max-width:520px;margin:18px auto 0}
+  .stage .consent a{color:inherit;text-decoration:underline}
   .widget-wrap{flex:1 1 auto}
   @media (max-width:880px){
     .card{grid-template-columns:1fr}
@@ -90,6 +92,7 @@
     <div class="widget-wrap">
       <div id="leadcapture_e32b2794-773a-44d0-8b8e-82468640b8ad"></div><script type="text/javascript">(function(win, doc, zenJSHost, src, module, partitionApiKey, widgetInstanceId) { win.zenplanner = win.zenplanner || {}; win.zenplanner.directLoadArgs = win.zenplanner.directLoadArgs || []; var tryCount = 0, intervalId = null; function afterLoad() { if (win.zenplanner.directLoader !== undefined && window.zenplanner.directLoader !== null) { clearInterval(intervalId); for (var i = 0, l = win.zenplanner.directLoadArgs.length; l > i; i++) { if (win.zenplanner.directLoadArgs[i].widgetInstanceId === widgetInstanceId) { win.zenplanner.directLoader.loadWidget(zenJSHost, module, partitionApiKey, widgetInstanceId); } } } else if (tryCount++ > 200) { console.log('Zen Planner widget : ' + module + ', failed to load.'); clearInterval(intervalId); } } if (win.zenplanner.directLoader === undefined || win.zenplanner.directLoader === null) { win.zenplanner.directLoadArgs.push({ module: module, partitionApiKey: partitionApiKey, widgetInstanceId: widgetInstanceId }); var s = doc.createElement('script'); s.async = 1; s.src = zenJSHost + '/' + src; doc.head.appendChild(s); intervalId = setInterval(afterLoad, 50); } else { win.zenplanner.directLoader.loadWidget(zenJSHost, module, partitionApiKey, widgetInstanceId); } })( window, document, 'https://studio.zenplanner.com', 'zenplanner/studio/target/zp-widget-direct.js', 'leadcapture', '4641145f-3d46-469c-94ca-55f0ca489c98', 'e32b2794-773a-44d0-8b8e-82468640b8ad' ); </script>
     </div>
+    <p class="consent">By submitting this form you agree that SynergyFx Strength &amp; Wellness Lab may text you at the mobile number provided about your inquiry, scheduling and follow-ups. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p>
   </section>
 </div>
 </body>

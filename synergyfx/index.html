@@ -99,6 +99,9 @@
   .err-msg{color:#f04438;font-size:12px;font-weight:500;display:none}
   .err-msg.show{display:block}
   .form-foot{display:flex;justify-content:flex-end;margin-top:26px}
+  .consent{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.55;color:#667085;cursor:pointer}
+  .consent input{margin:3px 0 0;width:16px;height:16px;flex:0 0 auto;accent-color:#c53333}
+  .consent a{color:inherit;text-decoration:underline}
   .cta{background:var(--brand);color:#fff;border:none;border-radius:8px;padding:13px 26px;font-size:15px;font-weight:600;
     cursor:pointer;font-family:inherit}
   .cta:hover{background:var(--brand-dark)}
@@ -339,6 +342,10 @@ function renderDetails(notice){
           <div class="inp"><input id="fDob" name="birthDate" type="date" /></div>
           <div class="hint">Optional.</div>
         </div>
+        <div class="fld full">
+          <label class="consent" for="fSms"><input id="fSms" name="smsConsent" type="checkbox" />
+            <span>I agree to receive text messages from SynergyFx Strength &amp; Wellness Lab about my consultation, scheduling and follow-ups at the mobile number provided. Consent is not a condition of booking. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</span></label>
+        </div>
       </div>
       <div class="form-foot"><button class="cta" id="submitBtn" type="submit">Confirm booking</button></div>
     </form>`;
@@ -370,7 +377,8 @@ function renderDetails(notice){
         body:JSON.stringify({action:"studio-book",templateId:CALENDAR.templateId,
           date:state.date,time:state.chosen.slice(11),
           durationMinutes:CALENDAR.slotDurationMin,
-          firstName:first,lastName:last,email,phone,birthDate:dob||undefined})});
+          firstName:first,lastName:last,email,phone,birthDate:dob||undefined,
+          smsConsent:stage.querySelector("#fSms").checked})});
       data=await r.json();
     }catch(e){
       btn.disabled=false; btn.textContent="Confirm booking";
