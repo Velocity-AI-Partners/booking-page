@@ -654,13 +654,16 @@
       var dateVal=i.date||'Zen Planner has no date for this person';
       // A form submission is timed to the second, so the pane shows the time too.
       if(i.dateKind==='form'&&i.formSubmittedAt) dateVal=fmtDateTime(i.formSubmittedAt);
+      // When Zen Planner dated the lead itself (same-day inquiry date), the exact form
+      // time still gets its own row: "what time did they contact us" is the point.
+      var formRow=(i.formSubmittedAt&&i.dateKind!=='form')?fmtDateTime(i.formSubmittedAt):'';
       // Don't print the message twice: the "From Zen Planner" card renders the same
       // custom fields, so the one shown above is skipped there.
       var lskip=['status','phone','email'];
       if(i.message) (i.custom||[]).forEach(function(c){ if(c.value===i.message) lskip.push('cf:'+c.label); });
       detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> '+(i.booked?'<span class="zp-pill confirmed">Booked</span>':'<span class="zp-pill upcoming">Not booked</span>'),contacts)+
         '<div class="zp-scroll">'+markBtns(i)+'<p class="zp-sec">Lead details</p>'+
-        kvCard([['Name',i.name],[dateLabel,dateVal],['Source',i.source],
+        kvCard([['Name',i.name],[dateLabel,dateVal],['Form submitted',formRow],['Source',i.source],
                 ['Came from',i.sourcePage||i.referrer||''],['Best way to reach',REACH[i.reachBy]||i.reachBy||''],
                 ['Form submissions',i.formCount>1?('Submitted the form '+i.formCount+' times'):''],
                 ['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
