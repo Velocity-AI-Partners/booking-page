@@ -8,24 +8,29 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* SynergyFx contact / lead capture. The form is SynergyFx's live Zen Planner
-     Studio "Contact Us (Website)" lead-capture widget (module=leadcapture,
-     widget e32b2794-773a-44d0-8b8e-82468640b8ad). It loads inline via the Zen
-     Planner loader and submits leads straight into Zen Planner Studio, the
-     single system of record. Fields match the old form: First/Last/Email/
-     Mobile Phone/"How can we help you?" + consent + Send Message. */
+  /* SynergyFx contact / lead capture. Our own form, posted through the
+     synergyfx-booking edge function (action studio-lead) to the SAME Zen Planner
+     Studio lead-capture endpoint the embedded widget used, so leads still land in
+     Studio unchanged. Replacing the widget buys the three things it could not do:
+     more than five fields, a record of which page and what time the visitor came
+     from, and a phone field that is not country-guessed from the visitor's IP
+     (which rejected real US numbers for anyone on a VPN abroad). */
   :root{
     --brand:#c53333; --brand-dark:#a82a2a;
     --brand-tint:rgba(197,51,51,.07);
     --ink:#101828; --muted:#667085; --slate:#5f6b7a;
-    --line:#e4e7ec; --bg:#ffffff;
+    --line:#e4e7ec; --field:#d0d5dd; --bg:#ffffff;
     --shadow:0 6px 28px rgba(16,24,40,.10);
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html{height:100%}
+  /* min-height, NOT height: a centered flex child that outgrows a fixed-height body
+     overflows ABOVE the scroll origin, and that top is unreachable. At phone width the
+     card is taller than the viewport, so height:100% hid the heading behind it. */
   body{
     margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-    color:var(--ink);background:#f7f8fa;display:flex;align-items:center;justify-content:center;padding:30px 16px;
+    color:var(--ink);background:#f7f8fa;display:flex;align-items:center;justify-content:center;
+    padding:30px 16px;min-height:100%;
   }
   .card{
     width:100%;max-width:1040px;background:var(--bg);border:1px solid var(--line);border-radius:14px;
@@ -51,12 +56,49 @@
   .info .foot{margin-top:auto;padding-top:28px;font-size:12px;color:var(--muted)}
   .stage{padding:30px 34px;min-width:0;display:flex;flex-direction:column}
   .stage .hd{font-size:15px;font-weight:600;color:var(--ink);text-align:center;margin:0 0 20px}
-  .stage .consent{font-size:12.5px;line-height:1.55;color:var(--muted);text-align:center;max-width:520px;margin:18px auto 0}
+  .stage .consent{font-size:12.5px;line-height:1.55;color:var(--muted);text-align:center;max-width:520px;margin:20px auto 0}
   .stage .consent a{color:inherit;text-decoration:underline}
-  .widget-wrap{flex:1 1 auto}
+  /* ---------- form (fields and button mirror the sibling booking page) ---------- */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
+  .fld{display:flex;flex-direction:column;gap:7px}
+  .fld.full{grid-column:1 / -1}
+  .fld label{font-size:14px;font-weight:600;color:var(--ink)}
+  .fld label .req{color:#f04438;margin-left:2px}
+  .fld input,.fld textarea{width:100%;font:inherit;font-size:14px;padding:13px 14px;border:1px solid var(--field);
+    border-radius:8px;outline:none;color:var(--ink);background:#fff}
+  .fld textarea{min-height:92px;resize:vertical}
+  .fld input:focus,.fld textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(197,51,51,.13)}
+  .fld input.err,.fld textarea.err{border-color:#f04438}
+  .err-msg{color:#f04438;font-size:12px;font-weight:500;display:none}
+  .err-msg.show{display:block}
+  .radios{display:flex;gap:10px;flex-wrap:wrap}
+  .radios label{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--field);
+    border-radius:8px;padding:11px 18px;font-size:14px;font-weight:500;cursor:pointer}
+  .radios label:has(input:checked){border-color:var(--brand);background:var(--brand-tint)}
+  .radios input{width:16px;height:16px;margin:0;accent-color:var(--brand)}
+  .radios.err label{border-color:#f04438}
+  .form-foot{display:flex;justify-content:center;margin-top:18px}
+  .cta{background:var(--brand);color:#fff;border:none;border-radius:8px;padding:13px 30px;font-size:15px;font-weight:600;
+    cursor:pointer;font-family:inherit}
+  .cta:hover{background:var(--brand-dark)}
+  .cta:disabled{opacity:.6;cursor:progress}
+  .form-notice{border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin:0 0 18px;
+    color:#c53333;background:#fdecec;border:1px solid #f3c2c2;display:none}
+  .form-notice.show{display:block}
+  /* ---------- thank-you state ---------- */
+  .thanks{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:14px;min-height:400px}
+  .thanks .check{width:62px;height:62px;border-radius:50%;background:var(--brand-tint);color:var(--brand);
+    display:flex;align-items:center;justify-content:center}
+  .thanks h2{margin:0;font-size:21px}
+  .thanks p{margin:0;color:var(--muted);max-width:400px;line-height:1.55}
   @media (max-width:880px){
     .card{grid-template-columns:1fr}
     .info{border-right:none;border-bottom:1px solid var(--line)}
+  }
+  @media (max-width:560px){
+    .form-grid{grid-template-columns:1fr}
+    .stage{padding:26px 20px}
   }
 </style>
 </head>
@@ -87,13 +129,152 @@
     <div class="foot">SynergyFx &bull; Columbia, MD</div>
   </aside>
 
-  <section class="stage">
+  <section class="stage" id="stage">
     <p class="hd">Complete the form and we'll be in touch within one business day.</p>
-    <div class="widget-wrap">
-      <div id="leadcapture_e32b2794-773a-44d0-8b8e-82468640b8ad"></div><script type="text/javascript">(function(win, doc, zenJSHost, src, module, partitionApiKey, widgetInstanceId) { win.zenplanner = win.zenplanner || {}; win.zenplanner.directLoadArgs = win.zenplanner.directLoadArgs || []; var tryCount = 0, intervalId = null; function afterLoad() { if (win.zenplanner.directLoader !== undefined && window.zenplanner.directLoader !== null) { clearInterval(intervalId); for (var i = 0, l = win.zenplanner.directLoadArgs.length; l > i; i++) { if (win.zenplanner.directLoadArgs[i].widgetInstanceId === widgetInstanceId) { win.zenplanner.directLoader.loadWidget(zenJSHost, module, partitionApiKey, widgetInstanceId); } } } else if (tryCount++ > 200) { console.log('Zen Planner widget : ' + module + ', failed to load.'); clearInterval(intervalId); } } if (win.zenplanner.directLoader === undefined || win.zenplanner.directLoader === null) { win.zenplanner.directLoadArgs.push({ module: module, partitionApiKey: partitionApiKey, widgetInstanceId: widgetInstanceId }); var s = doc.createElement('script'); s.async = 1; s.src = zenJSHost + '/' + src; doc.head.appendChild(s); intervalId = setInterval(afterLoad, 50); } else { win.zenplanner.directLoader.loadWidget(zenJSHost, module, partitionApiKey, widgetInstanceId); } })( window, document, 'https://studio.zenplanner.com', 'zenplanner/studio/target/zp-widget-direct.js', 'leadcapture', '4641145f-3d46-469c-94ca-55f0ca489c98', 'e32b2794-773a-44d0-8b8e-82468640b8ad' ); </script>
-    </div>
-    <p class="consent">By submitting this form you agree that SynergyFx Strength &amp; Wellness Lab may text you at the mobile number provided about your inquiry, scheduling and follow-ups. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p>
+    <div class="form-notice" id="notice"></div>
+    <form id="leadForm" novalidate>
+      <div class="form-grid">
+        <div class="fld">
+          <label for="fFirst">First name<span class="req">*</span></label>
+          <input id="fFirst" name="firstName" type="text" autocomplete="given-name" />
+          <div class="err-msg" data-for="fFirst">Please enter your first name.</div>
+        </div>
+        <div class="fld">
+          <label for="fLast">Last name<span class="req">*</span></label>
+          <input id="fLast" name="lastName" type="text" autocomplete="family-name" />
+          <div class="err-msg" data-for="fLast">Please enter your last name.</div>
+        </div>
+        <div class="fld">
+          <label for="fEmail">Email<span class="req">*</span></label>
+          <input id="fEmail" name="email" type="email" autocomplete="email" />
+          <div class="err-msg" data-for="fEmail">Please enter a valid email address.</div>
+        </div>
+        <div class="fld">
+          <!-- Plain US placeholder, no country picker: the widget this replaced read the
+               country from the visitor's IP and rejected US numbers over a VPN. -->
+          <label for="fPhone">Mobile phone<span class="req">*</span></label>
+          <input id="fPhone" name="phone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" />
+          <div class="err-msg" data-for="fPhone">Please enter a 10-digit US mobile number.</div>
+        </div>
+        <div class="fld full">
+          <label for="fMessage">How can we help you?<span class="req">*</span></label>
+          <textarea id="fMessage" name="message" maxlength="2000"></textarea>
+          <div class="err-msg" data-for="fMessage">Please tell us how we can help.</div>
+        </div>
+        <div class="fld full">
+          <label for="fReachCall">Best way to reach you<span class="req">*</span></label>
+          <div class="radios" id="reachBy">
+            <label for="fReachCall"><input id="fReachCall" name="reachBy" type="radio" value="call" />Call</label>
+            <label for="fReachText"><input id="fReachText" name="reachBy" type="radio" value="text" />Text</label>
+            <label for="fReachEmail"><input id="fReachEmail" name="reachBy" type="radio" value="email" />Email</label>
+          </div>
+          <div class="err-msg" data-for="reachBy">Please pick how you'd like us to reach you.</div>
+        </div>
+      </div>
+      <!-- No checkbox: submitting the form IS the consent, and the line below says so. -->
+      <p class="consent">By submitting this form, you consent to receive text messages from SynergyFx Strength &amp; Wellness Lab at the mobile number provided about your inquiry, scheduling and follow-ups. Consent is not a condition of purchase. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p>
+      <div class="form-foot"><button class="cta" id="submitBtn" type="submit">Send message</button></div>
+    </form>
   </section>
 </div>
+
+<script>
+const ENDPOINT = "https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/synergyfx-booking";
+const STUDIO_PHONE = "(410) 964-9858";
+// Bumped whenever the consent wording below changes, so a stored lead can be matched back
+// to the exact sentence the visitor agreed to.
+const CONSENT_VERSION = "2026-09-21-submit";
+
+// Which page sent them here. document.referrer is not enough on its own: across sites
+// browsers send only the ORIGIN by default (strict-origin-when-cross-origin), so a visitor
+// arriving from the wellness-lab page looks identical to one from the home page. The
+// ?from= parameter on the embed is what actually carries the page. Both are sent.
+const params = new URLSearchParams(location.search);
+const SOURCE_PAGE = (params.get("from") || "").trim();
+const REFERRER = document.referrer || "";
+
+const stage = document.getElementById("stage");
+const form = document.getElementById("leadForm");
+const btn = document.getElementById("submitBtn");
+const notice = document.getElementById("notice");
+
+const showErr = (id, on) => {
+  const el = document.getElementById(id);
+  const msg = document.querySelector('[data-for="' + id + '"]');
+  if (el) el.classList.toggle("err", on);
+  if (msg) msg.classList.toggle("show", on);
+};
+const showNotice = (text) => {
+  notice.textContent = text;
+  notice.classList.add("show");
+};
+// Same US rule the edge function enforces, applied here so a bad number is caught before
+// it travels: exactly 10 digits, or 11 with a leading 1.
+const validUsMobile = (raw) => {
+  const d = raw.replace(/\D/g, "");
+  return d.length === 10 || (d.length === 11 && d.charAt(0) === "1");
+};
+
+form.onsubmit = async (ev) => {
+  ev.preventDefault();
+  notice.classList.remove("show");
+  const val = (id) => document.getElementById(id).value.trim();
+  const first = val("fFirst"), last = val("fLast"), email = val("fEmail");
+  const phone = val("fPhone"), message = val("fMessage");
+  const picked = document.querySelector('input[name="reachBy"]:checked');
+  const reachBy = picked ? picked.value : "";
+
+  let bad = false;
+  [["fFirst", !first], ["fLast", !last],
+   ["fEmail", !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)],
+   ["fPhone", !validUsMobile(phone)],
+   ["fMessage", !message]].forEach(([id, isBad]) => { showErr(id, isBad); if (isBad) bad = true; });
+  showErr("reachBy", !reachBy);
+  document.getElementById("reachBy").classList.toggle("err", !reachBy);
+  if (!reachBy) bad = true;
+  if (bad) return;
+
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+  let data;
+  try {
+    const r = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "studio-lead",
+        firstName: first, lastName: last, email, phone, message, reachBy,
+        sourcePage: SOURCE_PAGE, referrer: REFERRER,
+        consentTextVersion: CONSENT_VERSION,
+      }),
+    });
+    data = await r.json();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "Send message";
+    showNotice("We couldn't reach our system just now. Please try again, or call us at " + STUDIO_PHONE + ".");
+    return;
+  }
+
+  // Only a real submitted:true is success. A preview response means writes are gated off
+  // and nothing was sent anywhere, so the visitor is told that plainly instead of being
+  // thanked for a message no one received.
+  if (!data || data.submitted !== true) {
+    btn.disabled = false;
+    btn.textContent = "Send message";
+    showNotice(data && data.preview
+      ? "This form isn't switched on yet, so your message wasn't sent. Please call us at " + STUDIO_PHONE + "."
+      : "We couldn't send your message. Please try again, or call us at " + STUDIO_PHONE + ".");
+    return;
+  }
+
+  stage.innerHTML =
+    '<div class="thanks">' +
+      '<div class="check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+      '<h2>Thanks, we got it.</h2>' +
+      '<p>We will be in touch within one business day.</p>' +
+    '</div>';
+};
+</script>
 </body>
 </html>

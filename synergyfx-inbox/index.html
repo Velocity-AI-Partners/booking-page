@@ -10,8 +10,9 @@
   Login-gated view of SynergyFx's Zen Planner Studio data. This page is public GitHub
   Pages, so it holds no data and no service key: a staff member signs in with the team
   password, which the vap-zp-staff proxy (POST /inbox) checks server-side before
-  returning the aggregated read-only feeds. Appointments load asynchronously (the
-  server builds them from Studio's calendar; a keep-warm refresher keeps it instant).
+  returning the aggregated read-only feeds. Appointments have no view here (the owner
+  works from the Zen Planner calendar); they are still polled in the background because
+  the server derives each lead's "Booked" flag and date from them.
 -->
 <style>
   :root{
@@ -24,7 +25,7 @@
     --cancelled:#b42318; --cancelled-bg:#fee4e2;
     --consult:#0e7490; --consult-bg:#e0f2fe;
     --member:#067647; --member-bg:#e7f6ec;
-    --input-bg:#fbfcfd; --row-hover:#f6f7f8; --overlay:rgba(17,24,39,.45);
+    --input-bg:#fbfcfd; --row-hover:#f6f7f8;
     --logo-mark:#314AAE; --logo-word:#0F172A;
     --nav-w:190px; /* shared: sidebar width AND header logo-cell width, so their divider lines up */
     --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -40,7 +41,7 @@
     --cancelled:#f87171; --cancelled-bg:#2e1615;
     --consult:#38bdf8; --consult-bg:#0e2530;
     --member:#4ade80; --member-bg:#12261a;
-    --input-bg:#121214; --row-hover:#1d1d20; --overlay:rgba(0,0,0,.65);
+    --input-bg:#121214; --row-hover:#1d1d20;
     --logo-mark:#9db0f4; --logo-word:#ffffff;
   }
   *{box-sizing:border-box}
@@ -89,6 +90,7 @@
   .zp-search input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-050)}
   .zp-filter{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap}
   .zp-filter:empty{display:none}
+  .zp-fsep{width:1px; align-self:stretch; background:var(--border); margin:0 3px}
   .zp-fchip{font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:999px; border:1px solid var(--border); background:var(--input-bg); color:var(--muted); cursor:pointer; white-space:nowrap; line-height:1.1}
   .zp-fchip:hover{border-color:var(--accent)}
   .zp-fchip.on{background:var(--accent); border-color:var(--accent); color:#fff}
@@ -107,7 +109,6 @@
 
   .zp-tp{font-size:10.5px; font-weight:650; padding:2px 8px; border-radius:999px; white-space:nowrap}
   .zp-tp.inquiry{color:var(--accent); background:var(--accent-050)}
-  .zp-tp.consult{color:var(--consult); background:var(--consult-bg)}
   .zp-tp.appt{color:var(--confirmed); background:var(--confirmed-bg)}
   .zp-tp.lead{color:var(--upcoming); background:var(--upcoming-bg)}
   .zp-tp.member{color:var(--member); background:var(--member-bg)}
@@ -120,34 +121,6 @@
   .zp-note-h{font-size:11px; color:var(--faint); margin-bottom:4px; font-weight:600}
   .zp-note-t{font-size:12.5px; color:var(--ink); white-space:pre-wrap; word-break:break-word; line-height:1.45}
 
-  .zp-cal{flex:1 1 auto; display:none; min-width:0; min-height:0; overflow:auto; background:var(--bg); padding:16px}
-  .zp-cal-grid{display:grid; grid-template-columns:repeat(7, minmax(150px,1fr)); gap:10px; min-width:1080px}
-  .zp-cal-day{background:var(--panel); border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; min-height:200px}
-  .zp-cal-day.today{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
-  .zp-cal-dhead{padding:9px 11px; border-bottom:1px solid var(--border-soft); font-size:12px; font-weight:650}
-  .zp-cal-dhead span{display:block; font-size:10.5px; font-weight:600; color:var(--faint); margin-top:1px}
-  .zp-cal-day.today .zp-cal-dhead{color:var(--accent-600)}
-  .zp-cal-items{padding:8px; display:flex; flex-direction:column; gap:6px}
-  .zp-cal-it{border:1px solid var(--border-soft); border-left:3px solid var(--confirmed); border-radius:8px; padding:7px 9px; background:var(--input-bg)}
-  .zp-cal-it.consult{border-left-color:var(--consult); background:var(--consult-bg)}
-  .zp-cal-t{font-size:11px; font-weight:700; color:var(--muted); font-variant-numeric:tabular-nums}
-  .zp-cal-n{font-size:12.5px; font-weight:600; margin-top:2px}
-  .zp-cal-s{font-size:11px; color:var(--faint); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  .zp-cal-none{font-size:11.5px; color:var(--faint); text-align:center; padding:14px 4px}
-  .zp-cal-loading{margin:auto; color:var(--faint); font-size:14px; padding:60px; text-align:center}
-  .zp-cal-it{cursor:pointer}
-  .zp-cal-it:hover{border-color:var(--accent); box-shadow:0 1px 6px rgba(16,24,40,.08)}
-  .zp-wk{display:flex; align-items:center; gap:10px; margin-bottom:12px}
-  .zp-wk button{border:1px solid var(--border); background:var(--panel); color:var(--ink); font-size:12.5px; font-weight:600; padding:7px 12px; border-radius:9px; cursor:pointer}
-  .zp-wk button:hover{border-color:var(--accent); color:var(--accent-600)}
-  .zp-wk .zp-wk-label{font-size:13.5px; font-weight:650}
-  .zp-wk .zp-wk-cur{margin-left:2px; font-size:12px; color:var(--accent-600); background:var(--accent-050); border-color:var(--accent-050)}
-  .zp-modal{position:fixed; inset:0; background:var(--overlay); display:flex; align-items:center; justify-content:center; z-index:60; padding:20px}
-  .zp-modal-card{background:var(--panel); border-radius:14px; width:100%; max-width:420px; box-shadow:0 18px 60px rgba(16,24,40,.25); overflow:hidden}
-  .zp-modal-head{display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid var(--border)}
-  .zp-modal-head b{font-size:15.5px}
-  .zp-modal-x{margin-left:auto; border:0; background:transparent; cursor:pointer; color:var(--muted); font-size:18px; line-height:1; padding:4px}
-  .zp-modal-body{padding:10px 18px 16px}
   .zp-forms{flex:1 1 auto; display:none; min-width:0; min-height:0; background:var(--bg); padding:16px; gap:14px}
   .zp-form-col{flex:1 1 50%; min-width:0; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden}
   .zp-form-head{padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; font-weight:650; display:flex; align-items:center; justify-content:space-between}
@@ -183,6 +156,14 @@
   .zp-kv-k{flex:0 0 108px; color:var(--muted); font-weight:600; font-size:12px; padding-top:1px}
   .zp-kv-v{flex:1 1 auto; color:var(--ink); font-size:13px; word-break:break-word; white-space:pre-wrap}
   .zp-kvcard{background:var(--panel); border:1px solid var(--border); border-radius:11px; padding:6px 14px 10px; margin-bottom:9px}
+  .zp-msg{font-size:13.5px; line-height:1.55; white-space:pre-wrap; padding:8px 0 4px}
+  .zp-marks{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 16px}
+  .zp-mark{border:1px solid var(--border); background:var(--panel); color:var(--muted); font-size:12px; font-weight:650; padding:7px 13px; border-radius:999px; cursor:pointer}
+  .zp-mark:hover{border-color:var(--accent); color:var(--accent-600)}
+  .zp-mark.on{background:var(--accent-050); border-color:var(--accent); color:var(--accent-600)}
+  .zp-mark:disabled{opacity:.55; cursor:default}
+  .zp-mark-err{font-size:12px; font-weight:600; color:var(--cancelled)}
+  .zp-mark-note{font-size:12px; color:var(--faint)}
 
   @media (max-width:900px){
     .zp-nav{flex:0 0 auto; flex-direction:row; overflow-x:auto; border-right:0; border-bottom:1px solid var(--border); padding:8px 10px}
@@ -263,14 +244,13 @@
     </a>
     <b class="zp-client">Synergy FX Strength &amp; Wellness Lab</b>
     <span class="zp-crumb" aria-hidden="true">&rsaquo;</span>
-    <span class="zp-page-title" id="zpTitle">Appointments</span>
+    <span class="zp-page-title" id="zpTitle">Leads</span>
   </header>
   <div class="zp-stale" id="zpStale" style="display:none"></div>
   <div class="zp-body">
     <nav class="zp-nav" id="zpNav">
       <button data-v="inquiry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Inquiries<b id="nInq">0</b></button>
-      <button class="on" data-v="appt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>Appointments<b id="nAppt">&hellip;</b></button>
-      <button data-v="lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Leads<b id="nLead">0</b></button>
+      <button class="on" data-v="lead"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Leads<b id="nLead">0</b></button>
       <button data-v="member"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0M15 5a3.2 3.2 0 0 1 0 6M17 13a6 6 0 0 1 4 6"/></svg>Members<b id="nMem">0</b></button>
       <button data-v="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Forms</button>
       <div class="zp-nav-foot">
@@ -291,7 +271,6 @@
       <div class="zp-rows" id="zpRows"></div>
     </section>
     <section class="zp-detail" id="zpDetail"></section>
-    <section class="zp-cal" id="zpCal"></section>
     <section class="zp-forms" id="zpForms">
       <div class="zp-form-col">
         <div class="zp-form-head">Booking page <a href="../synergyfx/" target="_blank" rel="noopener">Open form</a></div>
@@ -308,14 +287,11 @@
 <script>
 (function(){
   var API='https://vap-zp-staff.fly.dev/inbox';
-  var PW=null, state={view:'appt', search:'', active:null, bookedFilter:'all', memberFilter:'member'};
-  var DATA={inquiry:[], appt:[], lead:[], member:[], exmember:[]}, apptReady=false, apptWindow=7;
+  var PW=null, state={view:'lead', search:'', active:null, bookedFilter:'all', memberFilter:'member', dateFilter:'90', hiddenOnly:false};
+  var DATA={inquiry:[], lead:[], member:[], exmember:[]};
   // generatedAt of the payload currently on screen when the server flagged it
   // stale (its Studio rebuilds are failing); null = data is fresh.
-  var STALE={roster:null, appt:null};
-  var WEEKS={}, curWeek=null; // curWeek=null -> rolling current week; else 'YYYY-MM-DD'
-  function fmtYMD(t){var d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-  function weekKey(){return curWeek||'current';}
+  var STALE={roster:null};
   var AV=['#314AAE','#7a5af8','#0b8a6c','#c2410c','#0e7490','#9333ea','#b42318','#0369a1'];
   function color(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AV[s%AV.length];}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -326,6 +302,25 @@
   function calSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>';}
   function fmtDay(iso){var t=Date.parse(iso+'T12:00:00');if(isNaN(t))return iso;return new Date(t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
   function fmtISO(s){var t=Date.parse(s||'');if(isNaN(t))return s||'';return new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+  // Sort key for a lead. 0 (no date Zen Planner could give us) sorts last.
+  function leadTs(i){return i.dateISO?ts(i.dateISO+'T12:00:00'):(i.date?ts(i.date):0);}
+  // Where a lead's date came from. Shown on the card so a bulk-import day can never
+  // read like the day the person actually got in touch.
+  var KINDWORD={created:'Added ', imported:'Imported ', updated:'Updated '};
+  var KINDLABEL={inquiry:'Inquiry date', created:'Added to Zen Planner', imported:'Imported', updated:'Last updated', booked:'Booked on', form:'Form submitted'};
+  // Date AND time, in the viewer's own locale: a form submission is the one date we
+  // know to the second, so the pane shows all of it.
+  function fmtDateTime(s){var t=Date.parse(s||'');if(isNaN(t))return s||'';return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});}
+  var REACH={call:'Call', text:'Text', email:'Email'};
+  function leadTime(i){return i.date?((KINDWORD[i.dateKind]||'')+i.date):'No date in Zen Planner';}
+  // Date window on Leads. A row with no date at all is never hidden by it - it stays
+  // in the list flagged "No date" so nobody has to guess whether it was filtered out.
+  var DATEWIN={'30':30, '90':90};
+  function inWindow(i,win){
+    var days=DATEWIN[win]; if(!days) return true;
+    var t=leadTs(i); if(!t) return true;
+    return Date.now()-t<=days*86400000;
+  }
   var PINFO={};
   // status omitted (STUDENT/PROSPECT adds nothing) and lastLogDate omitted (a bare
   // date without the note text reads as noise) per user feedback 2026-07-08.
@@ -342,6 +337,9 @@
       rows+='<div class="zp-kv"><span class="zp-kv-k">'+esc(pair[1])+'</span><span class="zp-kv-v">'+esc(v)+'</span></div>';
     });
     (p.customFields||[]).forEach(function(c){
+      // A 'cf:<label>' entry in the skip list drops a custom field the pane already
+      // renders as its own block, so the lead's message isn't printed twice.
+      if(skip && skip.indexOf('cf:'+c.label)>=0) return;
       rows+='<div class="zp-kv"><span class="zp-kv-k">'+esc(c.label)+'</span><span class="zp-kv-v">'+esc(c.value)+'</span></div>';
     });
     return rows;
@@ -384,6 +382,12 @@
       return '<div class="zp-note">'+(head?'<div class="zp-note-h">'+esc(head)+'</div>':'')+'<div class="zp-note-t">'+esc(String(n.message).replace(/\r\n/g,'\n'))+'</div></div>';
     }).join('');
   }
+  // The lead-capture form's own message, in full. Its own block above the Zen Planner
+  // card because it is the one thing staff need to read before calling back.
+  function messageBox(msg){
+    if(!msg) return '';
+    return '<p class="zp-sec" style="margin-top:16px">What they wrote</p><div class="zp-kvcard"><div class="zp-msg">'+esc(String(msg))+'</div></div>';
+  }
   // Pre-filled "From Zen Planner" card from data already baked into the roster (member
   // backfill), so no per-open fetch. Returns '' when nothing new remains to show.
   function moreBoxInline(info, skip){
@@ -394,7 +398,7 @@
   }
 
   var rows=document.getElementById('zpRows'), detail=document.getElementById('zpDetail'), shell=document.getElementById('zpShell');
-  var TITLES={inquiry:'Inquiries', appt:'Appointments', lead:'Leads', member:'Members', forms:'Forms'};
+  var TITLES={inquiry:'Inquiries', lead:'Leads', member:'Members', forms:'Forms'};
 
   function applyRoster(d){
     var inq=(d.inquiries||[]).map(function(q,ix){
@@ -414,7 +418,10 @@
         if(!m.info&&p.info)m.info=p.info; if(!m.booked&&p.booked)m.booked=p.booked;
       }
       else if(p.type==='Ex-member') exmems.push({id:'x'+ix, name:p.name, status:p.status||'Alumni', ex:true, phone:p.phone, email:p.email, booked:p.booked||null});
-      else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date, booked:p.booked||null});
+      else leads.push({id:'l'+ix, name:p.name, phone:p.phone, email:p.email, source:p.source, interest:p.detail, date:p.date,
+        dateISO:p.dateISO||'', dateKind:p.dateKind||'', message:p.message||'', custom:p.custom||null, booked:p.booked||null,
+        markKey:p.markKey||'', marks:p.marks||null, formSubmittedAt:p.formSubmittedAt||'', sourcePage:p.sourcePage||'',
+        referrer:p.referrer||'', reachBy:p.reachBy||'', formCount:p.formCount||0});
     });
     mems.forEach(function(m){
       m.plans.sort(function(a,b){return ts(b.beginDate)-ts(a.beginDate);});
@@ -422,50 +429,43 @@
     });
     // Studio holds duplicate person records for a few people (re-inquiries, typo'd
     // emails). Collapse same-name rows: the newest-dated record fronts the person
-    // (blank date = recently created = newest), missing contact fields fill in from
-    // the older duplicate, and a booked flag on either survives.
+    // (a record with no date at all loses, since the server now dates everything it
+    // can), missing fields fill in from the older duplicate, and a booked flag on
+    // either survives.
     function dedupeByName(arr){
       var by={}, out=[];
       arr.forEach(function(r){
         var k=r.name.toLowerCase().trim();
         var cur=by[k];
         if(!cur){ by[k]=r; out.push(r); return; }
-        var tr=r.date?ts(r.date):9e15, tc=cur.date?ts(cur.date):9e15;
+        var tr=leadTs(r), tc=leadTs(cur);
         var keep=tr>tc?r:cur, drop=keep===r?cur:r;
-        ['phone','email','source','interest'].forEach(function(f){ if(!keep[f]&&drop[f]) keep[f]=drop[f]; });
+        ['phone','email','source','interest','message','custom','date','dateISO','dateKind','markKey','formSubmittedAt','sourcePage','referrer','reachBy','formCount'].forEach(function(f){ if(!keep[f]&&drop[f]) keep[f]=drop[f]; });
         if(!keep.booked&&drop.booked) keep.booked=drop.booked;
+        if(!keep.marks&&drop.marks) keep.marks=drop.marks;
         if(keep!==cur){ out[out.indexOf(cur)]=keep; by[k]=keep; }
       });
       return out;
     }
     leads=dedupeByName(leads);
     exmems=dedupeByName(exmems);
-    // Blank-date leads are the RECENTLY-CREATED merge rows (no inquiry date exists in
-    // Studio for them); sort them first, not last - ts('')=0 would bury the newest
-    // people at the bottom of 700+ rows.
-    leads.sort(function(a,b){var ta=a.date?ts(a.date):9e15, tb=b.date?ts(b.date):9e15; return tb-ta;});
+    // Newest first on the date the server resolved (inquiry, created, imported or
+    // booking). Blank-date leads now sort LAST: they used to be sorted first on the
+    // assumption that no date meant "just created", but those rows turned out to be
+    // an old bulk contact import, so the assumption parked the stalest records on top.
+    leads.sort(function(a,b){return leadTs(b)-leadTs(a);});
     mems.sort(function(a,b){return a.name<b.name?-1:1;});
     exmems.sort(function(a,b){return a.name<b.name?-1:1;});
     DATA.inquiry=inq; DATA.lead=leads; DATA.member=mems; DATA.exmember=exmems;
     document.getElementById('nInq').textContent=inq.length;
-    document.getElementById('nLead').textContent=leads.length;
     document.getElementById('nMem').textContent=mems.length;
+    navCounts();
     STALE.roster=(d.stale&&d.generatedAt)?d.generatedAt:null;
     document.getElementById('zpAsOf').textContent=STALE.roster
       ?('Data as of '+fmtStaleAt(STALE.roster))
       :('Updated '+new Date(d.generatedAt||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}));
     renderAll();
   }
-  function applyAppts(d, key){
-    var sorted=(d.appointments||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.minutes-b.minutes;});
-    WEEKS[key||'current']={list:sorted, weekStart:d.weekStart||null};
-    if((key||'current')===weekKey()){
-      DATA.appt=sorted; apptWindow=d.windowDays||7; apptReady=true;
-      if(state.view==='appt') renderAll();
-    }
-    if((key||'current')==='current') document.getElementById('nAppt').textContent=sorted.length;
-  }
-
   // Members view swaps between current members and ex-members (alumni) via the toggle.
   function curDataset(){
     if(state.view==='member') return state.memberFilter==='ex'?DATA.exmember:DATA.member;
@@ -478,34 +478,58 @@
   }
   function visible(){
     var base=searchBase();
+    if(state.view==='lead'){
+      // Hidden leads drop out of the working list but are never lost: the Hidden chip
+      // shows every one of them, ignoring the date window so none can go missing.
+      if(state.hiddenOnly) return base.filter(isHidden);
+      base=base.filter(function(i){return !isHidden(i);}).filter(function(i){return inWindow(i,state.dateFilter);});
+    }
     if((state.view==='lead'||state.view==='inquiry') && state.bookedFilter!=='all'){
       var want=state.bookedFilter==='booked';
       base=base.filter(function(i){return !!i.booked===want;});
     }
     return base;
   }
-  function fchip(val,label,count,on){
-    return '<button class="zp-fchip'+(on?' on':'')+'" data-f="'+val+'">'+esc(label)+(count!=null?'<b>'+count+'</b>':'')+'</button>';
+  function fchip(val,label,count,on,grp){
+    return '<button class="zp-fchip'+(on?' on':'')+'" data-f="'+val+'" data-g="'+grp+'">'+esc(label)+(count!=null?'<b>'+count+'</b>':'')+'</button>';
   }
-  // Booked/Not booked toggle on Leads + Inquiries; Members/Ex-members toggle on Members.
+  // Booked/Not booked toggle on Leads + Inquiries, plus a date window on Leads;
+  // Members/Ex-members toggle on Members. Booked counts follow the date window, so
+  // the two groups always add up to what is on screen.
   function renderFilter(){
     var el=document.getElementById('zpFilter'); if(!el) return;
     var chips='';
     if(state.view==='member'){
-      chips+=fchip('member','Members',DATA.member.length,state.memberFilter==='member');
-      chips+=fchip('ex','Ex-members',DATA.exmember.length,state.memberFilter==='ex');
+      chips+=fchip('member','Members',DATA.member.length,state.memberFilter==='member','member');
+      chips+=fchip('ex','Ex-members',DATA.exmember.length,state.memberFilter==='ex','member');
     } else if(state.view==='lead'||state.view==='inquiry'){
-      var base=searchBase(), nb=0;
+      var all=state.view==='lead'?searchBase().filter(function(i){return !isHidden(i);}):searchBase();
+      var base=state.view==='lead'?all.filter(function(i){return inWindow(i,state.dateFilter);}):all;
+      var nb=0;
       base.forEach(function(i){if(i.booked)nb++;});
-      chips+=fchip('all','All',base.length,state.bookedFilter==='all');
-      chips+=fchip('booked','Booked',nb,state.bookedFilter==='booked');
-      chips+=fchip('notbooked','Not booked',base.length-nb,state.bookedFilter==='notbooked');
+      chips+=fchip('all','All',base.length,state.bookedFilter==='all','booked');
+      chips+=fchip('booked','Booked',nb,state.bookedFilter==='booked','booked');
+      chips+=fchip('notbooked','Not booked',base.length-nb,state.bookedFilter==='notbooked','booked');
+      if(state.view==='lead'){
+        var win=function(w){return all.filter(function(i){return inWindow(i,w);}).length;};
+        chips+='<span class="zp-fsep"></span>';
+        chips+=fchip('30','Last 30 days',win('30'),state.dateFilter==='30','date');
+        chips+=fchip('90','Last 90 days',win('90'),state.dateFilter==='90','date');
+        chips+=fchip('all','All',win('all'),state.dateFilter==='all','date');
+        // Hidden leads stay one click away. The chip shows whenever any exist (and
+        // while it is the active view, so the last unhide can't strand you in it).
+        var nh=searchBase().filter(isHidden).length;
+        if(nh||state.hiddenOnly) chips+='<span class="zp-fsep"></span>'+fchip('hidden','Hidden',nh,state.hiddenOnly,'hidden');
+      }
     } else { el.innerHTML=''; return; }
     el.innerHTML=chips;
     [].forEach.call(el.querySelectorAll('.zp-fchip'),function(c){
       c.onclick=function(){
-        var v=c.getAttribute('data-f');
-        if(state.view==='member') state.memberFilter=v; else state.bookedFilter=v;
+        var v=c.getAttribute('data-f'), g=c.getAttribute('data-g');
+        if(g==='member') state.memberFilter=v;
+        else if(g==='hidden') state.hiddenOnly=!state.hiddenOnly;
+        else if(g==='date'){ state.dateFilter=v; state.hiddenOnly=false; }
+        else { state.bookedFilter=v; state.hiddenOnly=false; }
         var vis=visible(); state.active=vis.length?vis[0].id:null;
         shell.classList.remove('detail-open');
         renderList(); renderDetail();
@@ -514,9 +538,16 @@
   }
   function rowMeta(i){
     var bpill=function(i){return i.booked?'<span class="zp-pill confirmed">Booked</span>':'<span class="zp-pill upcoming">Not booked</span>';};
-    var bsnip=function(i,fallback){return i.booked?('Booked: '+fmtDay(i.booked.date)+' &middot; '+i.booked.time+(i.booked.isConsult?' (Consultation)':'')):fallback;};
+    // Plain ' - ': the whole snippet is escaped before it reaches the DOM, so an HTML
+    // entity here printed literally as "&middot;" on every booked card.
+    var bsnip=function(i,fallback){return i.booked?('Booked: '+fmtDay(i.booked.date)+' - '+i.booked.time+(i.booked.isConsult?' (Consultation)':'')):fallback;};
     if(state.view==='inquiry') return {snip:bsnip(i,(i.interest?('Interest: '+i.interest):(i.source||'Inquiry'))), time:i.date, foot:'<span class="zp-tp inquiry">Inquiry</span>'+bpill(i)};
-    if(state.view==='lead') return {snip:bsnip(i,(i.interest?('Interested in '+i.interest):'Submitted info, no booking yet')), time:i.date||'New', foot:'<span class="zp-tp lead">Lead</span>'+bpill(i)};
+    if(state.view==='lead'){
+      // What they wrote beats a generic line; collapsed to one line here because the
+      // card ellipsizes, and the detail pane shows the message in full.
+      var lsnip=i.message?String(i.message).replace(/\s+/g,' ').trim():(i.interest?('Interested in '+i.interest):'No message on file');
+      return {snip:bsnip(i,lsnip), time:leadTime(i), foot:'<span class="zp-tp lead">Lead</span>'+bpill(i)+markPills(i)};
+    }
     // Member / Ex-member rows carry no type/status pill: the section (and the
     // Members/Ex-members toggle) already says which they are, so a per-row
     // "Member CURRENT" / "Ex-member Alumni" is redundant on every line.
@@ -549,6 +580,59 @@
     pairs.forEach(function(p){ if(p[1]) h+='<div class="zp-kv"><span class="zp-kv-k">'+esc(p[0])+'</span><span class="zp-kv-v">'+esc(p[1])+'</span></div>'; });
     return '<div class="zp-kvcard">'+h+'</div>';
   }
+  // ---- staff marks: Contacted / No-show / Hide ----
+  // They live in this inbox only - nothing is written back to Zen Planner (decision
+  // 2026-09-21). Hiding is reversible and keeps the row: spam is hidden, not deleted.
+  function isHidden(i){ return !!(i.marks&&i.marks.hidden); }
+  function markDate(iso){ var t=Date.parse(iso||''); return isNaN(t)?'':new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+  // The nav count is the leads NOT hidden, so it always matches what the list shows.
+  function navCounts(){ var el=document.getElementById('nLead'); if(el) el.textContent=DATA.lead.filter(function(i){return !isHidden(i);}).length; }
+  function markPills(i){
+    var h='';
+    if(i.marks&&i.marks.contacted) h+='<span class="zp-pill showed">Contacted</span>';
+    if(i.marks&&i.marks.noshow) h+='<span class="zp-pill cancelled">No-show</span>';
+    return h;
+  }
+  function markBtn(i,mark,label){
+    var at=i.marks&&i.marks[mark];
+    // Pressed buttons carry the day they were set; Hide says Unhide instead, where a
+    // date would read as the day it was un-hidden.
+    return '<button class="zp-mark'+(at?' on':'')+'" type="button" data-mark="'+mark+'">'+esc(label)+(at&&mark!=='hidden'?' '+esc(markDate(at)):'')+'</button>';
+  }
+  function markBtns(i){
+    // No mark key means this row came from a roster the server built before mark keys
+    // existed; say so rather than offer a button that cannot save.
+    if(!i.markKey) return '<div class="zp-marks"><span class="zp-mark-note">Status marks appear after the next refresh of this list.</span></div>';
+    var h='<div class="zp-marks" id="zpMarks">'+markBtn(i,'contacted','Contacted');
+    // No-show only where there is a booking: it describes a missed appointment.
+    if(i.booked) h+=markBtn(i,'noshow','No-show');
+    h+=markBtn(i,'hidden',isHidden(i)?'Unhide':'Hide');
+    return h+'<span class="zp-mark-err" id="zpMarkErr"></span></div>';
+  }
+  function wireMarks(i){
+    var box=document.getElementById('zpMarks'); if(!box) return;
+    [].forEach.call(box.querySelectorAll('.zp-mark'),function(btn){
+      btn.onclick=function(){
+        var mark=btn.getAttribute('data-mark'), on=!(i.marks&&i.marks[mark]);
+        var err=document.getElementById('zpMarkErr'); if(err) err.textContent='';
+        btn.disabled=true;
+        fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW,section:'mark',key:i.markKey,mark:mark,on:on,name:i.name})})
+          .then(function(r){ return r.json().then(function(d){return {ok:r.ok,d:d};},function(){return {ok:false,d:null};}); },
+                function(e){ return {ok:false,d:null,net:true}; })
+          .then(function(x){
+            btn.disabled=false;
+            // Only what the server says it saved changes the screen: a failed save
+            // must never look like it worked.
+            if(!x.ok||!x.d||!x.d.marks){
+              if(err) err.textContent=x.net?'Could not reach the server. Try again.':((x.d&&x.d.error)?String(x.d.error):'Could not save that. Try again.');
+              return;
+            }
+            i.marks=x.d.marks;
+            navCounts(); renderList(); renderDetail();
+          });
+      };
+    });
+  }
   function renderDetail(){
     var i=curDataset().filter(function(x){return x.id===state.active;})[0];
     if(!i){detail.innerHTML='<div class="zp-empty">Select someone to view the details.</div>';return;}
@@ -564,11 +648,25 @@
       var bookedCard=i.booked
         ?'<div class="zp-bk"><div class="zp-bk-ic">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">'+esc(fmtDay(i.booked.date))+' &middot; '+esc(i.booked.time)+'</div><div class="zp-bk-s">'+(i.booked.isConsult?'Consultation booked':'Appointment booked')+'</div></div><span class="zp-pill confirmed">Booked</span></div>'
         :'<div class="zp-bk"><div class="zp-bk-ic" style="background:var(--upcoming-bg);color:var(--upcoming)">'+calSvg()+'</div><div class="zp-bk-main"><div class="zp-bk-t">No consultation booked yet</div><div class="zp-bk-s">A follow-up could invite them to book a call.</div></div></div>';
+      // The date row says where the date came from, and an undated lead says so
+      // outright rather than quietly dropping the row.
+      var dateLabel=KINDLABEL[i.dateKind]||'Submitted';
+      var dateVal=i.date||'Zen Planner has no date for this person';
+      // A form submission is timed to the second, so the pane shows the time too.
+      if(i.dateKind==='form'&&i.formSubmittedAt) dateVal=fmtDateTime(i.formSubmittedAt);
+      // Don't print the message twice: the "From Zen Planner" card renders the same
+      // custom fields, so the one shown above is skipped there.
+      var lskip=['status','phone','email'];
+      if(i.message) (i.custom||[]).forEach(function(c){ if(c.value===i.message) lskip.push('cf:'+c.label); });
       detail.innerHTML=headHTML(i,'<span class="zp-tp lead">Lead</span> '+(i.booked?'<span class="zp-pill confirmed">Booked</span>':'<span class="zp-pill upcoming">Not booked</span>'),contacts)+
-        '<div class="zp-scroll"><p class="zp-sec">Lead details</p>'+
-        kvCard([['Name',i.name],['Submitted',i.date],['Source',i.source],['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
-        bookedCard+moreBox()+notesBox()+'</div>';
-      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},['status','phone','email']);
+        '<div class="zp-scroll">'+markBtns(i)+'<p class="zp-sec">Lead details</p>'+
+        kvCard([['Name',i.name],[dateLabel,dateVal],['Source',i.source],
+                ['Came from',i.sourcePage||i.referrer||''],['Best way to reach',REACH[i.reachBy]||i.reachBy||''],
+                ['Form submissions',i.formCount>1?('Submitted the form '+i.formCount+' times'):''],
+                ['Interested in',i.interest],['Phone',i.phone],['Email',i.email]])+
+        bookedCard+messageBox(i.message)+moreBox()+notesBox()+'</div>';
+      loadPersonInfo('zpMoreInfo',{name:i.name,phone:i.phone,email:i.email},lskip);
+      wireMarks(i);
     } else if(i.ex){
       detail.innerHTML=headHTML(i,'',contacts)+
         '<div class="zp-scroll"><p class="zp-sec">Former member</p>'+
@@ -589,120 +687,28 @@
     }
     var back=document.getElementById('zpBack'); if(back) back.onclick=function(){shell.classList.remove('detail-open');};
   }
-  var calEl=document.getElementById('zpCal'), apptFirstPoll=0;
-  function weekBaseTs(){
-    if(curWeek) return Date.parse(curWeek+'T12:00:00');
-    var n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate(),12).getTime();
-  }
-  function weekNavHTML(){
-    var b=weekBaseTs(), end=b+6*86400000;
-    var f=function(t){return new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric'});};
-    return '<div class="zp-wk">'+
-      '<button id="wkPrev">&larr; Previous week</button>'+
-      '<span class="zp-wk-label">'+esc(f(b))+' &ndash; '+esc(f(end))+'</span>'+
-      '<button id="wkNext">Next week &rarr;</button>'+
-      (curWeek?'<button class="zp-wk-cur" id="wkCur">Back to this week</button>':'')+
-      '</div>';
-  }
-  function wireWeekNav(){
-    var shift=function(d){
-      var t=weekBaseTs()+d*7*86400000;
-      var today=new Date(); today=new Date(today.getFullYear(),today.getMonth(),today.getDate(),12).getTime();
-      var k=fmtYMD(t);
-      curWeek=(t===today)?null:k;
-      var have=WEEKS[weekKey()];
-      if(have){DATA.appt=have.list; apptReady=true;}
-      else {apptReady=false; DATA.appt=[]; apptFirstPoll=Date.now();}
-      renderCal();
-      if(!have) fetchAppts();
-    };
-    var p=document.getElementById('wkPrev'), n=document.getElementById('wkNext'), c=document.getElementById('wkCur');
-    if(p) p.onclick=function(){shift(-1);};
-    if(n) n.onclick=function(){shift(1);};
-    if(c) c.onclick=function(){curWeek=null; var have=WEEKS['current']; if(have){DATA.appt=have.list; apptReady=true;} else {apptReady=false;} renderCal(); if(!have) fetchAppts();};
-  }
-  function showApptModal(a){
-    var old=document.getElementById('zpModal'); if(old) old.remove();
-    var wrap=document.createElement('div'); wrap.className='zp-modal'; wrap.id='zpModal';
-    var when=fmtDay(a.date)+' &middot; '+esc(a.time)+(a.duration?(' &middot; '+a.duration+' min'):'');
-    var kv=[['Client',a.client],['Type',a.type],['When',null],['Coach',a.coach||'(not assigned yet)'],['Location',a.location||''],];
-    var rows='';
-    kv.forEach(function(p){
-      var v=p[0]==='When'?when:esc(p[1]||'');
-      if(!v) return;
-      rows+='<div class="zp-kv"><span class="zp-kv-k">'+esc(p[0])+'</span><span class="zp-kv-v">'+v+'</span></div>';
-    });
-    wrap.innerHTML='<div class="zp-modal-card"><div class="zp-modal-head">'+
-      '<div class="zp-av" style="background:'+color(a.client)+'">'+esc(initials(a.client))+'</div>'+
-      '<b>'+esc(a.client)+'</b>'+(a.isConsult?' <span class="zp-tp consult">Consultation</span>':'')+
-      '<button class="zp-modal-x" aria-label="Close">&times;</button></div>'+
-      '<div class="zp-modal-body">'+rows+'<div id="zpModalMore"><div class="zp-kv"><span class="zp-kv-k">More info</span><span class="zp-kv-v">Loading&hellip;</span></div></div></div></div>';
-    wrap.addEventListener('click',function(e){ if(e.target===wrap||e.target.closest('.zp-modal-x')) wrap.remove(); });
-    document.body.appendChild(wrap);
-    loadPersonInfo('zpModalMore',{name:a.client});
-  }
-  calEl.addEventListener('click',function(e){
-    var it=e.target.closest('.zp-cal-it'); if(!it) return;
-    var idx=parseInt(it.getAttribute('data-i'),10);
-    if(!isNaN(idx) && DATA.appt[idx]) showApptModal(DATA.appt[idx]);
-  });
-  function renderCal(){
-    if(!apptReady){
-      var waited=apptFirstPoll?Date.now()-apptFirstPoll:0;
-      calEl.innerHTML=weekNavHTML()+'<div class="zp-cal-loading">'+(waited>120000
-        ?'Appointments are taking longer than usual. The calendar is being rebuilt and will appear here as soon as it\'s ready.'
-        :(curWeek?'Loading that week&hellip; (first load of a past week takes a couple of minutes)':'Loading appointments&hellip;'))+'</div>';
-      wireWeekNav();
-      return;
-    }
-    var days=[], b=weekBaseTs();
-    for(var i=0;i<7;i++) days.push(fmtYMD(b+i*86400000));
-    var todayStr=fmtYMD(Date.now());
-    var by={};
-    DATA.appt.forEach(function(a,ix){a._ix=ix;(by[a.date]=by[a.date]||[]).push(a);});
-    var h=weekNavHTML()+'<div class="zp-cal-grid">';
-    days.forEach(function(d){
-      var t=Date.parse(d+'T12:00:00'), dt=new Date(t);
-      var isToday=(d===todayStr);
-      var wd=dt.toLocaleDateString('en-US',{weekday:'short'}), md=dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-      h+='<div class="zp-cal-day'+(isToday?' today':'')+'"><div class="zp-cal-dhead">'+(isToday?'Today':esc(wd))+'<span>'+esc(md)+'</span></div><div class="zp-cal-items">';
-      var list=by[d]||[];
-      if(!list.length) h+='<div class="zp-cal-none">No appointments</div>';
-      list.forEach(function(a){
-        h+='<div class="zp-cal-it'+(a.isConsult?' consult':'')+'" data-i="'+a._ix+'"><div class="zp-cal-t">'+esc(a.time)+(a.isConsult?' &middot; Consultation':'')+'</div>'+
-           '<div class="zp-cal-n">'+esc(a.client)+'</div>'+
-           '<div class="zp-cal-s">'+esc(a.type)+(a.coach?(' &middot; '+esc(a.coach)):'')+'</div></div>';
-      });
-      h+='</div></div>';
-    });
-    h+='</div>';
-    calEl.innerHTML=h;
-    wireWeekNav();
-  }
   function setPanes(){
-    var isCal=state.view==='appt', isForms=state.view==='forms';
-    document.querySelector('.zp-list').style.display=(isCal||isForms)?'none':'flex';
-    detail.style.display=(isCal||isForms)?'none':'flex';
-    calEl.style.display=isCal?'block':'none';
-    var f=document.getElementById('zpForms');
-    f.style.display=isForms?'flex':'none';
+    var isForms=state.view==='forms';
+    document.querySelector('.zp-list').style.display=isForms?'none':'flex';
+    detail.style.display=isForms?'none':'flex';
+    document.getElementById('zpForms').style.display=isForms?'flex':'none';
   }
   function fmtStaleAt(at){ return new Date(at).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
   function renderStale(){
     var el=document.getElementById('zpStale'); if(!el) return;
-    var at=state.view==='appt'?STALE.appt:(state.view==='forms'?null:STALE.roster);
+    var at=state.view==='forms'?null:STALE.roster;
     if(at){ el.textContent='Live connection to Zen Planner is interrupted - showing data saved '+fmtStaleAt(at)+'. Retrying in the background.'; el.style.display='block'; }
     else { el.style.display='none'; }
   }
-  function renderAll(){ setPanes(); if(state.view==='appt'){renderCal();} else if(state.view!=='forms'){renderList(); renderDetail();} renderStale(); }
+  function renderAll(){ setPanes(); if(state.view!=='forms'){renderList(); renderDetail();} renderStale(); }
 
   document.getElementById('zpNav').addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b||!b.hasAttribute('data-v')) return;
-    state.view=b.getAttribute('data-v'); state.search=''; state.bookedFilter='all'; state.memberFilter='member'; document.getElementById('zpSearch').value='';
+    state.view=b.getAttribute('data-v'); state.search=''; state.bookedFilter='all'; state.memberFilter='member'; state.dateFilter='90'; state.hiddenOnly=false; document.getElementById('zpSearch').value='';
     [].forEach.call(this.children,function(c){c.classList.toggle('on',c===b);});
     document.getElementById('zpTitle').textContent=TITLES[state.view];
     var _tn=document.getElementById('zpTabName'); if(_tn) _tn.textContent=TITLES[state.view];
-    var v=(state.view==='appt'||state.view==='forms')?[]:visible(); state.active=v.length?v[0].id:null;
+    var v=(state.view==='forms')?[]:visible(); state.active=v.length?v[0].id:null;
     shell.classList.remove('detail-open');
     renderAll();
   });
@@ -712,9 +718,7 @@
   function refreshAll(btn){
     if(btn) btn.classList.add('spin');
     var stop=function(){ if(btn) setTimeout(function(){btn.classList.remove('spin');},500); };
-    // Re-pull the roster AND force a fresh rebuild of every cached week of appointments.
-    WEEKS={}; apptReady=false; apptFirstPoll=Date.now();
-    if(state.view==='appt') renderCal();
+    // Re-pull the roster, and nudge the appointment build the booked flags come from.
     fetchAppts();
     Promise.resolve(refresh()).then(stop, stop);
   }
@@ -740,22 +744,16 @@
   function fetchRoster(){
     return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW})});
   }
+  // Appointments have no view of their own any more, but each lead's Booked flag and
+  // booked date are built from them SERVER-side, so this quiet poll keeps that build
+  // warm and re-polls while one is running. Nothing it returns is rendered here.
   var apptTimer=null;
   function fetchAppts(){
     if(apptTimer){clearTimeout(apptTimer); apptTimer=null;}
-    if(!apptFirstPoll) apptFirstPoll=Date.now();
-    var key=weekKey();
-    var body={password:PW,section:'appointments',days:7};
-    if(curWeek) body.start=curWeek;
-    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:PW,section:'appointments',days:7})})
       .then(function(r){return r.json();})
-      .then(function(d){
-        // A stale payload still renders (better than an empty grid) while the
-        // server rebuilds; keep polling until a fresh build lands.
-        if(d && d.appointments){ applyAppts(d, key); if(key===weekKey()){ STALE.appt=(d.stale&&d.generatedAt)?d.generatedAt:null; renderStale(); } }
-        if(d && d.building){ if(key===weekKey()){ apptTimer=setTimeout(fetchAppts,6000); if(!d.appointments && state.view==='appt') renderCal(); } return; }
-      })
-      .catch(function(){ if(key===weekKey()) apptTimer=setTimeout(fetchAppts,15000); });
+      .then(function(d){ if(d && d.building) apptTimer=setTimeout(fetchAppts,6000); })
+      .catch(function(){ apptTimer=setTimeout(fetchAppts,15000); });
   }
   async function refresh(){
     if(!PW) return;
