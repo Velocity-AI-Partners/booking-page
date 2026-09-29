@@ -1603,6 +1603,52 @@ var LOCATIONS = {
       ],
     },
   },
+  'stretch-zone-greenville': {
+    // 2026-09-29 (Greenville flags Haley Sanders + Marsha Redmond): 30-minute assessment, offered only
+    // where the practitioner has the full hour free (book-session v174 get-slots via the Booking Page
+    // CR feed). Hours only decide which days show; times come from the feed.
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Greenville SC',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/New_York',
+    phone: '18643739044',
+    email: '357stretch@gmail.com',
+    address: '67 Woodruff Industrial Ln, Suite 301A, Greenville, SC 29607',
+    clubreadyStoreId: 9774,
+    crm: 'clubready',
+    hours: { weekday: [7, 20], saturday: [8, 16], sunday: [12, 17] },
+    daysAhead: 14,
+    leadDaysAhead: 5,
+    leadDaysAheadExpanded: 7,
+    leadOffer: { label: 'Complimentary First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+  },
+  'stretch-zone-mooresville': {
+    // 2026-09-29 (Greenville flags Haley Sanders + Marsha Redmond): 30-minute assessment, offered only
+    // where the practitioner has the full hour free (book-session v174 get-slots via the Booking Page
+    // CR feed). Hours only decide which days show; times come from the feed.
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Mooresville NC',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/New_York',
+    phone: '17046777656',
+    email: '357stretch@gmail.com',
+    address: '591 River Hwy, Suite S, Mooresville, NC 28117',
+    clubreadyStoreId: 12286,
+    crm: 'clubready',
+    hours: { weekday: [7, 20], saturday: [8, 16], sunday: null },
+    daysAhead: 14,
+    leadDaysAhead: 5,
+    leadDaysAheadExpanded: 7,
+    leadOffer: { label: 'Complimentary First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+  },
   'stretch-zone-reston': {
     // 2026-08-28 (Robert Koh flag, Monica Rosenberg): Reston books months in advance and has
     // NO booking-window restriction by studio policy - so no leadDaysAhead / expansion caps
@@ -2822,6 +2868,10 @@ async function fetchCalendarLinks(payload) {
     'sz-west-bradenton': '5917 Manatee Ave West, Suite 611, Bradenton, FL 34209',
     'stretch-zone-willowbrook': '876 75th Street, Willowbrook, IL 60527',
     'sz-willowbrook': '876 75th Street, Willowbrook, IL 60527',
+    'stretch-zone-greenville': '67 Woodruff Industrial Ln, Suite 301A, Greenville, SC 29607',
+    'sz-greenville': '67 Woodruff Industrial Ln, Suite 301A, Greenville, SC 29607',
+    'stretch-zone-mooresville': '591 River Hwy, Suite S, Mooresville, NC 28117',
+    'sz-mooresville': '591 River Hwy, Suite S, Mooresville, NC 28117',
     'stretchlab-del-mar': '12853 El Camino Real, Ste 204, San Diego, CA 92130',
     'sl-del-mar': '12853 El Camino Real, Ste 204, San Diego, CA 92130',
     'integrated-martial-arts-westborough': '227 Turnpike Rd Suite C, Westborough, MA 01581',
@@ -2863,6 +2913,10 @@ async function fetchCalendarLinks(payload) {
     'sz-west-bradenton': '(941) 281-2673',
     'stretch-zone-willowbrook': '(630) 323-9983',
     'sz-willowbrook': '(630) 323-9983',
+    'stretch-zone-greenville': '(864) 373-9044',
+    'sz-greenville': '(864) 373-9044',
+    'stretch-zone-mooresville': '(704) 677-7656',
+    'sz-mooresville': '(704) 677-7656',
     'stretchlab-del-mar': '(858) 794-3000',
     'sl-del-mar': '(858) 794-3000',
     'integrated-martial-arts-westborough': '(774) 772-4759',
@@ -2993,6 +3047,8 @@ function showNoCreditsPopup() {
     'stretch-zone-sarasota-south': '(941) 552-8029',
     'stretch-zone-west-bradenton': '(941) 281-2673',
     'stretch-zone-willowbrook': '(630) 323-9983',
+    'stretch-zone-greenville': '(864) 373-9044',
+    'stretch-zone-mooresville': '(704) 677-7656',
     'stretchlab-del-mar': '(858) 794-3000',
   };
   var slug = currentLocationSlug || '';
