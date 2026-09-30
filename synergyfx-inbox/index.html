@@ -158,10 +158,12 @@
   .zp-kvcard{background:var(--panel); border:1px solid var(--border); border-radius:11px; padding:6px 14px 10px; margin-bottom:9px}
   .zp-msg{font-size:13.5px; line-height:1.55; white-space:pre-wrap; padding:8px 0 4px}
   .zp-marks{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 16px}
-  .zp-mark{border:1px solid var(--border); background:var(--panel); color:var(--muted); font-size:12px; font-weight:650; padding:7px 13px; border-radius:999px; cursor:pointer}
-  .zp-mark:hover{border-color:var(--accent); color:var(--accent-600)}
-  .zp-mark.on{background:var(--accent-050); border-color:var(--accent); color:var(--accent-600)}
-  .zp-mark:disabled{opacity:.55; cursor:default}
+  /* .zp-markbtn, not .zp-mark: that name is the 30px logo tile above, and sharing it
+     squeezed these buttons to 30px wide (Contacted clipped under Hide, 2026-09-30). */
+  .zp-markbtn{border:1px solid var(--border); background:var(--panel); color:var(--muted); font-size:12px; font-weight:650; padding:7px 13px; border-radius:999px; cursor:pointer}
+  .zp-markbtn:hover{border-color:var(--accent); color:var(--accent-600)}
+  .zp-markbtn.on{background:var(--accent-050); border-color:var(--accent); color:var(--accent-600)}
+  .zp-markbtn:disabled{opacity:.55; cursor:default}
   .zp-mark-err{font-size:12px; font-weight:600; color:var(--cancelled)}
   .zp-mark-note{font-size:12px; color:var(--faint)}
 
@@ -230,7 +232,7 @@
 <div class="zp-login" id="zpLogin">
   <form class="zp-card" id="zpLoginForm" autocomplete="on">
     <div class="zp-lgmark"><svg class="velo-mark" viewBox="0 0 123 110" aria-hidden="true"><path d="M45,1 L123,1 L116,14 L37,14 Z"/><path d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path d="M27,57 L49,57 L38,80 Z"/></svg></div>
-    <h1>Synergy FX Strength &amp; Wellness Lab</h1>
+    <h1>SynergyFx Strength &amp; Wellness Lab</h1>
     <div class="zp-field"><label for="lgPass">Team password</label><input id="lgPass" type="password" autocomplete="current-password"></div>
     <button class="zp-signin" id="lgBtn" type="submit">Sign in</button>
     <div class="zp-err" id="lgErr"></div>
@@ -242,7 +244,7 @@
     <a class="zp-brand" href="https://velocityaipartners.ai" target="_blank" rel="noopener" aria-label="Velocity AI Partners">
       <svg class="velo-lockup" viewBox="0 0 600 150" aria-hidden="true"><g transform="translate(2,22) scale(0.945)"><path class="vm" d="M45,1 L123,1 L116,14 L37,14 Z"/><path class="vm" d="M0,28 L104,28 L59,108 L66,44 L11,43 Z"/><path class="vm" d="M27,57 L49,57 L38,80 Z"/></g><text class="vw" x="140" y="99" font-size="78" letter-spacing="0.5">VELOCITY</text><text class="vp" x="144" y="130" font-size="20.5" letter-spacing="8.2">AI PARTNERS</text></svg>
     </a>
-    <b class="zp-client">Synergy FX Strength &amp; Wellness Lab</b>
+    <b class="zp-client">SynergyFx Strength &amp; Wellness Lab</b>
     <span class="zp-crumb" aria-hidden="true">&rsaquo;</span>
     <span class="zp-page-title" id="zpTitle">Leads</span>
   </header>
@@ -326,6 +328,7 @@
   // date without the note text reads as noise) per user feedback 2026-07-08.
   // "Check-ins" because Studio counts every visit type (classes, PT, red light, PEMF).
   var PLABELS=[['birthDate','Birthday'],['signupDate','Signed up'],['firstAttendanceDate','First visit'],['lastAttendanceDate','Last visit'],['attendanceLast30Days','Check-ins (30 days)'],['trialEndDate','Trial ends'],['phone','Phone'],['email','Email'],['referredBy','Referred by'],['instructor','Instructor'],['salesStaff','Sales staff']];
+  var DATEONLY={birthDate:1, signupDate:1, trialEndDate:1};
   function personRowsHTML(p, skip){
     var rows='';
     PLABELS.forEach(function(pair){
@@ -333,7 +336,11 @@
       var v=p[pair[0]];
       if(v===undefined||v===null||v==='') return;
       if(pair[0]==='gender'&&/nospec/i.test(String(v))) return;
-      if(/^\d{4}-\d{2}-\d{2}T/.test(String(v))) v=fmtISO(v);
+      // Birthday, sign-up and trial end are calendar dates stored as a midnight stamp
+      // (sometimes UTC midnight), so a local-time conversion showed them a day early
+      // for Eastern viewers. Read those from the date part; real timestamps convert.
+      if(DATEONLY[pair[0]] && /^\d{4}-\d{2}-\d{2}/.test(String(v))) v=fmtISO(String(v).slice(0,10)+'T12:00:00');
+      else if(/^\d{4}-\d{2}-\d{2}T/.test(String(v))) v=fmtISO(v);
       rows+='<div class="zp-kv"><span class="zp-kv-k">'+esc(pair[1])+'</span><span class="zp-kv-v">'+esc(v)+'</span></div>';
     });
     (p.customFields||[]).forEach(function(c){
@@ -597,7 +604,7 @@
     var at=i.marks&&i.marks[mark];
     // Pressed buttons carry the day they were set; Hide says Unhide instead, where a
     // date would read as the day it was un-hidden.
-    return '<button class="zp-mark'+(at?' on':'')+'" type="button" data-mark="'+mark+'">'+esc(label)+(at&&mark!=='hidden'?' '+esc(markDate(at)):'')+'</button>';
+    return '<button class="zp-markbtn'+(at?' on':'')+'" type="button" data-mark="'+mark+'">'+esc(label)+(at&&mark!=='hidden'?' '+esc(markDate(at)):'')+'</button>';
   }
   function markBtns(i){
     // No mark key means this row came from a roster the server built before mark keys
@@ -611,7 +618,7 @@
   }
   function wireMarks(i){
     var box=document.getElementById('zpMarks'); if(!box) return;
-    [].forEach.call(box.querySelectorAll('.zp-mark'),function(btn){
+    [].forEach.call(box.querySelectorAll('.zp-markbtn'),function(btn){
       btn.onclick=function(){
         var mark=btn.getAttribute('data-mark'), on=!(i.marks&&i.marks[mark]);
         var err=document.getElementById('zpMarkErr'); if(err) err.textContent='';
