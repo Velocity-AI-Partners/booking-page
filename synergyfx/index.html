@@ -208,6 +208,10 @@ const backBtn=document.getElementById("backBtn");
 let view=new Date(); view.setDate(1);
 let availability={};
 let state={date:null, slot:null, chosen:null};
+// Open on the first month that actually has times. With 24 hours notice, the last day or
+// two of a month has none left, and visitors saw an empty calendar (found 2026-09-30).
+// Only on first load: once someone uses the month arrows, the page stays where they put it.
+let autoAdvance=true;
 
 const ic={
   clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
@@ -257,14 +261,16 @@ async function renderDateTime(notice){
       </div>
       <div class="rail" id="rail"></div>
     </div>`;
-  stage.querySelector("#prev").onclick=()=>{ if(!prevDisabled){ view.setMonth(m-1); renderDateTime(); } };
-  stage.querySelector("#next").onclick=()=>{ view.setMonth(m+1); renderDateTime(); };
+  stage.querySelector("#prev").onclick=()=>{ if(!prevDisabled){ autoAdvance=false; view.setMonth(m-1); renderDateTime(); } };
+  stage.querySelector("#next").onclick=()=>{ autoAdvance=false; view.setMonth(m+1); renderDateTime(); };
 
   try{ availability=await fetchAvailability(y,m); }
   catch(e){ stage.querySelector("#grid").innerHTML=`<div class="cal-loading" style="grid-column:1/8;color:#f04438">Could not load availability. Please refresh.</div>`; return; }
 
-  // auto-select first available date in this month (matches the real widget)
   const availDates=Object.keys(availability).sort();
+  if(autoAdvance && !availDates.length){ autoAdvance=false; view.setMonth(m+1); return renderDateTime(notice); }
+  autoAdvance=false;
+  // auto-select first available date in this month (matches the real widget)
   if(!state.date || !availability[state.date]){
     state.date = availDates.find(d=>{const dd=new Date(d+"T12:00:00");return dd.getFullYear()===y&&dd.getMonth()===m;}) || null;
     state.slot=null; state.chosen=null;
