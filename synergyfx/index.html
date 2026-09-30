@@ -99,10 +99,9 @@
   .err-msg{color:#f04438;font-size:12px;font-weight:500;display:none}
   .err-msg.show{display:block}
   .form-foot{display:flex;justify-content:flex-end;margin-top:26px}
-  /* Two separate, optional, unchecked text-message opt-ins (Twilio 30931 / 30913): the
-     booking goes through with neither checked, and marketing is never bundled in. */
+  /* One optional, unchecked text-message opt-in (user decision 2026-09-30); the booking
+     goes through without it, since a required opt-in is rejected (Twilio 30931). */
   .optin{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:#101828;cursor:pointer}
-  .optin + .optin{margin-top:10px}
   .optin input{margin:2px 0 0;width:16px;height:16px;flex:0 0 auto;accent-color:#c53333}
   .consent{font-size:12.5px;line-height:1.55;color:#667085;margin:10px 0 0}
   .consent a{color:inherit;text-decoration:underline}
@@ -348,10 +347,8 @@ function renderDetails(notice){
         </div>
         <div class="fld full">
           <label class="optin" for="fSms"><input id="fSms" name="smsConsent" type="checkbox" />
-            <span>Text me about my consultation, scheduling, reminders and follow-ups from SynergyFx Strength &amp; Wellness Lab.</span></label>
-          <label class="optin" for="fSmsMkt"><input id="fSmsMkt" name="marketingConsent" type="checkbox" />
-            <span>Text me offers, promotions and event news from SynergyFx Strength &amp; Wellness Lab.</span></label>
-          <p class="consent">Both boxes are optional. You can book without checking either one, and consent is not a condition of booking or purchase. Texts go to the mobile number above. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p>
+            <span>Text me about my consultation, scheduling, reminders and follow-ups, plus offers, promotions and event news, from SynergyFx Strength &amp; Wellness Lab.</span></label>
+          <p class="consent">This box is optional. You can book without checking it, and consent is not a condition of booking or purchase. Texts go to the mobile number above. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p>
         </div>
       </div>
       <div class="form-foot"><button class="cta" id="submitBtn" type="submit">Confirm booking</button></div>
@@ -385,9 +382,10 @@ function renderDetails(notice){
           date:state.date,time:state.chosen.slice(11),
           durationMinutes:CALENDAR.slotDurationMin,
           firstName:first,lastName:last,email,phone,birthDate:dob||undefined,
+          // One box covers both kinds of text, so it answers both consent fields.
           smsConsent:stage.querySelector("#fSms").checked,
-          marketingConsent:stage.querySelector("#fSmsMkt").checked,
-          consentTextVersion:"2026-09-30-optin"})});
+          marketingConsent:stage.querySelector("#fSms").checked,
+          consentTextVersion:"2026-09-30-single"})});
       data=await r.json();
     }catch(e){
       btn.disabled=false; btn.textContent="Confirm booking";

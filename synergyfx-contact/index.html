@@ -58,9 +58,8 @@
   .stage .hd{font-size:15px;font-weight:600;color:var(--ink);text-align:center;margin:0 0 20px}
   .stage .consent{font-size:12.5px;line-height:1.55;color:var(--muted);margin:10px 0 0}
   .stage .consent a{color:inherit;text-decoration:underline}
-  /* Two separate, optional, unchecked text-message opt-ins: carriers reject a form where
-     submitting implies consent (Twilio 30931) or where marketing consent is bundled with
-     appointment texts (Twilio 30913). */
+  /* One optional, unchecked text-message opt-in (user decision 2026-09-30). It must stay
+     optional: carriers reject a form where submitting implies consent (Twilio 30931). */
   .optins{display:flex;flex-direction:column;gap:10px;margin-top:20px}
   .optin{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:var(--ink);cursor:pointer}
   .optin input{margin:2px 0 0;width:16px;height:16px;flex:0 0 auto;accent-color:var(--brand)}
@@ -179,10 +178,8 @@
       </div>
       <div class="optins">
         <label class="optin" for="fSmsInfo"><input id="fSmsInfo" name="smsConsent" type="checkbox" />
-          <span>Text me about my inquiry, consultation, scheduling, reminders and follow-ups from SynergyFx Strength &amp; Wellness Lab.</span></label>
-        <label class="optin" for="fSmsMkt"><input id="fSmsMkt" name="marketingConsent" type="checkbox" />
-          <span>Text me offers, promotions and event news from SynergyFx Strength &amp; Wellness Lab.</span></label>
-        <p class="consent">Both boxes are optional. You can send this form without checking either one, and consent is not a condition of purchase. Texts go to the mobile number above. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p>
+          <span>Text me about my inquiry, consultation, scheduling, reminders and follow-ups, plus offers, promotions and event news, from SynergyFx Strength &amp; Wellness Lab.</span></label>
+        <p class="consent">This box is optional. You can send this form without checking it, and consent is not a condition of purchase. Texts go to the mobile number above. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. <a href="https://synergyfxfit.com/privacy-policy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://synergyfxfit.com/terms-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p>
       </div>
       <div class="form-foot"><button class="cta" id="submitBtn" type="submit">Send message</button></div>
     </form>
@@ -194,7 +191,7 @@ const ENDPOINT = "https://jjckotsrhuxxftwmdlwc.supabase.co/functions/v1/synergyf
 const STUDIO_PHONE = "(410) 964-9858";
 // Bumped whenever the consent wording below changes, so a stored lead can be matched back
 // to the exact sentence the visitor agreed to.
-const CONSENT_VERSION = "2026-09-30-optin";
+const CONSENT_VERSION = "2026-09-30-single";
 
 // Which page sent them here. document.referrer is not enough on its own: across sites
 // browsers send only the ORIGIN by default (strict-origin-when-cross-origin), so a visitor
@@ -255,8 +252,9 @@ form.onsubmit = async (ev) => {
       body: JSON.stringify({
         action: "studio-lead",
         firstName: first, lastName: last, email, phone, message, reachBy,
+        // One box covers both kinds of text, so it answers both consent fields.
         smsConsent: document.getElementById("fSmsInfo").checked,
-        marketingConsent: document.getElementById("fSmsMkt").checked,
+        marketingConsent: document.getElementById("fSmsInfo").checked,
         sourcePage: SOURCE_PAGE, referrer: REFERRER,
         consentTextVersion: CONSENT_VERSION,
       }),
