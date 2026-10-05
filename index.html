@@ -1010,7 +1010,7 @@ var EDGE_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONF
 // Known limit: builds already cached in the wild predate this checker, so they
 // cannot self-heal. This only prevents future stale-build episodes.
 // ============================================================
-var PAGE_VERSION = '2026-09-10-1';
+var PAGE_VERSION = '2026-10-05-1';
 var VERSION_CHECK_INTERVAL_MS = 10 * 60 * 1000;
 var lastVersionCheckAt = 0;
 
@@ -1478,6 +1478,32 @@ var LOCATIONS = {
     clubreadyStoreId: 11796,
     crm: 'clubready',
     hours: { weekday: [8, 21], saturday: [11, 15], sunday: [9, 17] },
+    daysAhead: 14,
+    leadDaysAhead: 5,
+    leadDaysAheadExpanded: 7,
+    leadOffer: { label: 'Complimentary First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+    pricing: {
+      title: 'Member Session Pricing',
+      rows: [
+        ['Membership', '$45-$55/session'],
+      ],
+    },
+  },
+  'stretch-zone-south-miami': {
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - South Miami FL',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/New_York',
+    phone: '17866361300',
+    email: 'southmiami@stretchzone.com',
+    address: '7308 SW 57th Ave, South Miami, FL 33143',
+    clubreadyStoreId: 3370,
+    crm: 'clubready',
+    hours: { weekday: [8, 20], saturday: [8, 16], sunday: [10, 16] },
     daysAhead: 14,
     leadDaysAhead: 5,
     leadDaysAheadExpanded: 7,
@@ -2860,6 +2886,8 @@ async function fetchCalendarLinks(payload) {
     'sz-napa': '3270 California Blvd, Suite A2, Napa, CA 94558',
     'stretch-zone-brickell': '1390 Brickell Avenue, Suite 102, Miami, FL 33131',
     'sz-brickell': '1390 Brickell Avenue, Suite 102, Miami, FL 33131',
+    'stretch-zone-south-miami': '7308 SW 57th Ave, South Miami, FL 33143',
+    'sz-south-miami': '7308 SW 57th Ave, South Miami, FL 33143',
     'stretch-zone-fair-oaks': '11721 Fair Oaks Blvd, Fair Oaks, CA 95628',
     'sz-fair-oaks': '11721 Fair Oaks Blvd, Fair Oaks, CA 95628',
     'stretch-zone-sarasota-south': '2881 Clark Road, Suite 13, Sarasota, FL 34231',
@@ -2905,6 +2933,8 @@ async function fetchCalendarLinks(payload) {
     'sz-napa': '(707) 913-3000',
     'stretch-zone-brickell': '(305) 235-1999',
     'sz-brickell': '(305) 235-1999',
+    'stretch-zone-south-miami': '(786) 636-1300',
+    'sz-south-miami': '(786) 636-1300',
     'stretch-zone-fair-oaks': '(916) 616-5669',
     'sz-fair-oaks': '(916) 616-5669',
     'stretch-zone-sarasota-south': '(941) 552-8029',
@@ -3023,6 +3053,7 @@ function showNoCreditsPopup() {
     'stretch-zone-south-reno': 'https://www.stretchzone.com/locations/south-reno-nv',
     'stretch-zone-napa': 'https://www.stretchzone.com/locations/napa-ca',
     'stretch-zone-brickell': 'https://www.stretchzone.com/locations/brickell-fl',
+    'stretch-zone-south-miami': 'https://www.stretchzone.com/locations/south-miami-fl',
     'stretch-zone-fair-oaks': 'https://www.stretchzone.com/locations/fair-oaks-ca',
     'stretch-zone-sarasota-south': 'https://www.stretchzone.com/locations/sarasota-south-fl',
     'stretch-zone-west-bradenton': 'https://www.stretchzone.com/locations/west-bradenton-fl',
@@ -3043,6 +3074,7 @@ function showNoCreditsPopup() {
     'stretch-zone-south-reno': '(775) 900-0274',
     'stretch-zone-napa': '(707) 913-3000',
     'stretch-zone-brickell': '(305) 235-1999',
+    'stretch-zone-south-miami': '(786) 636-1300',
     'stretch-zone-fair-oaks': '(916) 616-5669',
     'stretch-zone-sarasota-south': '(941) 552-8029',
     'stretch-zone-west-bradenton': '(941) 281-2673',
