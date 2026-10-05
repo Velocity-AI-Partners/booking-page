@@ -1010,7 +1010,7 @@ var EDGE_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONF
 // Known limit: builds already cached in the wild predate this checker, so they
 // cannot self-heal. This only prevents future stale-build episodes.
 // ============================================================
-var PAGE_VERSION = '2026-10-05-1';
+var PAGE_VERSION = '2026-10-05-2';
 var VERSION_CHECK_INTERVAL_MS = 10 * 60 * 1000;
 var lastVersionCheckAt = 0;
 
@@ -1670,6 +1670,48 @@ var LOCATIONS = {
     clubreadyStoreId: 12286,
     crm: 'clubready',
     hours: { weekday: [7, 20], saturday: [8, 16], sunday: null },
+    daysAhead: 14,
+    leadDaysAhead: 5,
+    leadDaysAheadExpanded: 7,
+    leadOffer: { label: 'Complimentary First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+  },
+  'stretch-zone-cool-springs': {
+    // 2026-10-05: added so a member's booking link opens here instead of the error screen.
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Cool Springs TN',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/Chicago',
+    phone: '16157215190',
+    email: 'coolspringstn@stretchzone.com',
+    address: '330 Mayfield Drive, Suite C9, Franklin, TN 37067',
+    clubreadyStoreId: 11825,
+    crm: 'clubready',
+    hours: { weekday: [6, 20], saturday: [8, 17], sunday: [8, 14] },
+    daysAhead: 14,
+    leadDaysAhead: 5,
+    leadDaysAheadExpanded: 7,
+    leadOffer: { label: 'Complimentary First Stretch Assessment', detail: 'Includes consultation, 30-min stretch, and membership review' },
+  },
+  'stretch-zone-gaithersburg': {
+    // 2026-10-05: added so a member's booking link opens here instead of the error screen.
+    name: 'Stretch Zone',
+    displayName: 'Stretch Zone - Gaithersburg MD',
+    brand: 'Stretch Zone',
+    tagline: 'Practitioner-assisted stretching',
+    sessionLabel: 'Stretch Session',
+    uiMode: 'slots',
+    logo: 'https://jjckotsrhuxxftwmdlwc.supabase.co/storage/v1/object/public/location-logos/logos/stretch-zone-west-boylston-1771338222411.png',
+    timezone: 'America/New_York',
+    phone: '13017987376',
+    email: 'gaithersburg@stretchzone.com',
+    address: '251 Kentlands Boulevard, Gaithersburg, MD 20878',
+    clubreadyStoreId: 12010,
+    crm: 'clubready',
+    hours: { weekday: [7, 19], saturday: [8, 16], sunday: [8, 16] },
     daysAhead: 14,
     leadDaysAhead: 5,
     leadDaysAheadExpanded: 7,
