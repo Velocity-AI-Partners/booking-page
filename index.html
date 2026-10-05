@@ -1010,7 +1010,7 @@ var EDGE_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONF
 // Known limit: builds already cached in the wild predate this checker, so they
 // cannot self-heal. This only prevents future stale-build episodes.
 // ============================================================
-var PAGE_VERSION = '2026-10-05-2';
+var PAGE_VERSION = '2026-10-05-3';
 var VERSION_CHECK_INTERVAL_MS = 10 * 60 * 1000;
 var lastVersionCheckAt = 0;
 
@@ -1052,6 +1052,8 @@ document.addEventListener('visibilitychange', function() { if (!document.hidden)
 // Tracks whether the last get-slots call actually failed, so an API error is
 // shown as an error instead of being rendered as genuine empty availability.
 var slotsLoadFailed = false;
+// True from init until the carousel has loaded the day named by a ?date= deep link.
+var deepLinkDatePending = false;
 // Set when get-slots answered 401/403, which means this tab sent the request
 // without a usable anon key - i.e. it is running a pre-auth-header build.
 var slotsAuthFailed = false;
@@ -1984,6 +1986,7 @@ function init() {
   var dateParam = params.get('date') || '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
     selectedDate = dateParam;
+    deepLinkDatePending = true;
   }
 
   // Handle Stripe payment return
@@ -2164,6 +2167,18 @@ function buildDateCarousel() {
     }
 
     container.appendChild(item);
+  }
+
+  // A ?date= deep link marked its day as selected but never loaded that day's times, so the
+  // page sat on the loading placeholders (found 2026-10-05). Load them once; if the linked day
+  // is not on the carousel (past, closed, or beyond the window), fall back to the first day.
+  if (selectedDate && deepLinkDatePending) {
+    deepLinkDatePending = false;
+    if (container.querySelector('.date-item[data-date="' + selectedDate + '"]')) {
+      selectDate(selectedDate);
+    } else {
+      selectedDate = null;
+    }
   }
 
   // Auto-select first selectable date
